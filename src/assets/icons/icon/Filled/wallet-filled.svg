@@ -1,0 +1,47 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M21 3H3V5H21V3Z" fill="#69529F"/>
+<path d="M21 19H3V21H21V19Z" fill="#69529F"/>
+<path d="M3 5H1V19H3V5Z" fill="#69529F"/>
+<path d="M3 4H2V5H3V4Z" fill="#69529F"/>
+<path d="M3 19H2V20H3V19Z" fill="#69529F"/>
+<path d="M23 5H21V9H23V5Z" fill="#69529F"/>
+<path d="M23 15H21V19H23V15Z" fill="#69529F"/>
+<path d="M22 4H21V5H22V4Z" fill="#69529F"/>
+<path d="M22 19H21V20H22V19Z" fill="#69529F"/>
+<rect x="3" y="7" width="16" height="2" fill="#69529F"/>
+<rect x="3" y="15" width="16" height="2" fill="#69529F"/>
+<rect x="3" y="9" width="13" height="6" fill="#69529F"/>
+<rect x="20" y="10" width="3" height="4" fill="#69529F"/>
+<rect x="3" y="5" width="2" height="2" fill="#69529F"/>
+<line x1="5" y1="5.5" x2="21" y2="5.5" stroke="#69529F"/>
+<line x1="19" y1="6.5" x2="21" y2="6.5" stroke="#69529F"/>
+<line x1="16" y1="6.5" x2="17" y2="6.5" stroke="#69529F"/>
+<line x1="13" y1="6.5" x2="14" y2="6.5" stroke="#69529F"/>
+<line x1="10" y1="6.5" x2="11" y2="6.5" stroke="#69529F"/>
+<line x1="7" y1="6.5" x2="8" y2="6.5" stroke="#69529F"/>
+<line x1="20" y1="7.5" x2="21" y2="7.5" stroke="#69529F"/>
+<line x1="20" y1="8.5" x2="21" y2="8.5" stroke="#69529F"/>
+<line x1="20" y1="15.5" x2="21" y2="15.5" stroke="#69529F"/>
+<line x1="20" y1="16.5" x2="21" y2="16.5" stroke="#69529F"/>
+<line x1="3" y1="18.5" x2="21" y2="18.5" stroke="#69529F"/>
+<line x1="21" y1="17.5" x2="20" y2="17.5" stroke="#69529F"/>
+<line x1="17" y1="17.5" x2="16" y2="17.5" stroke="#69529F"/>
+<line x1="20" y1="13.5" x2="19" y2="13.5" stroke="#69529F"/>
+<line x1="19" y1="13.5" x2="18" y2="13.5" stroke="#69529F"/>
+<line x1="18" y1="13.5" x2="17" y2="13.5" stroke="#69529F"/>
+<line x1="18" y1="12.5" x2="17" y2="12.5" stroke="#69529F"/>
+<line x1="18" y1="11.5" x2="17" y2="11.5" stroke="#69529F"/>
+<line x1="18" y1="10.5" x2="17" y2="10.5" stroke="#69529F"/>
+<line x1="19" y1="10.5" x2="18" y2="10.5" stroke="#69529F"/>
+<line x1="20" y1="10.5" x2="19" y2="10.5" stroke="#69529F"/>
+<line x1="17" y1="14.5" x2="16" y2="14.5" stroke="#69529F"/>
+<line x1="17" y1="9.5" x2="16" y2="9.5" stroke="#69529F"/>
+<line x1="14" y1="17.5" x2="13" y2="17.5" stroke="#69529F"/>
+<line x1="11" y1="17.5" x2="10" y2="17.5" stroke="#69529F"/>
+<line x1="8" y1="17.5" x2="7" y2="17.5" stroke="#69529F"/>
+<line x1="5" y1="17.5" x2="4" y2="17.5" stroke="#69529F"/>
+<line x1="4" y1="17.5" x2="3" y2="17.5" stroke="#69529F"/>
+<path d="M24 9H23V10H24V9Z" fill="#69529F"/>
+<path d="M24 14H23V15H24V14Z" fill="#69529F"/>
+<path d="M24 10H23V12V14H24V10Z" fill="#69529F"/>
+</svg>
