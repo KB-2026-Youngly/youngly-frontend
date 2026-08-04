@@ -66,7 +66,7 @@
                 id="user-id"
                 v-model.trim="form.userId"
                 type="text"
-                maxlength="12"
+                maxlength="10"
                 autocomplete="username"
                 placeholder="아이디를 입력해 주세요"
               />
@@ -78,7 +78,7 @@
                   id="password"
                   v-model="form.password"
                   :type="showPassword ? 'text' : 'password'"
-                  maxlength="12"
+                  maxlength="15"
                   autocomplete="current-password"
                   placeholder="사용자암호를 입력해 주세요"
                 />
@@ -95,7 +95,9 @@
             <label class="remember"
               ><input v-model="rememberId" type="checkbox" /> <span>아이디 저장</span></label
             >
-            <button class="primary-button" type="submit">로그인</button>
+            <button class="primary-button" type="submit" :disabled="submitting">
+              {{ submitting ? '로그인 중...' : '로그인' }}
+            </button>
             <div class="account-links">
               <a href="#" @click.prevent>아이디 조회</a>
               <a href="#" @click.prevent>사용자암호 재설정</a>
@@ -135,12 +137,17 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { login } from '@/api/auth'
 import loginIcon1 from '@/assets/icons/loginIcon/1.png'
 import loginIcon2 from '@/assets/icons/loginIcon/2.png'
 import loginIcon3 from '@/assets/icons/loginIcon/3.png'
 import loginIcon4 from '@/assets/icons/loginIcon/4.png'
 import starfriendImage from '@/assets/icons/loginIcon/starfriend.png'
+
+const route = useRoute()
+const router = useRouter()
 
 const tabs = [
   { id: 'kb', label: 'KB국민인증서' },
@@ -159,8 +166,17 @@ const showPassword = ref(false)
 const rememberId = ref(false)
 const error = ref('')
 const toast = ref('')
+const submitting = ref(false)
 const form = reactive({ userId: '', password: '' })
 let toastTimer
+
+onMounted(() => {
+  const savedId = localStorage.getItem('youngly_saved_login_id')
+  if (savedId) {
+    form.userId = savedId
+    rememberId.value = true
+  }
+})
 
 function showMessage(message) {
   toast.value = message
@@ -168,13 +184,42 @@ function showMessage(message) {
   toastTimer = setTimeout(() => (toast.value = ''), 2500)
 }
 
-function handleLogin() {
+function apiErrorMessage(apiError) {
+  return (
+    apiError.response?.data?.message ||
+    apiError.response?.data?.error ||
+    '아이디 또는 사용자암호를 확인해 주세요.'
+  )
+}
+
+async function handleLogin() {
   if (!form.userId || !form.password) {
     error.value = '아이디와 사용자암호를 모두 입력해 주세요.'
     return
   }
   error.value = ''
-  showMessage('로그인 API 연결 전 데모 화면입니다.')
+  submitting.value = true
+  try {
+    const { data } = await login({ loginId: form.userId, password: form.password })
+    if (!data?.accessToken) throw new Error('로그인 응답에 JWT가 없습니다.')
+
+    localStorage.setItem('youngly_access_token', data.accessToken)
+    localStorage.setItem(
+      'youngly_user',
+      JSON.stringify({ userId: data.userId, loginId: data.loginId, nickname: data.nickname }),
+    )
+    if (rememberId.value) localStorage.setItem('youngly_saved_login_id', form.userId)
+    else localStorage.removeItem('youngly_saved_login_id')
+
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/home'
+    await router.replace(redirect)
+  } catch (apiError) {
+    localStorage.removeItem('youngly_access_token')
+    localStorage.removeItem('youngly_user')
+    error.value = apiErrorMessage(apiError)
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 
@@ -294,12 +339,13 @@ function handleLogin() {
 .login-section {
   width: 100%;
   margin: 0;
-  padding: 48px 40px 70px;
+  padding: clamp(32px, 4vw, 48px) clamp(20px, 4vw, 40px) clamp(48px, 6vw, 70px);
   background: #ece5db;
 }
 .login-card {
   width: min(900px, 100%);
   margin: 0 auto;
+  overflow: hidden;
   background: #fff;
 }
 .tabs {
@@ -404,6 +450,10 @@ function handleLogin() {
 }
 .primary-button:hover {
   background: #f3be00;
+}
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 .account-links {
   display: flex;
@@ -602,9 +652,7 @@ footer p {
     z-index: 2;
   }
   .login-section {
-    width: 100%;
-    margin: 0;
-    padding: 0 0 40px;
+    padding: 24px 16px 40px;
   }
   .login-card {
     border: 0;
@@ -617,8 +665,9 @@ footer p {
   }
   .id-panel,
   .certificate-panel {
-    width: calc(100% - 40px);
-    padding-top: 32px;
+    width: 100%;
+    min-height: 0;
+    padding: 32px 20px 34px;
   }
   .account-links a {
     padding: 0 9px;
@@ -626,17 +675,63 @@ footer p {
   }
   .quick-links {
     grid-template-columns: 1fr 1fr;
-    margin: 0 20px;
+    width: 100%;
+    margin: 0;
   }
   .quick-links a {
     min-height: 88px;
   }
   .notice-list {
-    margin: 24px 20px 0;
+    width: 100%;
+    margin: 24px 0 0;
+    padding: 20px 20px 20px 36px;
   }
   footer div {
     flex-wrap: wrap;
     gap: 10px 18px;
+  }
+}
+@media (max-width: 430px) {
+  .hero > div {
+    width: calc(100% - 32px);
+  }
+  .hero p:last-child {
+    max-width: 65%;
+    line-height: 1.45;
+  }
+  .login-section {
+    padding-inline: 12px;
+  }
+  .tabs button {
+    min-width: 0;
+    height: 56px;
+    padding-inline: 4px;
+    line-height: 1.35;
+    word-break: keep-all;
+  }
+  .id-panel,
+  .certificate-panel {
+    padding-inline: 16px;
+  }
+  .account-links {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+  .account-links a {
+    padding-inline: 8px;
+  }
+  .quick-links a {
+    min-width: 0;
+    padding: 18px 12px;
+    gap: 8px;
+  }
+  .quick-icon {
+    flex-basis: 38px;
+    width: 38px;
+    height: 38px;
+  }
+  .quick-links strong {
+    display: none;
   }
 }
 </style>

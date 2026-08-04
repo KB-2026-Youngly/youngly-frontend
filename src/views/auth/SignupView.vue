@@ -55,8 +55,13 @@
           <p v-if="infoError" class="inline-error">{{ infoError }}</p>
           <div class="confirm-row">
             <p v-if="infoConfirmed"><span>✓</span> 기본정보 확인이 완료되었습니다.</p>
-            <button type="button" :class="{ edit: infoConfirmed }" @click="toggleInfoConfirm">
-              {{ infoConfirmed ? '수정하기' : '확인' }}
+            <button
+              type="button"
+              :class="{ edit: infoConfirmed }"
+              :disabled="accountSearching"
+              @click="toggleInfoConfirm"
+            >
+              {{ accountSearching ? '계좌 조회 중...' : infoConfirmed ? '수정하기' : '확인' }}
             </button>
           </div>
         </section>
@@ -97,26 +102,33 @@
               <p>조회 및 자산관리에 사용할 대표계좌를 선택해 주세요.</p>
             </div>
             <div v-if="selectedAccount" class="selected-summary">
-              <strong>{{ selectedAccount.number }}</strong
+              <strong>{{ selectedAccount.accountNumber }}</strong
               ><span>{{ formatCurrency(selectedAccount.balance) }}원</span>
             </div>
-            <button type="button" @click="accountListOpen = !accountListOpen">
-              {{ selectedAccount ? '계좌 변경' : '계좌 선택' }}
+            <button
+              type="button"
+              :disabled="!infoConfirmed || accountSearching"
+              @click="toggleAccountList"
+            >
+              {{ accountSearching ? '조회 중' : selectedAccount ? '계좌 변경' : '계좌 선택' }}
               <span>{{ accountListOpen ? '⌃' : '⌄' }}</span>
             </button>
           </div>
           <div v-if="accountListOpen" class="account-list">
+            <p v-if="!accounts.length" class="empty-accounts">
+              입력한 이름과 생년월일로 조회된 입출금 통장이 없습니다.
+            </p>
             <button
               v-for="account in accounts"
-              :key="account.number"
+              :key="account.kbAccountId"
               type="button"
-              :class="{ selected: selectedAccount?.number === account.number }"
+              :class="{ selected: selectedAccount?.kbAccountId === account.kbAccountId }"
               @click="selectAccount(account)"
             >
               <span class="bank-symbol">KB</span>
               <span class="account-name"
-                ><b>{{ account.name }}</b
-                ><small>{{ account.number }}</small></span
+                ><b>{{ account.bankName }} 입출금 통장</b
+                ><small>{{ account.accountNumber }}</small></span
               >
               <span class="balance"
                 ><small>출금가능금액</small><b>{{ formatCurrency(account.balance) }}원</b></span
@@ -129,25 +141,23 @@
         <p v-if="error" class="page-error" role="alert">{{ error }}</p>
         <div class="actions">
           <button type="button" class="back" @click="$router.back()">이전</button
-          ><button type="submit" class="submit">가입하기</button>
+          ><button type="submit" class="submit" :disabled="submitting">
+            {{ submitting ? '가입 처리 중...' : '가입하기' }}
+          </button>
         </div>
       </form>
     </main>
-
-    <div v-if="completed" class="modal-backdrop">
-      <div class="modal">
-        <span>✓</span>
-        <h2>가입 정보 작성이 완료되었습니다.</h2>
-        <p>현재는 화면 데모이며 회원가입 API는 연결되지 않았습니다.</p>
-        <button @click="$router.push('/login')">로그인으로 이동</button>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { computed, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { searchAccounts, registerAccount } from '@/api/account'
+import { login, signup } from '@/api/auth'
 import infoIcon from '@/assets/icons/loginIcon/i.png'
+
+const router = useRouter()
 
 const fields = [
   { key: 'name', label: '이름', help: '예: 홍길동' },
@@ -194,11 +204,7 @@ const generalInterests = [
   '음악/공연',
   '재테크/경제',
 ]
-const accounts = [
-  { name: 'KB국민 ONE통장', number: '123456-01-123456', balance: 2850000 },
-  { name: 'KB마이핏통장', number: '987654-01-456789', balance: 724500 },
-  { name: '직장인우대종합통장', number: '456789-02-789012', balance: 11380200 },
-]
+const accounts = ref([])
 const form = reactive({
   name: '',
   birthDate: '',
@@ -214,12 +220,34 @@ const infoError = ref('')
 const accountListOpen = ref(false)
 const selectedAccount = ref(null)
 const error = ref('')
-const completed = ref(false)
+const accountSearching = ref(false)
+const submitting = ref(false)
+const signupAccessToken = ref('')
 const basicComplete = computed(() => fields.every((field) => form[field.key].trim()))
 
-function toggleInfoConfirm() {
+function toBirthday(value) {
+  if (!/^\d{6}$/.test(value)) return null
+  const year = Number(value.slice(0, 2))
+  const month = Number(value.slice(2, 4))
+  const day = Number(value.slice(4, 6))
+  const currentYear = new Date().getFullYear() % 100
+  const fullYear = year <= currentYear ? 2000 + year : 1900 + year
+  const lastDay = new Date(fullYear, month, 0).getDate()
+  if (month < 1 || month > 12 || day < 1 || day > lastDay) return null
+  return `${fullYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
+function apiErrorMessage(apiError, fallback) {
+  return apiError.response?.data?.message || apiError.response?.data?.error || fallback
+}
+
+async function toggleInfoConfirm() {
   if (infoConfirmed.value) {
     infoConfirmed.value = false
+    accounts.value = []
+    selectedAccount.value = null
+    accountListOpen.value = false
+    signupAccessToken.value = ''
     return
   }
   if (!basicComplete.value) {
@@ -230,8 +258,34 @@ function toggleInfoConfirm() {
     infoError.value = '비밀번호와 비밀번호 확인이 일치하지 않습니다.'
     return
   }
+  const birthday = toBirthday(form.birthDate)
+  if (!birthday) {
+    infoError.value = '생년월일을 YYMMDD 형식으로 정확히 입력해 주세요.'
+    return
+  }
+
   infoError.value = ''
-  infoConfirmed.value = true
+  accountSearching.value = true
+  try {
+    const { data } = await searchAccounts({ name: form.name, birthday })
+    accounts.value = (Array.isArray(data) ? data : []).filter(
+      (account) => account.accountType === 'DEPOSIT',
+    )
+    selectedAccount.value = null
+    accountListOpen.value = false
+    infoConfirmed.value = true
+  } catch (apiError) {
+    infoError.value = apiErrorMessage(
+      apiError,
+      '계좌를 조회하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+    )
+  } finally {
+    accountSearching.value = false
+  }
+}
+function toggleAccountList() {
+  if (!infoConfirmed.value || accountSearching.value) return
+  accountListOpen.value = !accountListOpen.value
 }
 function selectAccount(account) {
   selectedAccount.value = account
@@ -241,7 +295,7 @@ function selectAccount(account) {
 function formatCurrency(value) {
   return value.toLocaleString('ko-KR')
 }
-function submitForm() {
+async function submitForm() {
   if (!infoConfirmed.value) {
     error.value = '기본정보 입력 후 확인 버튼을 눌러 주세요.'
     return
@@ -252,11 +306,48 @@ function submitForm() {
   }
   if (!selectedAccount.value) {
     error.value = '대표 개인 입출금 통장을 선택해 주세요.'
-    accountListOpen.value = true
+    toggleAccountList()
     return
   }
   error.value = ''
-  completed.value = true
+  submitting.value = true
+  try {
+    const investmentInterestIds = form.interests
+      .filter((interest) => investmentInterests.includes(interest))
+      .map((interest) => investmentInterests.indexOf(interest) + 1)
+    const interestIds = form.interests
+      .filter((interest) => generalInterests.includes(interest))
+      .map((interest) => generalInterests.indexOf(interest) + 11)
+
+    if (!signupAccessToken.value) {
+      await signup({
+        loginId: form.userId,
+        password: form.password,
+        name: form.name,
+        nickname: form.nickname,
+        email: form.email,
+        birthday: toBirthday(form.birthDate),
+        interestIds,
+        investmentInterestIds,
+      })
+
+      const { data } = await login({
+        loginId: form.userId,
+        password: form.password,
+      })
+      if (!data?.accessToken) {
+        throw new Error('로그인 응답에 JWT가 없습니다.')
+      }
+      signupAccessToken.value = data.accessToken
+    }
+
+    await registerAccount(selectedAccount.value.kbAccountId, signupAccessToken.value)
+    await router.push('/login')
+  } catch (apiError) {
+    error.value = apiErrorMessage(apiError, '회원가입 처리 중 오류가 발생했습니다.')
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 
@@ -449,6 +540,12 @@ function submitForm() {
   font-weight: 800;
   cursor: pointer;
 }
+.confirm-row button:disabled,
+.account-heading > button:disabled,
+.actions button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
 .confirm-row button.edit {
   border: 1px solid #ccc;
   background: #fff;
@@ -534,6 +631,14 @@ function submitForm() {
   padding: 0 30px 28px;
   display: grid;
   gap: 8px;
+}
+.empty-accounts {
+  margin: 0;
+  padding: 24px 16px;
+  border: 1px solid #e0e0e0;
+  color: #777;
+  text-align: center;
+  font-size: 13px;
 }
 .account-list > button {
   width: 100%;

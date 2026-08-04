@@ -1,7 +1,7 @@
 export const navigationItems = [
   {
     name: '홈',
-    path: '/',
+    path: '/home',
     icon: 'home',
   },
   {

@@ -4,6 +4,7 @@
       <div class="logo-text">CHALLENGE PIXEL</div>
 
       <div class="header-right">
+        <span class="user-name">{{ nickname }}님</span>
         <!-- 알림 종 아이콘 -->
         <button class="icon-btn" aria-label="알림">
           <div class="bell-wrapper">
@@ -17,6 +18,7 @@
         <div class="profile-circle">
           <div class="profile-circle-inner"></div>
         </div>
+        <button class="logout-button" type="button" @click="logout">로그아웃</button>
       </div>
     </div>
   </header>
@@ -30,7 +32,23 @@ export default {
   data() {
     return {
       bellIconUrl: bellIcon,
+      nickname: '회원',
     }
+  },
+  mounted() {
+    try {
+      const user = JSON.parse(localStorage.getItem('youngly_user') || '{}')
+      this.nickname = user.nickname || user.loginId || '회원'
+    } catch {
+      this.nickname = '회원'
+    }
+  },
+  methods: {
+    logout() {
+      localStorage.removeItem('youngly_access_token')
+      localStorage.removeItem('youngly_user')
+      this.$router.replace('/login')
+    },
   },
 }
 </script>
@@ -62,6 +80,23 @@ export default {
   display: flex;
   align-items: center;
   gap: 18px;
+}
+.user-name {
+  color: #554873;
+  font-size: 13px;
+  font-weight: 700;
+}
+.logout-button {
+  padding: 8px 12px;
+  border: 1px solid #d8d2e4;
+  background: #fff;
+  color: #554873;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.logout-button:hover {
+  background: #f6f3fb;
 }
 
 .icon-btn {
@@ -183,5 +218,20 @@ export default {
     5px 2px,
     10px 2px
   );
+}
+@media (max-width: 600px) {
+  .app-header {
+    padding-inline: 16px;
+  }
+  .logo-text {
+    font-size: 16px;
+  }
+  .user-name,
+  .profile-circle {
+    display: none;
+  }
+  .header-right {
+    gap: 10px;
+  }
 }
 </style>
