@@ -33,6 +33,23 @@ const routes = [
       },
     ],
   },
+  {
+    path: '/mypage',
+    component: DefaultLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'MyPage',
+        component: () => import('@/views/mypage/MyPageView.vue'),
+      },
+      {
+        path: 'profile',
+        name: 'ProfileEdit',
+        component: () => import('@/views/mypage/ProfileEditView.vue'),
+      },
+    ],
+  },
 ]
 
 const router = createRouter({
