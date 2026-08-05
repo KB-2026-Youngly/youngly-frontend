@@ -58,13 +58,16 @@ export default {
     },
   },
   data() {
-    return {
-      activeTab: '/',
-    }
+    return {}
+  },
+  computed: {
+    activeTab() {
+      return this.$route.path
+    },
   },
   methods: {
     selectTab(path) {
-      this.activeTab = path
+      if (this.$route.path !== path) this.$router.push(path)
     },
   },
 }

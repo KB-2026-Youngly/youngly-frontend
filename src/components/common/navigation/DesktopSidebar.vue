@@ -65,18 +65,19 @@ export default {
     },
   },
   data() {
-    return {
-      activeTab: '/',
-    }
+    return {}
   },
   computed: {
+    activeTab() {
+      return this.$route.path
+    },
     activeSidebarTheme() {
       return this.currentTheme
     },
   },
   methods: {
     selectTab(path) {
-      this.activeTab = path
+      if (this.$route.path !== path) this.$router.push(path)
     },
     cycleSidebarTheme() {
       const nextTheme = (this.currentTheme % 2) + 1
