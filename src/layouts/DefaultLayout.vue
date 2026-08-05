@@ -1,14 +1,14 @@
 <template>
-  <div class="layout-container">
+  <div class="layout-container" :class="{ 'asset-layout': $route.path === '/asset' }">
     <!-- 사이드바 (데스크톱 전용 왼쪽 세로 영역 & 모바일 하단바) -->
     <AppNavigation />
 
-    <div class="main-content-wrapper">
+    <div class="main-content-wrapper" :class="{ 'asset-main-wrapper': $route.path === '/asset' }">
       <!-- 헤더 (사이드바 우측 상단) -->
       <AppHeader />
 
       <!-- 메인 페이지 영역 -->
-      <main class="content-area">
+      <main class="content-area" :class="{ 'asset-content-area': $route.path === '/asset' }">
         <router-view />
       </main>
     </div>
@@ -47,13 +47,30 @@ export default {
   background-color: #f9f9fb;
 }
 
+.layout-container.asset-layout,
+.asset-main-wrapper,
+.content-area.asset-content-area {
+  background-color: #e6dcf6;
+}
+
 @media (max-width: 767px) {
   .layout-container {
     flex-direction: column;
+    width: 100%;
+    overflow-x: hidden;
   }
 
   .main-content-wrapper {
-    padding-bottom: 70px; /* 모바일 하단 네비게이션 여백 */
+    padding-top: 68px;
+    padding-bottom: 76px;
+  }
+
+  .content-area.asset-content-area {
+    padding: 0;
+    width: 100%;
+    min-width: 0;
+    background: #e6dcf6;
+    overflow-x: hidden;
   }
 }
 </style>
