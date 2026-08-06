@@ -89,6 +89,9 @@ export default {
   background-color: #ffffff;
   border-top: 1px solid #2d1f4f;
   transition: all 0.2s ease;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
 }
 
 .nav-container {

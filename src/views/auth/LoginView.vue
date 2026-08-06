@@ -185,10 +185,14 @@ function showMessage(message) {
 }
 
 function apiErrorMessage(apiError) {
+  if (!apiError.response) {
+    return `서버에 연결할 수 없습니다. 현재 접속 주소(${window.location.host})와 PC 네트워크를 확인해 주세요.`
+  }
+
   return (
     apiError.response?.data?.message ||
     apiError.response?.data?.error ||
-    '아이디 또는 사용자암호를 확인해 주세요.'
+    `로그인 요청에 실패했습니다. (HTTP ${apiError.response.status})`
   )
 }
 

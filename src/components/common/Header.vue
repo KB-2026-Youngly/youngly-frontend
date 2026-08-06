@@ -55,8 +55,8 @@ export default {
 
 <style scoped>
 .app-header {
-  background-color: #ffffff; /* 하얀 테마 */
-  border-bottom: 1px solid #2d1f4f; /* 사이드바와 어울리는 남보라색 테두리 */
+  background-color: #e6dcf6;
+  border-bottom: none;
   padding: 12px 24px;
 }
 
@@ -219,9 +219,17 @@ export default {
     10px 2px
   );
 }
-@media (max-width: 600px) {
+@media (max-width: 767px) {
   .app-header {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1000;
     padding-inline: 16px;
+    background: #e6dcf6;
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
   .logo-text {
     font-size: 16px;
