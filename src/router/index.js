@@ -74,6 +74,18 @@ const routes = [
       },
     ],
   },
+  {
+    path: '/groups',
+    component: DefaultLayout,
+    meta: { requiresAuth: true }, // 로그인 필요하면 유지
+    children: [
+      {
+        path: '',
+        name: 'GroupList',
+        component: () => import('@/views/group/GroupListView.vue')
+      }
+    ]
+  }
 ]
 
 const router = createRouter({
