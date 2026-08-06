@@ -33,6 +33,30 @@ const routes = [
       },
     ],
   },
+  {
+    path: '/asset',
+    component: DefaultLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'Asset',
+        component: () => import('@/views/asset/AssetView.vue'),
+      },
+    ],
+  },
+  {
+    path: '/calendar',
+    component: DefaultLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'Calendar',
+        component: () => import('@/views/calendar/CalendarView.vue'),
+      },
+    ],
+  },
 ]
 
 const router = createRouter({

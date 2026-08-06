@@ -5,13 +5,41 @@ export function searchAccounts(payload) {
 }
 
 export function registerAccount(kbAccountId, accessToken) {
-  return apiClient.post(
-    '/accounts',
-    { kbAccountId },
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    },
-  )
+  const config = accessToken
+    ? {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    : undefined
+
+  return apiClient.post('/accounts', { kbAccountId }, config)
+}
+
+export function updatePensionStatus(accountId, accountStatus) {
+  return apiClient.patch(`/accounts/${accountId}/status`, { accountStatus })
+}
+
+export function getAccount(accountType) {
+  return apiClient.get('/accounts', { params: { accountType } })
+}
+
+export function updateAccount(accountId, kbAccountId) {
+  return apiClient.put(`/accounts/${accountId}`, { kbAccountId })
+}
+
+export function searchMoimAccounts(payload) {
+  return apiClient.post('/group-accounts/search', payload)
+}
+
+export function registerMoimAccount(kbAccountId) {
+  return apiClient.post('/group-accounts', { kbAccountId })
+}
+
+export function getMoimAccounts() {
+  return apiClient.get('/group-accounts')
+}
+
+export function deactivateMoimAccount(moimAccountId) {
+  return apiClient.patch(`/group-accounts/${moimAccountId}/status`)
 }
