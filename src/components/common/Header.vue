@@ -5,113 +5,156 @@
 
       <div class="header-right">
         <span class="user-name">{{ nickname }}님</span>
-        <!-- 알림 종 아이콘 -->
-        <button class="icon-btn" aria-label="알림">
-          <div class="bell-wrapper">
-            <img :src="bellIconUrl" class="bell-icon" alt="bell" />
-            <!-- 알림 왔을 때의 빨간 표시 뱃지 -->
+
+        <button class="icon-btn" type="button" aria-label="알림">
+          <span class="bell-wrapper">
+            <img :src="bellIcon" class="bell-icon" alt="" />
             <span class="notification-badge"></span>
-          </div>
+          </span>
         </button>
 
-        <!-- 계단식 빈 프로필 동그라미 -->
-        <div class="profile-circle">
-          <div class="profile-circle-inner"></div>
+        <div ref="profileMenu" class="profile-menu">
+          <button
+            class="profile-button"
+            type="button"
+            aria-label="프로필 메뉴 열기"
+            aria-haspopup="menu"
+            :aria-expanded="isMenuOpen"
+            @click="isMenuOpen = !isMenuOpen"
+          >
+            <CharacterAvatar
+              class="profile-button__avatar"
+              :character="equippedCharacter"
+              :fallback-text="nickname"
+            />
+          </button>
+
+          <div v-if="isMenuOpen" class="profile-dropdown" role="menu">
+            <RouterLink to="/mypage" role="menuitem" @click="closeMenu">마이페이지</RouterLink>
+            <button type="button" role="menuitem" @click="logout">로그아웃</button>
+          </div>
         </div>
-        <button class="logout-button" type="button" @click="logout">로그아웃</button>
       </div>
     </div>
   </header>
 </template>
 
-<script>
+<script setup>
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 import bellIcon from '@/assets/icons/bell.svg'
+import CharacterAvatar from '@/components/collectible/CharacterAvatar.vue'
+import { useCollectibleStore } from '@/stores/collectible'
 
-export default {
-  name: 'AppHeader',
-  data() {
-    return {
-      bellIconUrl: bellIcon,
-      nickname: '회원',
-    }
-  },
-  mounted() {
-    try {
-      const user = JSON.parse(localStorage.getItem('youngly_user') || '{}')
-      this.nickname = user.nickname || user.loginId || '회원'
-    } catch {
-      this.nickname = '회원'
-    }
-  },
-  methods: {
-    logout() {
-      localStorage.removeItem('youngly_access_token')
-      localStorage.removeItem('youngly_user')
-      this.$router.replace('/login')
-    },
-  },
+defineOptions({ name: 'AppHeader' })
+
+const router = useRouter()
+const collectibleStore = useCollectibleStore()
+const { equippedCharacter } = storeToRefs(collectibleStore)
+const profileMenu = ref(null)
+const isMenuOpen = ref(false)
+const nickname = ref('회원')
+
+const closeMenu = () => {
+  isMenuOpen.value = false
 }
+
+const handleOutsideClick = (event) => {
+  if (isMenuOpen.value && !profileMenu.value?.contains(event.target)) closeMenu()
+}
+
+const handleKeydown = (event) => {
+  if (event.key === 'Escape') closeMenu()
+}
+
+const logout = () => {
+  closeMenu()
+  collectibleStore.$reset()
+  localStorage.removeItem('youngly_access_token')
+  localStorage.removeItem('youngly_user')
+  router.replace('/login')
+}
+
+onMounted(() => {
+  try {
+    const user = JSON.parse(localStorage.getItem('youngly_user') || '{}')
+    nickname.value = user.nickname || user.loginId || '회원'
+  } catch {
+    nickname.value = '회원'
+  }
+
+  document.addEventListener('pointerdown', handleOutsideClick)
+  document.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', handleOutsideClick)
+  document.removeEventListener('keydown', handleKeydown)
+})
 </script>
 
 <style scoped>
 .app-header {
-  background-color: #e6dcf6;
-  border-bottom: none;
+  position: relative;
+  z-index: 1000;
   padding: 12px 24px;
+  background-color: #e6dcf6;
 }
 
 .header-container {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   max-width: 1200px;
   margin: 0 auto;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .logo-text {
+  color: #2d1f4f;
   font-family: 'Courier New', Courier, monospace;
-  font-weight: 900;
   font-size: 20px;
-  color: #2d1f4f; /* 텍스트를 검은(남보라) 계열로 변경 */
-  text-shadow: 2px 2px 0px #e5e5f7;
+  font-weight: 900;
+  text-shadow: 2px 2px 0 #e5e5f7;
 }
 
 .header-right {
   display: flex;
+  gap: 14px;
   align-items: center;
-  gap: 18px;
 }
+
 .user-name {
   color: #554873;
   font-size: 13px;
   font-weight: 700;
 }
-.logout-button {
-  padding: 8px 12px;
-  border: 1px solid #d8d2e4;
-  background: #fff;
-  color: #554873;
-  font-size: 12px;
-  font-weight: 700;
+
+.icon-btn,
+.profile-button {
+  display: grid;
+  padding: 0;
+  border: 0;
+  place-items: center;
+  background: transparent;
   cursor: pointer;
-}
-.logout-button:hover {
-  background: #f6f3fb;
 }
 
 .icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
   padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   transition: transform 0.15s ease;
 }
 
 .icon-btn:hover {
   transform: scale(1.08);
+}
+
+.icon-btn:focus-visible,
+.profile-button:focus-visible,
+.profile-dropdown a:focus-visible,
+.profile-dropdown button:focus-visible {
+  outline: 3px solid rgba(113, 86, 173, 0.35);
+  outline-offset: 2px;
 }
 
 .bell-wrapper {
@@ -120,126 +163,106 @@ export default {
 }
 
 .bell-icon {
+  display: block;
   width: 32px;
   height: 32px;
-  display: block;
 }
 
-/* 알림 빨간 표시 (픽셀 느낌 뱃지) */
 .notification-badge {
   position: absolute;
-  top: 0px;
-  right: 0px;
+  top: 0;
+  right: 0;
   width: 9px;
   height: 9px;
-  background-color: #ff4b4b;
   border: 2px solid #ffffff;
   border-radius: 50%;
-  box-shadow: 0 0 0 1.5px #2d1f4f; /* 선명한 픽셀 테두리 느낌 부여 */
+  background-color: #ff4b4b;
+  box-shadow: 0 0 0 1.5px #2d1f4f;
 }
 
-/* 계단식 빈 프로필 동그라미 */
-.profile-circle {
+.profile-menu {
+  position: relative;
+}
+
+.profile-button {
   width: 44px;
   height: 44px;
-  background-color: #2d1f4f; /* 테두리 역할 색상 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: 2px solid #2d1f4f;
+  border-radius: 50%;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.profile-button:hover {
+  border-color: #7156ad;
+  transform: translateY(-1px);
+}
+
+.profile-button__avatar {
+  width: 40px;
+  height: 40px;
+  font-size: 15px;
+  background: #f4effa;
+  color: #7156ad;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  display: grid;
+  width: 148px;
+  overflow: hidden;
+  border: 1px solid #d8d2e4;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(45, 31, 79, 0.16);
+}
+
+.profile-dropdown a,
+.profile-dropdown button {
+  padding: 12px 14px;
+  border: 0;
+  color: #403554;
+  background: #ffffff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: none;
   cursor: pointer;
-  transition: transform 0.15s ease;
-  clip-path: polygon(
-    11px 0,
-    calc(100% - 11px) 0,
-    calc(100% - 11px) 2px,
-    calc(100% - 6px) 2px,
-    calc(100% - 6px) 6px,
-    calc(100% - 2px) 6px,
-    calc(100% - 2px) 11px,
-    100% 11px,
-    100% calc(100% - 11px),
-    calc(100% - 2px) calc(100% - 11px),
-    calc(100% - 2px) calc(100% - 6px),
-    calc(100% - 6px) calc(100% - 6px),
-    calc(100% - 6px) calc(100% - 2px),
-    calc(100% - 11px) calc(100% - 2px),
-    calc(100% - 11px) 100%,
-    11px 100%,
-    11px calc(100% - 2px),
-    6px calc(100% - 2px),
-    6px calc(100% - 6px),
-    2px calc(100% - 6px),
-    2px calc(100% - 11px),
-    0 calc(100% - 11px),
-    0 11px,
-    2px 11px,
-    2px 6px,
-    6px 6px,
-    6px 2px,
-    11px 2px
-  );
 }
 
-.profile-circle:hover {
-  transform: scale(1.05);
+.profile-dropdown a:hover,
+.profile-dropdown button:hover {
+  background: #f4effa;
 }
 
-.profile-circle-inner {
-  width: 42px;
-  height: 42px;
-  background-color: #ffffff; /* 안쪽의 하얀 빈 공간 */
-  clip-path: polygon(
-    10px 0,
-    calc(100% - 10px) 0,
-    calc(100% - 10px) 2px,
-    calc(100% - 5px) 2px,
-    calc(100% - 5px) 5px,
-    calc(100% - 2px) 5px,
-    calc(100% - 2px) 10px,
-    100% 10px,
-    100% calc(100% - 10px),
-    calc(100% - 2px) calc(100% - 10px),
-    calc(100% - 2px) calc(100% - 5px),
-    calc(100% - 5px) calc(100% - 5px),
-    calc(100% - 5px) calc(100% - 2px),
-    calc(100% - 10px) calc(100% - 2px),
-    calc(100% - 10px) 100%,
-    10px 100%,
-    10px calc(100% - 2px),
-    5px calc(100% - 2px),
-    5px calc(100% - 5px),
-    2px calc(100% - 5px),
-    2px calc(100% - 10px),
-    0 calc(100% - 10px),
-    0 10px,
-    2px 10px,
-    2px 5px,
-    5px 5px,
-    5px 2px,
-    10px 2px
-  );
-}
 @media (max-width: 767px) {
   .app-header {
     position: fixed;
     top: 0;
     right: 0;
     left: 0;
-    z-index: 1000;
     padding-inline: 16px;
-    background: #e6dcf6;
     transform: translateZ(0);
     backface-visibility: hidden;
   }
+
   .logo-text {
     font-size: 16px;
   }
-  .user-name,
-  .profile-circle {
+
+  .user-name {
     display: none;
   }
+
   .header-right {
-    gap: 10px;
+    gap: 8px;
+  }
+
+  .profile-dropdown {
+    right: 0;
+    max-width: calc(100vw - 24px);
   }
 }
 </style>

@@ -74,6 +74,31 @@ const routes = [
       },
     ],
   },
+  {
+    path: '/point',
+    alias: '/points',
+    component: DefaultLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'Point',
+        component: () => import('@/views/point/PointView.vue'),
+      },
+    ],
+  },
+  {
+    path: '/characters',
+    component: DefaultLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'Characters',
+        component: () => import('@/views/collectible/InventoryView.vue'),
+      },
+    ],
+  },
 ]
 
 const router = createRouter({
