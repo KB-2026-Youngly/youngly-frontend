@@ -66,7 +66,7 @@
                 id="user-id"
                 v-model.trim="form.userId"
                 type="text"
-                maxlength="10"
+                maxlength="15"
                 autocomplete="username"
                 placeholder="아이디를 입력해 주세요"
               />
