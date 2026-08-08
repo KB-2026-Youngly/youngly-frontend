@@ -84,6 +84,56 @@ const routes = [
       },
     ],
   },
+  // --- feature 브랜치에서 추가한 라우트들 ---
+  {
+    path: '/feed/write',
+    component: DefaultLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'FeedWrite',
+        component: () => import('@/views/post/FeedWriteView.vue'),
+      },
+    ],
+  },
+  {
+    path: '/posts/:id',
+    component: DefaultLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'FeedDetail',
+        component: () => import('@/views/post/FeedDetailView.vue'),
+      },
+    ],
+  },
+  {
+    path: '/groups',
+    component: DefaultLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'GroupList',
+        component: () => import('@/views/group/GroupListView.vue')
+      }
+    ]
+  },
+  {
+    path: '/groups/:id',
+    component: DefaultLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'GroupDetail',
+        component: () => import('@/views/group/GroupDetailView.vue')
+      }
+    ]
+  },
+  // --- develop 브랜치에서 추가한 라우트들 ---
   {
     path: '/point',
     alias: '/points',
