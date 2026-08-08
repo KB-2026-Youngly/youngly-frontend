@@ -43,3 +43,9 @@ export function getMoimAccounts() {
 export function deactivateMoimAccount(moimAccountId) {
   return apiClient.patch(`/group-accounts/${moimAccountId}/status`)
 }
+
+export function getAccountTransactions(accountType, accountId, page = 0, size = 20) {
+  return apiClient.get('/account-transactions', {
+    params: { accountType, accountId, page, size },
+  })
+}

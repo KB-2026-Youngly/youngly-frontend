@@ -60,6 +60,16 @@ const routes = [
         name: 'Asset',
         component: () => import('@/views/asset/AssetView.vue'),
       },
+      {
+        path: 'moim/:moimAccountId',
+        name: 'MoimAccountDetail',
+        component: () => import('@/views/asset/MoimAccountDetailView.vue'),
+      },
+      {
+        path: 'pension/insight',
+        name: 'PensionInsight',
+        component: () => import('@/views/asset/PensionInsightView.vue'),
+      },
     ],
   },
   {
@@ -74,6 +84,7 @@ const routes = [
       },
     ],
   },
+  // --- feature 브랜치에서 추가한 라우트들 ---
   {
     path: '/feed/write',
     component: DefaultLayout,
@@ -101,7 +112,7 @@ const routes = [
   {
     path: '/groups',
     component: DefaultLayout,
-    meta: { requiresAuth: true }, // 로그인 필요하면 유지
+    meta: { requiresAuth: true },
     children: [
       {
         path: '',
@@ -110,10 +121,10 @@ const routes = [
       }
     ]
   },
-  // src/router/index.js 예시
   {
     path: '/groups/:id',
     component: DefaultLayout,
+    meta: { requiresAuth: true },
     children: [
       {
         path: '',
@@ -121,7 +132,33 @@ const routes = [
         component: () => import('@/views/group/GroupDetailView.vue')
       }
     ]
-  }
+  },
+  // --- develop 브랜치에서 추가한 라우트들 ---
+  {
+    path: '/point',
+    alias: '/points',
+    component: DefaultLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'Point',
+        component: () => import('@/views/point/PointView.vue'),
+      },
+    ],
+  },
+  {
+    path: '/characters',
+    component: DefaultLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'Characters',
+        component: () => import('@/views/collectible/InventoryView.vue'),
+      },
+    ],
+  },
 ]
 
 const router = createRouter({

@@ -50,6 +50,12 @@
           </dd>
         </div>
       </dl>
+      <button class="ai-insight-button" type="button" @click="router.push({ name: 'PensionInsight' })">
+        <span aria-hidden="true">✦</span>
+        AI 개인연금 인사이트
+        <b aria-hidden="true">→</b>
+      </button>
+      <TransactionHistory account-type="PENSION" :account-id="connectedPension.accountId" />
     </article>
 
     <article v-else-if="loadingConnectedAccount && activeTab === 'pension'" class="asset-card">
@@ -71,14 +77,17 @@
         @dragover.prevent
         @drop="handleDesktopDrop(account.moimAccountId)"
         @dragend="finishMoimDrag"
+        @click="openMoimDetail(account)"
       >
         <span
           class="drag-handle"
           role="button"
           aria-label="길게 눌러 순서 변경"
           @pointerdown.stop="handleMoimPointerDown(account.moimAccountId, $event)"
+          @click.stop
           @contextmenu.prevent
-        >≡</span>
+          >≡</span
+        >
         <button
           v-if="account.owner"
           class="moim-edit-button"
@@ -360,7 +369,9 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import BaseModal from '@/components/base/BaseModal.vue'
+import TransactionHistory from '@/components/asset/TransactionHistory.vue'
 import {
   deactivateMoimAccount,
   getAccount,
@@ -374,6 +385,8 @@ import {
 } from '@/api/account'
 import { getMyInfo } from '@/api/user'
 import { getGroups } from '@/api/group'
+
+const router = useRouter()
 
 const tabs = [
   { id: 'pension', icon: '₩', label: '개인연금', caption: '나의 노후 자산' },
@@ -449,6 +462,14 @@ function handleConnectClick() {
   }
   isEditing.value = false
   pensionModalOpen.value = true
+}
+
+function openMoimDetail(account) {
+  if (draggingMoimId.value || mobileDragActive) return
+  router.push({
+    name: 'MoimAccountDetail',
+    params: { moimAccountId: account.moimAccountId },
+  })
 }
 
 function applySavedMoimOrder(accounts) {
@@ -892,6 +913,10 @@ function resetModal() {
   background: linear-gradient(135deg, #ffffff 0%, #faf8fe 100%);
   box-shadow: 0 10px 32px rgba(34, 28, 47, 0.055);
 }
+.linked-account-card > * {
+  position: relative;
+  z-index: 1;
+}
 .linked-account-card::after {
   content: '';
   width: 210px;
@@ -899,8 +924,10 @@ function resetModal() {
   position: absolute;
   right: -80px;
   bottom: -120px;
+  z-index: 0;
   border-radius: 50%;
   background: #eee8fa;
+  pointer-events: none;
 }
 .edit-account-button {
   width: 38px;
@@ -978,6 +1005,24 @@ function resetModal() {
   color: #4f397e;
   font-size: 19px;
 }
+.ai-insight-button {
+  width: min(620px, 100%);
+  min-height: 50px;
+  margin-top: 18px;
+  padding: 0 17px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  border-radius: 14px;
+  color: #fff;
+  background: linear-gradient(110deg, #654596, #8067bd);
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(99, 69, 150, 0.2);
+}
+.ai-insight-button span { color: #ffe59b; font-size: 18px; }
+.ai-insight-button b { margin-left: auto; }
 .moim-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

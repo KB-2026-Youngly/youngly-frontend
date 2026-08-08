@@ -2,16 +2,34 @@
   <div class="mypage">
     <h1>마이페이지</h1>
 
-    <ProfileCard :user="user" :summary="activitySummary" @edit="goToProfileEdit" />
+    <ProfileCard
+      :user="user"
+      :summary="activitySummary"
+      :equipped-character="equippedCharacter"
+      @edit="goToProfileEdit"
+    />
 
     <section class="character-card" aria-labelledby="character-title">
-      <div class="character-card__preview" aria-hidden="true">{{ character.emoji }}</div>
-      <div class="character-card__copy">
-        <h2 id="character-title">내 캐릭터 꾸미기</h2>
-        <p>{{ character.description }}</p>
-        <span>{{ character.itemCount }}개의 아이템 보유</span>
+      <div class="character-card__preview">
+        <BaseSpinner
+          v-if="isCharacterLoading"
+          size="small"
+          :show-label="false"
+          aria-label="캐릭터를 불러오는 중"
+        />
+        <CharacterPreview v-else :character="equippedCharacter" />
       </div>
-      <button class="character-card__button" type="button" aria-label="내 캐릭터 꾸미기">
+      <div class="character-card__copy">
+        <h2 id="character-title">내 캐릭터</h2>
+        <p>{{ characterDescription }}</p>
+        <span>캐릭터 선택 및 장착</span>
+      </div>
+      <button
+        class="character-card__button"
+        type="button"
+        aria-label="내 캐릭터 선택 화면으로 이동"
+        @click="router.push('/characters')"
+      >
         <ChevronRight :size="20" aria-hidden="true" />
       </button>
     </section>
@@ -26,13 +44,27 @@
 </template>
 
 <script setup>
+import { computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { ChevronRight, LogOut } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/base/BaseButton.vue'
+import BaseSpinner from '@/components/base/BaseSpinner.vue'
+import CharacterPreview from '@/components/collectible/CharacterPreview.vue'
 import ProfileCard from '@/components/mypage/ProfileCard.vue'
 import SettingsMenu from '@/components/mypage/SettingsMenu.vue'
+import { useCollectibleStore } from '@/stores/collectible'
+import { usePointStore } from '@/stores/point'
 
 const router = useRouter()
+const pointStore = usePointStore()
+const collectibleStore = useCollectibleStore()
+const { balance, isLoading: isPointLoading, error: pointError } = storeToRefs(pointStore)
+const {
+  equippedCharacter,
+  isLoading: isCharacterLoading,
+  error: characterError,
+} = storeToRefs(collectibleStore)
 
 // 사용자 API 연동 전까지 디자인 확인용 임시 데이터는 부모 화면에서 관리합니다.
 const user = {
@@ -43,17 +75,27 @@ const user = {
   badge: '12일 연속 활동 중',
 }
 
-const activitySummary = [
+const activitySummary = computed(() => [
   { label: '완료 횟수', value: '5개' },
   { label: '평균 달성률', value: '78%' },
-  { label: '보유 포인트', value: '820P', isPoint: true },
-]
+  {
+    label: '보유 포인트',
+    value: isPointLoading.value
+      ? '...'
+      : pointError.value
+        ? '—'
+        : `${new Intl.NumberFormat('ko-KR').format(balance.value)}P`,
+    isPoint: true,
+    to: '/point',
+  },
+])
 
-const character = {
-  emoji: '🧑🏻‍💼',
-  description: '획득한 아이템으로 나만의 캐릭터를 꾸며보세요.',
-  itemCount: 5,
-}
+const characterDescription = computed(() => {
+  if (isCharacterLoading.value) return '현재 장착 캐릭터를 불러오는 중이에요.'
+  if (characterError.value) return '현재 캐릭터를 불러오지 못했어요.'
+  if (equippedCharacter.value) return `${equippedCharacter.value.name} 캐릭터를 장착 중이에요.`
+  return '장착 중인 캐릭터가 없어요.'
+})
 
 const settingsItems = [
   {
@@ -75,10 +117,15 @@ const goToProfileEdit = () => {
 }
 
 const logout = () => {
+  collectibleStore.$reset()
   localStorage.removeItem('youngly_access_token')
   localStorage.removeItem('youngly_user')
   router.replace('/login')
 }
+
+onMounted(() => {
+  pointStore.fetchPointBalance()
+})
 </script>
 
 <style scoped>
@@ -122,10 +169,11 @@ const logout = () => {
   display: grid;
   width: 72px;
   height: 72px;
+  padding: 5px;
   place-items: center;
   border: 1px solid var(--color-primary-border, #e6dcf6);
-  background: var(--color-surface, #ffffff);
-  font-size: 38px;
+  background: #f8f4fc;
+  box-sizing: border-box;
 }
 
 .character-card__copy h2 {

@@ -1,14 +1,38 @@
 <template>
-  <div class="layout-container" :class="{ 'asset-layout': $route.path === '/asset', 'home-layout': $route.name === 'Home', 'feed-write-layout': $route.name === 'FeedWrite', 'group-detail-layout': $route.name === 'GroupDetail' }">
+  <div 
+    class="layout-container" 
+    :class="{ 
+      'asset-layout': isAssetRoute, 
+      'home-layout': isHomeRoute, 
+      'feed-write-layout': isFeedWriteRoute, 
+      'group-detail-layout': isGroupDetailRoute 
+    }"
+  >
     <!-- 사이드바 (데스크톱 전용 왼쪽 세로 영역 & 모바일 하단바) -->
     <AppNavigation />
 
-    <div class="main-content-wrapper" :class="{ 'asset-main-wrapper': $route.path === '/asset', 'home-main-wrapper': $route.name === 'Home', 'feed-write-main-wrapper': $route.name === 'FeedWrite', 'group-detail-main-wrapper': $route.name === 'GroupDetail' }">
+    <div 
+      class="main-content-wrapper" 
+      :class="{ 
+        'asset-main-wrapper': isAssetRoute, 
+        'home-main-wrapper': isHomeRoute, 
+        'feed-write-main-wrapper': isFeedWriteRoute, 
+        'group-detail-main-wrapper': isGroupDetailRoute 
+      }"
+    >
       <!-- 헤더 (사이드바 우측 상단) -->
       <AppHeader />
 
       <!-- 메인 페이지 영역 -->
-      <main class="content-area" :class="{ 'asset-content-area': $route.path === '/asset', 'home-content-area': $route.name === 'Home', 'feed-write-content-area': $route.name === 'FeedWrite', 'group-detail-content-area': $route.name === 'GroupDetail' }">
+      <main 
+        class="content-area" 
+        :class="{ 
+          'asset-content-area': isAssetRoute, 
+          'home-content-area': isHomeRoute, 
+          'feed-write-content-area': isFeedWriteRoute, 
+          'group-detail-content-area': isGroupDetailRoute 
+        }"
+      >
         <router-view />
       </main>
     </div>
@@ -18,12 +42,31 @@
 <script>
 import AppHeader from '@/components/common/Header.vue'
 import AppNavigation from '@/components/common/navigation/AppNavigation.vue'
+import { useCollectibleStore } from '@/stores/collectible'
 
 export default {
   name: 'DefaultLayout',
   components: {
     AppHeader,
     AppNavigation,
+  },
+  computed: {
+    // 💡 템플릿을 깔끔하게 유지하기 위해 조건들을 computed로 분리!
+    isAssetRoute() {
+      return this.$route.path === '/asset'
+    },
+    isHomeRoute() {
+      return this.$route.name === 'Home'
+    },
+    isFeedWriteRoute() {
+      return this.$route.name === 'FeedWrite'
+    },
+    isGroupDetailRoute() {
+      return this.$route.name === 'GroupDetail'
+    }
+  },
+  mounted() {
+    useCollectibleStore().ensureOwnedCharacters()
   },
 }
 </script>

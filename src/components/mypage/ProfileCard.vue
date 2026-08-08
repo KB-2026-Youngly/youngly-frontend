@@ -1,7 +1,11 @@
 <template>
   <section class="profile-card" aria-labelledby="profile-name">
     <div class="profile-card__top">
-      <div class="profile-card__avatar" aria-hidden="true">{{ user.avatarText }}</div>
+      <CharacterAvatar
+        class="profile-card__avatar"
+        :character="equippedCharacter"
+        :fallback-text="user.avatarText"
+      />
 
       <div class="profile-card__info">
         <h2 id="profile-name">{{ user.name }}</h2>
@@ -21,6 +25,7 @@
 <script setup>
 import { Settings } from 'lucide-vue-next'
 import ActivitySummary from '@/components/mypage/ActivitySummary.vue'
+import CharacterAvatar from '@/components/collectible/CharacterAvatar.vue'
 
 defineProps({
   user: {
@@ -30,6 +35,10 @@ defineProps({
   summary: {
     type: Array,
     required: true,
+  },
+  equippedCharacter: {
+    type: Object,
+    default: null,
   },
 })
 
@@ -63,6 +72,10 @@ const emit = defineEmits(['edit'])
   background: var(--color-primary, #7156ad);
   font-size: 20px;
   font-weight: 800;
+}
+
+.profile-card__avatar:has(img) {
+  background: var(--color-primary-soft, #e6dcf6);
 }
 
 .profile-card__info {
