@@ -53,7 +53,7 @@ export default {
       this.currentTheme = newTheme
     },
     handleCameraClick() {
-      this.$emit('camera-triggered')
+      if (this.$route.path !== '/feed/write') this.$router.push('/feed/write')
     },
   },
 }

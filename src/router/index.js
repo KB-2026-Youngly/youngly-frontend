@@ -75,6 +75,30 @@ const routes = [
     ],
   },
   {
+    path: '/feed/write',
+    component: DefaultLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'FeedWrite',
+        component: () => import('@/views/post/FeedWriteView.vue'),
+      },
+    ],
+  },
+  {
+    path: '/posts/:id',
+    component: DefaultLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'FeedDetail',
+        component: () => import('@/views/post/FeedDetailView.vue'),
+      },
+    ],
+  },
+  {
     path: '/groups',
     component: DefaultLayout,
     meta: { requiresAuth: true }, // 로그인 필요하면 유지
@@ -83,6 +107,18 @@ const routes = [
         path: '',
         name: 'GroupList',
         component: () => import('@/views/group/GroupListView.vue')
+      }
+    ]
+  },
+  // src/router/index.js 예시
+  {
+    path: '/groups/:id',
+    component: DefaultLayout,
+    children: [
+      {
+        path: '',
+        name: 'GroupDetail',
+        component: () => import('@/views/group/GroupDetailView.vue')
       }
     ]
   }

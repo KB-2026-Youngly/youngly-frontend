@@ -5,7 +5,7 @@
         <section
           ref="modalElement"
           class="base-modal"
-          :class="`base-modal--${size}`"
+          :class="[`base-modal--${size}`, modalClass]"
           role="dialog"
           aria-modal="true"
           :aria-labelledby="hasTitle ? titleId : undefined"
@@ -75,6 +75,10 @@ const props = defineProps({
   showCloseButton: {
     type: Boolean,
     default: true,
+  },
+  modalClass: {
+    type: [String, Array, Object],
+    default: '',
   },
 })
 

@@ -1,24 +1,43 @@
 <template>
   <header class="app-header">
     <div class="header-container">
-      <div class="logo-text">CHALLENGE PIXEL</div>
+      <div v-if="!isGroupDetail" class="default-header-content">
+        <div class="logo-text">CHALLENGE PIXEL</div>
 
-      <div class="header-right">
-        <span class="user-name">{{ nickname }}님</span>
-        <!-- 알림 종 아이콘 -->
-        <button class="icon-btn" aria-label="알림">
-          <div class="bell-wrapper">
-            <img :src="bellIconUrl" class="bell-icon" alt="bell" />
-            <!-- 알림 왔을 때의 빨간 표시 뱃지 -->
-            <span class="notification-badge"></span>
+        <div class="header-right">
+          <span class="user-name">{{ nickname }}님</span>
+          <!-- 알림 종 아이콘 -->
+          <button class="icon-btn" aria-label="알림">
+            <div class="bell-wrapper">
+              <img :src="bellIconUrl" class="bell-icon" alt="bell" />
+              <!-- 알림 왔을 때의 빨간 표시 뱃지 -->
+              <span class="notification-badge"></span>
+            </div>
+          </button>
+
+          <!-- 계단식 빈 프로필 동그라미 -->
+          <div class="profile-circle">
+            <div class="profile-circle-inner"></div>
           </div>
-        </button>
-
-        <!-- 계단식 빈 프로필 동그라미 -->
-        <div class="profile-circle">
-          <div class="profile-circle-inner"></div>
+          <button class="logout-button" type="button" @click="logout">로그아웃</button>
         </div>
-        <button class="logout-button" type="button" @click="logout">로그아웃</button>
+      </div>
+
+      <div v-else class="group-detail-header-content">
+        <div class="group-meta-row">
+          <div class="group-badges">
+            <span class="group-badge">운동</span>
+            <span class="group-badge">초대 중</span>
+            <span class="member-count">♟&nbsp; 1 / 6명</span>
+          </div>
+          <div class="group-actions">
+            <button class="settings-button" type="button" aria-label="그룹 설정">⚙</button>
+            <button class="group-profile" type="button" aria-label="내 프로필">김</button>
+          </div>
+        </div>
+        <button class="group-title" type="button" @click="openGroupEdit">
+          {{ groupTitle }} <span aria-hidden="true">›</span>
+        </button>
       </div>
     </div>
   </header>
@@ -33,7 +52,13 @@ export default {
     return {
       bellIconUrl: bellIcon,
       nickname: '회원',
+      groupTitle: '30일 매일 운동 챌린지',
     }
+  },
+  computed: {
+    isGroupDetail() {
+      return this.$route.name === 'GroupDetail'
+    },
   },
   mounted() {
     try {
@@ -42,8 +67,24 @@ export default {
     } catch {
       this.nickname = '회원'
     }
+    this.loadGroupInfo()
+    window.addEventListener('youngly-group-info-updated', this.loadGroupInfo)
+  },
+  beforeUnmount() {
+    window.removeEventListener('youngly-group-info-updated', this.loadGroupInfo)
   },
   methods: {
+    loadGroupInfo() {
+      try {
+        const groupInfo = JSON.parse(localStorage.getItem('youngly_group_info') || '{}')
+        this.groupTitle = groupInfo.title || '30일 매일 운동 챌린지'
+      } catch {
+        this.groupTitle = '30일 매일 운동 챌린지'
+      }
+    },
+    openGroupEdit() {
+      this.$router.replace({ query: { ...this.$route.query, editGroup: 'true' } })
+    },
     logout() {
       localStorage.removeItem('youngly_access_token')
       localStorage.removeItem('youngly_user')
@@ -61,11 +102,15 @@ export default {
 }
 
 .header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.default-header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .logo-text {
@@ -219,6 +264,91 @@ export default {
     10px 2px
   );
 }
+
+.group-detail-header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
+}
+
+.group-meta-row,
+.group-actions,
+.group-badges {
+  display: flex;
+  align-items: center;
+}
+
+.group-meta-row {
+  justify-content: space-between;
+}
+
+.group-badges { gap: 6px; }
+
+.group-badge {
+  padding: 2px 6px;
+  border: 1px solid #71717a;
+  border-radius: 3px;
+  background: #e5e2fa;
+  color: #554873;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.member-count {
+  color: #27272a;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.group-actions { gap: 13px; }
+
+.settings-button {
+  width: 29px;
+  height: 29px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #222;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.group-profile {
+  width: 31px;
+  height: 31px;
+  padding: 0;
+  border: 2px solid #222;
+  background: #65529d;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  clip-path: polygon(7px 0, calc(100% - 7px) 0, calc(100% - 7px) 3px, calc(100% - 3px) 3px, calc(100% - 3px) 7px, 100% 7px, 100% calc(100% - 7px), calc(100% - 3px) calc(100% - 7px), calc(100% - 3px) calc(100% - 3px), calc(100% - 7px) calc(100% - 3px), calc(100% - 7px) 100%, 7px 100%, 7px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 7px), 0 calc(100% - 7px), 0 7px, 3px 7px, 3px 3px, 7px 3px);
+}
+
+.group-title {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  margin: 0;
+  color: #222;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.15;
+  cursor: pointer;
+}
+
+.settings-button:focus-visible,
+.group-profile:focus-visible {
+  outline: 3px solid #7156ad;
+  outline-offset: 2px;
+}
+
 @media (max-width: 767px) {
   .app-header {
     position: fixed;
@@ -226,8 +356,9 @@ export default {
     right: 0;
     left: 0;
     z-index: 1000;
-    padding-inline: 16px;
-    background: #e6dcf6;
+    padding: 8px 16px 9px;
+    background: #fff;
+    border-bottom: 3px solid #222;
     transform: translateZ(0);
     backface-visibility: hidden;
   }
@@ -241,5 +372,6 @@ export default {
   .header-right {
     gap: 10px;
   }
+  .group-detail-header-content { gap: 6px; }
 }
 </style>
