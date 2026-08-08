@@ -18,12 +18,16 @@
 <script>
 import AppHeader from '@/components/common/Header.vue'
 import AppNavigation from '@/components/common/navigation/AppNavigation.vue'
+import { useCollectibleStore } from '@/stores/collectible'
 
 export default {
   name: 'DefaultLayout',
   components: {
     AppHeader,
     AppNavigation,
+  },
+  mounted() {
+    useCollectibleStore().ensureOwnedCharacters()
   },
 }
 </script>
