@@ -1,14 +1,14 @@
 <template>
-  <div class="layout-container" :class="{ 'asset-layout': $route.path === '/asset' }">
+  <div class="layout-container" :class="{ 'asset-layout': isAssetRoute }">
     <!-- 사이드바 (데스크톱 전용 왼쪽 세로 영역 & 모바일 하단바) -->
     <AppNavigation />
 
-    <div class="main-content-wrapper" :class="{ 'asset-main-wrapper': $route.path === '/asset' }">
+    <div class="main-content-wrapper" :class="{ 'asset-main-wrapper': isAssetRoute }">
       <!-- 헤더 (사이드바 우측 상단) -->
       <AppHeader />
 
       <!-- 메인 페이지 영역 -->
-      <main class="content-area" :class="{ 'asset-content-area': $route.path === '/asset' }">
+      <main class="content-area" :class="{ 'asset-content-area': isAssetRoute }">
         <router-view />
       </main>
     </div>

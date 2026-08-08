@@ -60,6 +60,16 @@ const routes = [
         name: 'Asset',
         component: () => import('@/views/asset/AssetView.vue'),
       },
+      {
+        path: 'moim/:moimAccountId',
+        name: 'MoimAccountDetail',
+        component: () => import('@/views/asset/MoimAccountDetailView.vue'),
+      },
+      {
+        path: 'pension/insight',
+        name: 'PensionInsight',
+        component: () => import('@/views/asset/PensionInsightView.vue'),
+      },
     ],
   },
   {
