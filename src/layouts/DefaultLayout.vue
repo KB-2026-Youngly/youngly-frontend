@@ -18,6 +18,7 @@
 <script>
 import AppHeader from '@/components/common/Header.vue'
 import AppNavigation from '@/components/common/navigation/AppNavigation.vue'
+import { useCollectibleStore } from '@/stores/collectible'
 
 export default {
   name: 'DefaultLayout',
@@ -25,10 +26,8 @@ export default {
     AppHeader,
     AppNavigation,
   },
-  computed: {
-    isAssetRoute() {
-      return this.$route.path === '/asset' || this.$route.path.startsWith('/asset/')
-    },
+  mounted() {
+    useCollectibleStore().ensureOwnedCharacters()
   },
 }
 </script>
