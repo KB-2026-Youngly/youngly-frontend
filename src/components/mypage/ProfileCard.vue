@@ -1,16 +1,20 @@
 <template>
   <section class="profile-card" aria-labelledby="profile-name">
     <div class="profile-card__top">
-      <CharacterAvatar
-        class="profile-card__avatar"
-        :character="equippedCharacter"
-        :fallback-text="user.avatarText"
-      />
+      <span class="profile-card__avatar" aria-hidden="true">
+        <img
+          v-if="user?.profileImageUrl && !profileImageFailed"
+          :src="user?.profileImageUrl"
+          alt=""
+          @error="profileImageFailed = true"
+        />
+        <span v-else>{{ avatarInitial }}</span>
+      </span>
 
       <div class="profile-card__info">
-        <h2 id="profile-name">{{ user.name }}</h2>
-        <p>{{ user.group }} · 연속 {{ user.activeDays }}일</p>
-        <span class="profile-card__badge">🏆 {{ user.badge }}</span>
+        <h2 id="profile-name">{{ user?.name || '이름 없음' }}</h2>
+        <p>{{ user?.email || '이메일 정보 없음' }}</p>
+        <span class="profile-card__badge">{{ user?.nickname || '닉네임 없음' }}</span>
       </div>
 
       <button class="profile-card__settings" type="button" aria-label="내 정보 수정" @click="emit('edit')">
@@ -23,26 +27,33 @@
 </template>
 
 <script setup>
+import { computed, ref, watch } from 'vue'
 import { Settings } from 'lucide-vue-next'
 import ActivitySummary from '@/components/mypage/ActivitySummary.vue'
-import CharacterAvatar from '@/components/collectible/CharacterAvatar.vue'
 
-defineProps({
+const props = defineProps({
   user: {
     type: Object,
-    required: true,
+    default: null,
   },
   summary: {
     type: Array,
     required: true,
   },
-  equippedCharacter: {
-    type: Object,
-    default: null,
-  },
 })
 
 const emit = defineEmits(['edit'])
+const profileImageFailed = ref(false)
+const avatarInitial = computed(() =>
+  String(props.user?.nickname || props.user?.name || '회').trim().charAt(0) || '회',
+)
+
+watch(
+  () => props.user?.profileImageUrl,
+  () => {
+    profileImageFailed.value = false
+  },
+)
 </script>
 
 <style scoped>
@@ -76,6 +87,12 @@ const emit = defineEmits(['edit'])
 
 .profile-card__avatar:has(img) {
   background: var(--color-primary-soft, #e6dcf6);
+}
+
+.profile-card__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .profile-card__info {

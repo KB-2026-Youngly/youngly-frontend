@@ -10,7 +10,27 @@
       <p>프로필과 계정 정보를 관리하세요.</p>
     </header>
 
-    <ProfileForm @submit="handleProfileSubmit" />
+    <section v-if="isLoading" class="state-panel">
+      <BaseSpinner size="large" label="사용자 정보를 불러오는 중..." centered />
+    </section>
+
+    <section v-else-if="error" class="state-panel" role="alert">
+      <BaseEmptyState
+        title="사용자 정보를 불러오지 못했어요"
+        :description="error"
+        action-text="다시 불러오기"
+        @action="fetchMyInfo"
+      />
+    </section>
+
+    <ProfileForm
+      v-else
+      :user="user"
+      :loading="isSaving"
+      :error="saveError"
+      :success-message="successMessage"
+      @submit="handleProfileSubmit"
+    />
 
     <nav class="account-menu" aria-label="계정 관리">
       <button class="account-menu__item" type="button">
@@ -30,11 +50,28 @@
 </template>
 
 <script setup>
+import { onMounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { ArrowLeft, ChevronRight, LockKeyhole } from 'lucide-vue-next'
+import BaseEmptyState from '@/components/base/BaseEmptyState.vue'
+import BaseSpinner from '@/components/base/BaseSpinner.vue'
 import ProfileForm from '@/components/mypage/ProfileForm.vue'
+import { useUserStore } from '@/stores/user'
 
-// API 연동 범위가 아니므로 현재는 브라우저 기본 폼 제출 흐름만 막고 값을 받습니다.
-const handleProfileSubmit = () => {}
+const userStore = useUserStore()
+const { user, isLoading, error, isSaving, saveError } = storeToRefs(userStore)
+const { fetchMyInfo, updateProfile } = userStore
+const successMessage = ref('')
+
+const handleProfileSubmit = async (profile) => {
+  successMessage.value = ''
+  const saved = await updateProfile(profile)
+  if (saved) successMessage.value = '프로필을 저장했습니다.'
+}
+
+onMounted(() => {
+  if (!user.value) fetchMyInfo()
+})
 </script>
 
 <style scoped>
@@ -101,6 +138,15 @@ const handleProfileSubmit = () => {}
   margin-top: 20px;
   padding: 0 20px;
   border: 1px solid var(--color-border, #ddd9e8);
+  border-radius: 12px;
+  background: var(--color-surface, #ffffff);
+}
+
+.state-panel {
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  padding: 24px;
   border-radius: 12px;
   background: var(--color-surface, #ffffff);
 }

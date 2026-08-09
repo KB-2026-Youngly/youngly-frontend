@@ -197,7 +197,8 @@ const confirmDraw = async () => {
   const result = await drawNewCharacter()
   if (!result) return
 
-  await Promise.all([fetchOwnedCharacters(), pointStore.fetchPointOverview()])
+  pointStore.setBalance(result.remainingPoint)
+  await fetchOwnedCharacters()
   drawModalMode.value = 'result'
 }
 

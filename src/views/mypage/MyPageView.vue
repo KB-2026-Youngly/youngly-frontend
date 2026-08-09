@@ -2,10 +2,23 @@
   <div class="mypage">
     <h1>마이페이지</h1>
 
+    <section v-if="userError" class="state-panel" role="alert">
+      <BaseEmptyState
+        title="사용자 정보를 불러오지 못했어요"
+        :description="userError"
+        action-text="다시 불러오기"
+        @action="userStore.fetchMyInfo"
+      />
+    </section>
+
+    <section v-else-if="isUserLoading || !user" class="state-panel">
+      <BaseSpinner size="large" label="사용자 정보를 불러오는 중..." centered />
+    </section>
+
     <ProfileCard
+      v-else
       :user="user"
       :summary="activitySummary"
-      :equipped-character="equippedCharacter"
       @edit="goToProfileEdit"
     />
 
@@ -49,35 +62,30 @@ import { storeToRefs } from 'pinia'
 import { ChevronRight, LogOut } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/base/BaseButton.vue'
+import BaseEmptyState from '@/components/base/BaseEmptyState.vue'
 import BaseSpinner from '@/components/base/BaseSpinner.vue'
 import CharacterPreview from '@/components/collectible/CharacterPreview.vue'
 import ProfileCard from '@/components/mypage/ProfileCard.vue'
 import SettingsMenu from '@/components/mypage/SettingsMenu.vue'
 import { useCollectibleStore } from '@/stores/collectible'
 import { usePointStore } from '@/stores/point'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const pointStore = usePointStore()
 const collectibleStore = useCollectibleStore()
+const userStore = useUserStore()
 const { balance, isLoading: isPointLoading, error: pointError } = storeToRefs(pointStore)
+const { user, isLoading: isUserLoading, error: userError } = storeToRefs(userStore)
 const {
   equippedCharacter,
   isLoading: isCharacterLoading,
   error: characterError,
 } = storeToRefs(collectibleStore)
 
-// 사용자 API 연동 전까지 디자인 확인용 임시 데이터는 부모 화면에서 관리합니다.
-const user = {
-  name: '김민준',
-  avatarText: '민',
-  group: 'KB 챌린지',
-  activeDays: 12,
-  badge: '12일 연속 활동 중',
-}
-
 const activitySummary = computed(() => [
-  { label: '완료 횟수', value: '5개' },
-  { label: '평균 달성률', value: '78%' },
+  { label: '완료 횟수', value: '—' },
+  { label: '평균 달성률', value: '—' },
   {
     label: '보유 포인트',
     value: isPointLoading.value
@@ -118,13 +126,17 @@ const goToProfileEdit = () => {
 
 const logout = () => {
   collectibleStore.$reset()
+  pointStore.$reset()
+  userStore.$reset()
   localStorage.removeItem('youngly_access_token')
   localStorage.removeItem('youngly_user')
   router.replace('/login')
 }
 
 onMounted(() => {
+  userStore.fetchMyInfo()
   pointStore.fetchPointBalance()
+  collectibleStore.ensureOwnedCharacters()
 })
 </script>
 
@@ -151,6 +163,15 @@ onMounted(() => {
   margin: 0 0 2px;
   font-size: 28px;
   line-height: 1.25;
+}
+
+.state-panel {
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  border-radius: 12px;
+  background: var(--color-surface, #ffffff);
 }
 
 .character-card {

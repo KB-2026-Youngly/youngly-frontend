@@ -6,6 +6,7 @@
       label="닉네임"
       name="nickname"
       autocomplete="nickname"
+      required
     />
 
     <BaseInput
@@ -19,25 +20,67 @@
       aria-readonly="true"
     />
 
-    <BaseButton type="submit" size="large" block>프로필 저장</BaseButton>
+    <BaseInput
+      id="profile-image-url"
+      v-model="profileImageUrl"
+      label="프로필 이미지 URL"
+      name="profileImageUrl"
+      type="url"
+      placeholder="https://example.com/profile.png"
+    />
+
+    <p v-if="error" class="profile-form__message profile-form__message--error" role="alert">
+      {{ error }}
+    </p>
+    <p v-else-if="successMessage" class="profile-form__message" role="status">
+      {{ successMessage }}
+    </p>
+
+    <BaseButton type="submit" size="large" block :loading="loading">프로필 저장</BaseButton>
   </form>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseInput from '@/components/base/BaseInput.vue'
 
 const emit = defineEmits(['submit'])
 
-// 사용자 API 연동 전까지 디자인 확인용 임시 데이터를 사용합니다.
-const nickname = ref('김민준')
-const email = ref('minjun@kbchallenge.com')
+const props = defineProps({
+  user: {
+    type: Object,
+    default: null,
+  },
+  loading: Boolean,
+  error: {
+    type: String,
+    default: '',
+  },
+  successMessage: {
+    type: String,
+    default: '',
+  },
+})
+
+const nickname = ref('')
+const email = ref('')
+const profileImageUrl = ref('')
+
+watch(
+  () => props.user,
+  (user) => {
+    nickname.value = user?.nickname || ''
+    email.value = user?.email || ''
+    profileImageUrl.value = user?.profileImageUrl || ''
+  },
+  { immediate: true },
+)
 
 const handleSubmit = () => {
   emit('submit', {
     nickname: nickname.value,
-    email: email.value,
+    profileImageUrl: profileImageUrl.value || null,
   })
 }
 </script>
@@ -78,6 +121,17 @@ const handleSubmit = () => {
   min-height: 48px;
   margin-top: 2px;
   border-radius: 4px;
+}
+
+.profile-form__message {
+  margin: 0;
+  color: #2d8363;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.profile-form__message--error {
+  color: var(--color-danger, #e96363);
 }
 
 @media (max-width: 767px) {
