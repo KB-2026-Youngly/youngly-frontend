@@ -44,8 +44,18 @@ export function deactivateMoimAccount(moimAccountId) {
   return apiClient.patch(`/group-accounts/${moimAccountId}/status`)
 }
 
-export function getAccountTransactions(accountType, accountId, page = 0, size = 20) {
+export function updateMoimAccountName(moimAccountId, accountName) {
+  return apiClient.patch(`/group-accounts/${moimAccountId}/name`, { accountName })
+}
+
+export function getAccountTransactions(accountType, accountId, page = 0, size = 20, roundId = null) {
   return apiClient.get('/account-transactions', {
-    params: { accountType, accountId, page, size },
+    params: {
+      accountType,
+      accountId,
+      page,
+      size,
+      ...(roundId ? { roundId } : {}),
+    },
   })
 }
