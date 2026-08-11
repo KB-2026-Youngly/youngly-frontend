@@ -267,19 +267,35 @@
       v-model="moimEditModalOpen"
       title="모임통장 관리"
       size="small"
-      :close-on-overlay="!deactivatingMoim"
-      :close-on-esc="!deactivatingMoim"
+      :close-on-overlay="!moimEditSubmitting"
+      :close-on-esc="!moimEditSubmitting"
       @close="resetMoimEditModal"
     >
       <div v-if="editingMoimAccount" class="moim-edit-content">
         <small>선택한 모임통장</small>
         <strong>{{ editingMoimAccount.accountName }}</strong>
         <span>{{ editingMoimAccount.accountNumber }}</span>
-        <button type="button" disabled>모임통장 이름 변경 <em>추후 구현 예정</em></button>
+        <form class="moim-name-form" @submit.prevent="changeMoimAccountName">
+          <label for="moim-account-name">모임통장 이름 변경</label>
+          <div>
+            <input
+              id="moim-account-name"
+              v-model="moimAccountName"
+              type="text"
+              maxlength="50"
+              autocomplete="off"
+              placeholder="변경할 이름을 입력해 주세요"
+              :disabled="moimEditSubmitting"
+            />
+            <button type="submit" :disabled="!canChangeMoimName || moimEditSubmitting">
+              {{ changingMoimName ? '변경 중...' : '변경' }}
+            </button>
+          </div>
+        </form>
         <button
           class="deactivate-button"
           type="button"
-          :disabled="deactivatingMoim"
+          :disabled="moimEditSubmitting"
           @click="deactivateSelectedMoim"
         >
           {{ deactivatingMoim ? '비활성화 중...' : '모임통장 연동 비활성화' }}
@@ -381,6 +397,7 @@ import {
   searchAccounts,
   searchMoimAccounts,
   updateAccount,
+  updateMoimAccountName,
   updatePensionStatus,
 } from '@/api/account'
 import { getMyInfo } from '@/api/user'
@@ -433,7 +450,14 @@ const draggingMoimId = ref('')
 const moimEditModalOpen = ref(false)
 const editingMoimAccount = ref(null)
 const deactivatingMoim = ref(false)
+const changingMoimName = ref(false)
+const moimAccountName = ref('')
 const moimEditError = ref('')
+const moimEditSubmitting = computed(() => deactivatingMoim.value || changingMoimName.value)
+const canChangeMoimName = computed(() => {
+  const nextName = moimAccountName.value.trim()
+  return Boolean(nextName) && nextName !== editingMoimAccount.value?.accountName
+})
 let longPressTimer
 let mobileDragActive = false
 let mobileDragPointerId = null
@@ -576,8 +600,28 @@ function resetMoimModal() {
 
 function openMoimEditModal(account) {
   editingMoimAccount.value = account
+  moimAccountName.value = account.accountName || ''
   moimEditError.value = ''
   moimEditModalOpen.value = true
+}
+
+async function changeMoimAccountName() {
+  if (!editingMoimAccount.value || !canChangeMoimName.value || moimEditSubmitting.value) return
+
+  changingMoimName.value = true
+  moimEditError.value = ''
+  const accountName = moimAccountName.value.trim()
+  try {
+    await updateMoimAccountName(editingMoimAccount.value.moimAccountId, accountName)
+    moimEditModalOpen.value = false
+    editingMoimAccount.value = null
+    await loadConnectedMoimAccounts()
+    showToast('모임통장 이름이 변경되었습니다.')
+  } catch (error) {
+    moimEditError.value = apiErrorMessage(error, '모임통장 이름을 변경하지 못했습니다.')
+  } finally {
+    changingMoimName.value = false
+  }
 }
 
 async function deactivateSelectedMoim() {
@@ -598,8 +642,9 @@ async function deactivateSelectedMoim() {
 }
 
 function resetMoimEditModal() {
-  if (deactivatingMoim.value) return
+  if (moimEditSubmitting.value) return
   editingMoimAccount.value = null
+  moimAccountName.value = ''
   moimEditError.value = ''
 }
 
@@ -1171,6 +1216,57 @@ function resetModal() {
 .moim-edit-content > strong,
 .moim-edit-content > span {
   display: block;
+}
+.moim-name-form {
+  padding: 14px;
+  border: 1px solid #e0dbe5;
+  border-radius: 10px;
+  background: #faf8fc;
+}
+.moim-name-form label {
+  display: block;
+  margin-bottom: 9px;
+  color: #574e62;
+  font-size: 12px;
+  font-weight: 800;
+}
+.moim-name-form > div {
+  display: flex;
+  gap: 8px;
+}
+.moim-name-form input {
+  min-width: 0;
+  height: 42px;
+  flex: 1;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border: 1px solid #d8d1e1;
+  border-radius: 8px;
+  outline: none;
+  color: #382f43;
+  font: inherit;
+  font-size: 13px;
+}
+.moim-name-form input:focus {
+  border-color: #69529f;
+  box-shadow: 0 0 0 3px rgba(105, 82, 159, 0.11);
+}
+.moim-name-form button {
+  min-width: 68px;
+  height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: #69529f;
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.moim-name-form button:disabled,
+.moim-name-form input:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 .moim-edit-content > small {
   color: #8c8593;

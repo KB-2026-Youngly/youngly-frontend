@@ -53,7 +53,7 @@ export default {
   computed: {
     // 💡 템플릿을 깔끔하게 유지하기 위해 조건들을 computed로 분리!
     isAssetRoute() {
-      return this.$route.path === '/asset'
+      return this.$route.path === '/asset' || this.$route.path.startsWith('/asset/')
     },
     isHomeRoute() {
       return this.$route.name === 'Home'

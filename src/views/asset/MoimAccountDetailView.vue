@@ -7,14 +7,13 @@
     <template v-else-if="account">
       <article class="account-summary">
         <div class="summary-main-row">
-          <span class="kb-badge">KB</span>
-          <h1>{{ account.accountName || 'KB 모임통장' }}</h1>
+          <img class="kb-icon" :src="kbIcon" alt="KB국민은행" />
+          <div class="account-heading">
+            <h1>{{ account.accountName || 'KB 모임통장' }}</h1>
+            <p>{{ account.accountNumber }}</p>
+          </div>
         </div>
-        <dl class="account-meta-row">
-          <div><dt>계좌번호</dt><dd>{{ account.accountNumber }}</dd></div>
-          <div><dt>잔액</dt><dd class="balance">{{ formatCurrency(account.balance) }}원</dd></div>
-          <div><dt>은행</dt><dd>{{ account.bankName }}</dd></div>
-        </dl>
+        <strong class="account-balance">{{ formatCurrency(account.balance) }}원</strong>
       </article>
 
       <section v-if="group" class="deposit-status-section">
@@ -26,13 +25,47 @@
         <div v-if="membersLoading" class="member-state">예치금 현황을 불러오고 있어요.</div>
         <div v-else-if="membersError" class="member-state error">{{ membersError }}</div>
         <template v-else>
+          <div class="deposit-overview">
+            <div class="my-deposit-summary">
+              <div>
+                <small>내 예치금</small>
+                <strong>{{ formatCurrency(myDeposit?.depositedAmount) }}원</strong>
+              </div>
+              <span :class="{ complete: myDepositComplete }">
+                {{ myDepositComplete ? '예치 완료' : `${formatCurrency(myDeposit?.remainingAmount)}원 부족` }}
+              </span>
+              <div class="my-deposit-progress" aria-hidden="true">
+                <span :style="{ width: `${myDepositProgress}%` }"></span>
+              </div>
+              <p>최소 예치금 {{ formatCurrency(myDeposit?.requiredAmount) }}원</p>
+            </div>
+
+            <div class="deposit-visualization">
+              <div class="completion-copy">
+                <span>예치 완료</span>
+                <strong>{{ completedMemberCount }}<small>/{{ members.length }}명</small></strong>
+              </div>
+              <div class="completion-bar" role="progressbar" aria-label="예치 완료 인원" :aria-valuenow="completionRate" aria-valuemin="0" aria-valuemax="100">
+                <span :style="{ width: `${completionRate}%` }"></span>
+              </div>
+              <p>참여자의 {{ completionRate }}%가 최소 예치금을 채웠어요.</p>
+            </div>
+          </div>
+
           <ul class="member-list">
-            <li v-for="member in members" :key="member.userId">
+            <li
+              v-for="member in members"
+              :key="member.userId"
+              :class="{ 'is-me': member.userId === myDeposit?.userId }"
+            >
               <div class="member-profile">
                 <img v-if="member.profileImageUrl" :src="member.profileImageUrl" :alt="`${member.nickname} 프로필`" />
                 <span v-else>{{ member.nickname?.slice(0, 1) || '?' }}</span>
                 <div>
-                  <strong>{{ member.nickname }}</strong>
+                  <div class="member-name-row">
+                    <strong>{{ member.nickname }}</strong>
+                    <small v-if="member.userId === myDeposit?.userId" class="me-badge">나</small>
+                  </div>
                   <small class="status-badge" :class="statusClass(member)">{{ depositStatusLabel(member) }}</small>
                 </div>
               </div>
@@ -112,6 +145,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseModal from '@/components/base/BaseModal.vue'
 import TransactionHistory from '@/components/asset/TransactionHistory.vue'
+import kbIcon from '@/assets/icons/kb_icon.png'
 import { getAccount, getMoimAccounts } from '@/api/account'
 import { depositToGroup, getGroups, getMemberDepositStatuses, getMyDepositStatus } from '@/api/group'
 
@@ -135,6 +169,18 @@ const depositAmount = ref(0)
 const toast = ref('')
 let toastTimer
 
+const completedMemberCount = computed(() => members.value.filter(isDepositComplete).length)
+const completionRate = computed(() =>
+  members.value.length ? Math.round((completedMemberCount.value / members.value.length) * 100) : 0,
+)
+const myDepositComplete = computed(
+  () => Number(myDeposit.value?.remainingAmount || 0) <= 0,
+)
+const myDepositProgress = computed(() => {
+  const required = Number(myDeposit.value?.requiredAmount || 0)
+  if (required <= 0) return 100
+  return Math.min(100, (Number(myDeposit.value?.depositedAmount || 0) / required) * 100)
+})
 const canRequestDeposit = computed(() =>
   Boolean(personalAccount.value?.accountId) && Number(depositAmount.value) > 0 && !depositSubmitting.value,
 )
@@ -166,8 +212,12 @@ async function loadMemberDeposits() {
       (item) => item.moimAccountId === account.value.moimAccountId,
     )
     if (!group.value) return
-    const { data } = await getMemberDepositStatuses(group.value.groupId)
-    members.value = Array.isArray(data) ? data : []
+    const [membersResponse, myDepositResponse] = await Promise.all([
+      getMemberDepositStatuses(group.value.groupId),
+      getMyDepositStatus(group.value.groupId),
+    ])
+    members.value = Array.isArray(membersResponse.data) ? membersResponse.data : []
+    myDeposit.value = myDepositResponse.data
   } catch (requestError) {
     members.value = []
     membersError.value = apiError(requestError, '예치금 현황을 불러오지 못했습니다.')
@@ -277,24 +327,40 @@ function formatCurrency(value) {
 .account-summary, .deposit-status-section { border: 1px solid rgba(105,82,159,.14); border-radius: 20px; background: #fff; box-shadow: 0 10px 28px rgba(49,37,72,.07); }
 .account-summary { padding: 24px 28px; }
 .summary-main-row { display: flex; align-items: center; gap: 13px; }
-.kb-badge { width: 44px; height: 44px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 14px; color: #fff; background: #69529f; font-weight: 900; }
-.summary-main-row h1 { margin: 0; color: #30293a; font-size: 21px; }
-.account-meta-row { display: grid; grid-template-columns: 1.3fr 1fr .7fr; gap: 12px; margin: 18px 0 0; padding-top: 18px; border-top: 1px solid #eee9f3; }
-.account-meta-row div { min-width: 0; }
-.account-meta-row dt { color: #92899a; font-size: 11px; }
-.account-meta-row dd { margin: 6px 0 0; overflow: hidden; color: #383140; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
-.account-meta-row .balance { color: #60438e; font-size: 17px; }
+.kb-icon { width: 48px; height: 48px; flex: 0 0 48px; object-fit: contain; }
+.account-heading { min-width: 0; }
+.account-heading h1 { margin: 0; overflow: hidden; color: #30293a; font-size: 21px; text-overflow: ellipsis; white-space: nowrap; }
+.account-heading p { margin: 6px 0 0; color: #8b8195; font-size: 13px; }
+.account-balance { display: block; margin-top: 25px; color: #30293a; font-size: 30px; letter-spacing: -.7px; }
 .deposit-status-section { margin-top: 18px; padding: 24px 28px; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .section-heading small { color: #8b8195; }
 .section-heading h2 { margin: 3px 0 0; color: #30293a; font-size: 19px; }
 .section-heading > strong { padding: 7px 11px; border-radius: 999px; color: #64498e; background: #f2ecfa; font-size: 12px; }
+.deposit-overview { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+.my-deposit-summary,.deposit-visualization { min-width: 0; padding: 17px; border-radius: 14px; background: #f8f5fc; }
+.my-deposit-summary { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 7px 12px; }
+.my-deposit-summary > div:first-child { display: grid; gap: 5px; }
+.my-deposit-summary small,.completion-copy > span { color: #8b8195; font-size: 11px; }
+.my-deposit-summary strong { color: #3d3349; font-size: 20px; }
+.my-deposit-summary > span { padding: 5px 8px; border-radius: 999px; color: #9a5e16; background: #fff1d9; font-size: 10px; font-weight: 800; white-space: nowrap; }
+.my-deposit-summary > span.complete { color: #28745a; background: #e5f6ee; }
+.my-deposit-progress,.completion-bar { grid-column: 1 / -1; height: 7px; overflow: hidden; border-radius: 999px; background: #e7e0ec; }
+.my-deposit-progress span,.completion-bar span { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg,#8b6ab8,#60418f); }
+.my-deposit-summary p,.deposit-visualization p { grid-column: 1 / -1; margin: 0; color: #8b8195; font-size: 11px; }
+.deposit-visualization { display: grid; gap: 10px; }
+.completion-copy { display: flex; align-items: center; justify-content: space-between; }
+.completion-copy strong { color: #5d4189; font-size: 23px; }
+.completion-copy strong small { margin-left: 2px; color: #8b8195; font-size: 11px; }
 .member-list { margin: 15px 0 0; padding: 0; list-style: none; }
-.member-list li { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 10px 16px; padding: 15px 0; border-top: 1px solid #f0ebf3; }
+.member-list li { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 10px 16px; padding: 15px 12px; border-top: 1px solid #f0ebf3; border-radius: 12px; }
+.member-list li.is-me { margin: 5px 0; border: 1px solid #9d84c4; background: #f8f4fd; }
 .member-profile { display: flex; align-items: center; gap: 11px; min-width: 0; }
 .member-profile > img, .member-profile > span { width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 40px; border-radius: 50%; object-fit: cover; color: #fff; background: #755a9c; font-weight: 800; }
 .member-profile > div { display: grid; justify-items: start; gap: 5px; }
+.member-name-row { display: flex; align-items: center; gap: 6px; }
 .member-profile strong { color: #3b3443; font-size: 14px; }
+.me-badge { min-width: 22px; padding: 3px 6px; border: 1px solid #8065aa; border-radius: 999px; color: #60418f; background: #fff; font-size: 9px; font-weight: 900; line-height: 1; text-align: center; }
 .status-badge { padding: 4px 8px; border: 1px solid; border-radius: 999px; font-size: 10px; font-weight: 800; }
 .status-badge.complete { border-color: #b9dfce; color: #28745a; background: #effaf5; }
 .status-badge.pending { border-color: #f0cf9d; color: #9a5e16; background: #fff8ec; }
@@ -337,11 +403,12 @@ function formatCurrency(value) {
 @media (max-width: 767px) {
   .detail-page { width: 100%; min-height: calc(100dvh - 68px); margin: 0; padding: 22px 20px 110px; }
   .account-summary { padding: 20px 18px; border-radius: 16px; }
-  .summary-main-row h1 { font-size: 17px; }
-  .account-meta-row { grid-template-columns: 1.35fr 1fr .55fr; gap: 8px; }
-  .account-meta-row dd { font-size: 11px; }
-  .account-meta-row .balance { font-size: 14px; }
+  .kb-icon { width: 44px; height: 44px; flex-basis: 44px; }
+  .account-heading h1 { font-size: 17px; }
+  .account-heading p { font-size: 12px; }
+  .account-balance { margin-top: 22px; font-size: 27px; }
   .deposit-status-section { padding: 20px 16px; border-radius: 16px; }
+  .deposit-overview { grid-template-columns: 1fr; }
   .member-list li { gap: 10px; }
   .member-deposit strong,.member-deposit span { display: block; }
   .deposit-actions { grid-template-columns: 1fr; }

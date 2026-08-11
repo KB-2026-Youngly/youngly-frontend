@@ -8,12 +8,67 @@
       <button type="button" :disabled="loading" @click="loadTransactions">새로고침</button>
     </div>
 
+    <div v-if="accountType === 'MOIM'" class="history-filters">
+      <div class="category-filters" aria-label="거래 유형 필터">
+        <button
+          v-for="filter in categoryFilters"
+          :key="filter.value"
+          type="button"
+          :class="{ active: selectedCategory === filter.value }"
+          @click="selectedCategory = filter.value"
+        >
+          {{ filter.label }}
+        </button>
+      </div>
+      <div ref="roundFilterRef" class="round-filter">
+        <span>라운드</span>
+        <div class="round-dropdown">
+          <button
+            class="round-trigger"
+            type="button"
+            :disabled="loading"
+            :aria-expanded="roundMenuOpen"
+            aria-haspopup="listbox"
+            @click="roundMenuOpen = !roundMenuOpen"
+          >
+            {{ selectedRoundLabel }}
+            <span class="round-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <transition name="round-menu">
+            <div v-if="roundMenuOpen" class="round-menu" role="listbox" aria-label="라운드 선택">
+              <button
+                type="button"
+                role="option"
+                :aria-selected="selectedRoundId === ''"
+                :class="{ selected: selectedRoundId === '' }"
+                @click="selectRound('')"
+              >
+                <span>전체 라운드</span><b aria-hidden="true">{{ selectedRoundId === '' ? '✓' : '' }}</b>
+              </button>
+              <button
+                v-for="round in roundOptions"
+                :key="round.roundId"
+                type="button"
+                role="option"
+                :aria-selected="selectedRoundId === String(round.roundId)"
+                :class="{ selected: selectedRoundId === String(round.roundId) }"
+                @click="selectRound(String(round.roundId))"
+              >
+                <span>{{ round.roundNo }}라운드</span>
+                <b aria-hidden="true">{{ selectedRoundId === String(round.roundId) ? '✓' : '' }}</b>
+              </button>
+            </div>
+          </transition>
+        </div>
+      </div>
+    </div>
+
     <div v-if="loading" class="history-state">거래내역을 불러오고 있어요.</div>
     <div v-else-if="error" class="history-state history-error">
       <span>{{ error }}</span>
       <button type="button" @click="loadTransactions">다시 시도</button>
     </div>
-    <div v-else-if="!transactions.length" class="history-state">아직 거래내역이 없어요.</div>
+    <div v-else-if="!filteredTransactions.length" class="history-state">조건에 맞는 거래내역이 없어요.</div>
 
     <ul v-else class="history-list">
       <li v-for="transaction in visibleTransactions" :key="transaction.transactionId">
@@ -52,7 +107,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { getAccountTransactions } from '@/api/account'
 
 const props = defineProps({
@@ -62,16 +117,52 @@ const props = defineProps({
 })
 
 const transactions = ref([])
+const allTransactions = ref([])
 const loading = ref(false)
 const error = ref('')
 const expanded = ref(false)
+const selectedCategory = ref('ALL')
+const selectedRoundId = ref('')
+const roundMenuOpen = ref(false)
+const roundFilterRef = ref(null)
+const categoryFilters = [
+  { label: '전체', value: 'ALL' },
+  { label: '예치금', value: 'CHARGE' },
+  { label: '정산', value: 'SETTLEMENT' },
+]
+const filteredTransactions = computed(() =>
+  selectedCategory.value === 'ALL'
+    ? transactions.value
+    : transactions.value.filter(
+        (transaction) => transaction.transactionCategory === selectedCategory.value,
+      ),
+)
+const roundOptions = computed(() => {
+  const rounds = new Map()
+  allTransactions.value.forEach((transaction) => {
+    if (transaction.roundId != null && transaction.roundNo != null) {
+      rounds.set(String(transaction.roundId), {
+        roundId: transaction.roundId,
+        roundNo: transaction.roundNo,
+      })
+    }
+  })
+  return [...rounds.values()].sort((a, b) => b.roundNo - a.roundNo)
+})
+const selectedRoundLabel = computed(() => {
+  if (!selectedRoundId.value) return '전체 라운드'
+  const selected = roundOptions.value.find(
+    (round) => String(round.roundId) === selectedRoundId.value,
+  )
+  return selected ? `${selected.roundNo}라운드` : '전체 라운드'
+})
 const visibleTransactions = computed(() =>
   props.initialLimit > 0 && !expanded.value
-    ? transactions.value.slice(0, props.initialLimit)
-    : transactions.value,
+    ? filteredTransactions.value.slice(0, props.initialLimit)
+    : filteredTransactions.value,
 )
 const canToggle = computed(
-  () => props.initialLimit > 0 && transactions.value.length > props.initialLimit,
+  () => props.initialLimit > 0 && filteredTransactions.value.length > props.initialLimit,
 )
 
 async function loadTransactions() {
@@ -79,8 +170,15 @@ async function loadTransactions() {
   loading.value = true
   error.value = ''
   try {
-    const { data } = await getAccountTransactions(props.accountType, props.accountId)
+    const { data } = await getAccountTransactions(
+      props.accountType,
+      props.accountId,
+      0,
+      100,
+      selectedRoundId.value || null,
+    )
     transactions.value = Array.isArray(data) ? data : []
+    if (!selectedRoundId.value) allTransactions.value = transactions.value
     expanded.value = false
   } catch (requestError) {
     transactions.value = []
@@ -88,6 +186,25 @@ async function loadTransactions() {
   } finally {
     loading.value = false
   }
+}
+
+function handleRoundChange() {
+  expanded.value = false
+  loadTransactions()
+}
+
+function selectRound(roundId) {
+  if (selectedRoundId.value === roundId) {
+    roundMenuOpen.value = false
+    return
+  }
+  selectedRoundId.value = roundId
+  roundMenuOpen.value = false
+  handleRoundChange()
+}
+
+function closeRoundMenu(event) {
+  if (!roundFilterRef.value?.contains(event.target)) roundMenuOpen.value = false
 }
 
 function typeClass(type) {
@@ -115,8 +232,19 @@ function formatDate(value) {
   }).format(new Date(value))
 }
 
-watch(() => [props.accountType, props.accountId], loadTransactions)
-onMounted(loadTransactions)
+watch(
+  () => [props.accountType, props.accountId],
+  () => {
+    selectedCategory.value = 'ALL'
+    selectedRoundId.value = ''
+    loadTransactions()
+  },
+)
+onMounted(() => {
+  loadTransactions()
+  document.addEventListener('pointerdown', closeRoundMenu)
+})
+onBeforeUnmount(() => document.removeEventListener('pointerdown', closeRoundMenu))
 </script>
 
 <style scoped>
@@ -154,6 +282,24 @@ onMounted(loadTransactions)
   opacity: 0.45;
   cursor: default;
 }
+.history-filters { margin-top: 17px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.category-filters { display: flex; gap: 7px; }
+.category-filters button { min-height: 34px; padding: 0 13px; border: 1px solid #ddd5e6; border-radius: 999px; background: #fff; color: #776d81; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.category-filters button.active { border-color: #69529f; color: #fff; background: #69529f; }
+.round-filter { display: flex; align-items: center; gap: 9px; color: #82768e; font-size: 11px; font-weight: 700; }
+.round-dropdown { min-width: 150px; position: relative; }
+.round-trigger { width: 100%; min-height: 40px; padding: 0 12px 0 14px; display: flex; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid #d6cbe2; border-radius: 12px; outline: none; background: #faf8fd; color: #4d405a; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; box-shadow: 0 3px 10px rgba(79,57,126,.07); transition: border-color .18s, box-shadow .18s, background-color .18s; }
+.round-trigger:hover,.round-trigger[aria-expanded='true'] { border-color: #8063aa; background: #fff; box-shadow: 0 0 0 3px rgba(105,82,159,.1); }
+.round-trigger:disabled { cursor: wait; opacity: .58; }
+.round-chevron { color: #69529f; font-size: 15px; transition: transform .18s; }
+.round-trigger[aria-expanded='true'] .round-chevron { transform: rotate(180deg); }
+.round-menu { width: 100%; max-height: 220px; padding: 6px; position: absolute; top: calc(100% + 7px); right: 0; z-index: 15; overflow-y: auto; border: 1px solid #ddd3e7; border-radius: 13px; background: #fff; box-shadow: 0 12px 30px rgba(54,39,76,.18); }
+.round-menu button { width: 100%; min-height: 39px; padding: 0 10px; display: flex; align-items: center; justify-content: space-between; border: 0; border-radius: 8px; background: transparent; color: #62576c; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; text-align: left; }
+.round-menu button:hover { background: #f6f1fb; color: #5e428c; }
+.round-menu button.selected { color: #5d408d; background: #eee6f8; font-weight: 900; }
+.round-menu button b { min-width: 16px; color: #69529f; text-align: center; }
+.round-menu-enter-active,.round-menu-leave-active { transition: opacity .15s, transform .15s; transform-origin: top right; }
+.round-menu-enter-from,.round-menu-leave-to { opacity: 0; transform: translateY(-5px) scale(.98); }
 .history-state {
   padding: 40px 12px 24px;
   color: #91889b;
@@ -240,6 +386,11 @@ onMounted(loadTransactions)
     margin-top: 16px;
     padding: 18px 16px;
   }
+  .history-filters { align-items: stretch; flex-direction: column; }
+  .category-filters { width: 100%; }
+  .category-filters button { flex: 1; }
+  .round-filter { justify-content: space-between; }
+  .round-dropdown { width: min(190px, 65%); min-width: 0; }
   .history-list li {
     grid-template-columns: 36px minmax(0, 1fr) auto;
     gap: 9px;
