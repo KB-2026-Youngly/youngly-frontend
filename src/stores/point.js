@@ -4,6 +4,15 @@ import { getPointBalance, getPointHistory } from '@/api/point'
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.message || error?.response?.data?.error || fallback
 
+const sortNewestFirst = (histories) =>
+  [...histories].sort((a, b) => {
+    const createdAtDifference = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    if (Number.isFinite(createdAtDifference) && createdAtDifference !== 0) {
+      return createdAtDifference
+    }
+    return Number(b.pointLogId ?? 0) - Number(a.pointLogId ?? 0)
+  })
+
 export const usePointStore = defineStore('point', {
   state: () => ({
     balance: 0,
@@ -41,7 +50,9 @@ export const usePointStore = defineStore('point', {
         ])
 
         this.balance = Number(balanceResponse.data?.balance ?? 0)
-        this.histories = Array.isArray(historyResponse.data) ? historyResponse.data : []
+        this.histories = Array.isArray(historyResponse.data)
+          ? sortNewestFirst(historyResponse.data)
+          : []
       } catch (error) {
         this.error = getErrorMessage(
           error,
@@ -50,6 +61,11 @@ export const usePointStore = defineStore('point', {
       } finally {
         this.isLoading = false
       }
+    },
+
+    setBalance(balance) {
+      this.balance = Number(balance ?? 0)
+      this.error = ''
     },
   },
 })
