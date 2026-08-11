@@ -22,6 +22,12 @@ const routes = [
     component: () => import('@/views/auth/SignupView.vue'),
   },
   {
+    path: '/bank-home',
+    name: 'BankHome',
+    component: () => import('@/views/home/BankHomeView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/home',
     component: DefaultLayout,
     meta: { requiresAuth: true },
@@ -179,7 +185,7 @@ router.beforeEach((to) => {
     return { name: 'Login', query: { redirect: to.fullPath } }
   }
   if (to.name === 'Login' && accessToken) {
-    return { name: 'Home' }
+    return { name: 'BankHome' }
   }
 })
 
