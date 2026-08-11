@@ -54,9 +54,15 @@
         <article
           v-for="member in displayedMembers"
           :key="member.name"
+          :data-feed-member="member.name"
           class="feed-card pixel-frame my-feed-card"
-          :class="{ 'is-started': challengeStarted, 'has-verification': challengeStarted && member.isVerified }"
-          @click="openPostDetail(member)"
+          :class="{ 'is-started': challengeStarted, 'has-verification': challengeStarted && member.isVerified, 'is-reordering': draggingFeedName === member.name }"
+          draggable="true"
+          @click="handleFeedCardClick(member)"
+          @dragstart="handleFeedDesktopDragStart(member.name, $event)"
+          @dragover.prevent
+          @drop="handleFeedDesktopDrop(member.name)"
+          @dragend="finishFeedDrag"
         >
           <div class="feed-owner">
             <span class="avatar">{{ member.initial }}</span>
@@ -92,6 +98,14 @@
             </button>
           </template>
           <p v-else class="sleep-message">ZZZ...</p>
+          <span
+            class="feed-drag-handle"
+            role="button"
+            aria-label="우하단을 길게 눌러 피드 순서 변경"
+            @pointerdown.stop="handleFeedPointerDown(member.name, $event)"
+            @click.stop
+            @contextmenu.prevent
+          ></span>
         </article>
 
         <template v-if="!allMembersJoined">
@@ -185,16 +199,34 @@
       modal-class="group-edit-modal"
       title="그룹 정보 수정"
       size="large"
+      :show-close-button="false"
       @close="closeGroupEdit"
     >
-      <form class="group-edit-form" @submit.prevent="saveGroupEdit">
+      <template #header>
+        <div
+          class="group-edit-sheet-header"
+          @pointerdown="startGroupEditSwipe"
+          @pointerup="endGroupEditSwipe"
+          @pointercancel="cancelGroupEditSwipe"
+        >
+          <span class="group-edit-sheet-handle" aria-hidden="true"></span>
+          <span>그룹 정보 수정</span>
+        </div>
+      </template>
+      <form
+        class="group-edit-form"
+        @submit.prevent="saveGroupEdit"
+        @pointerdown="startGroupEditSwipe"
+        @pointerup="endGroupEditSwipe"
+        @pointercancel="cancelGroupEditSwipe"
+      >
         <label class="group-edit-field">
-          <span>1. 그룹 제목</span>
+          <span>방 이름</span>
           <input v-model.trim="groupEditForm.title" required />
         </label>
 
         <fieldset class="group-edit-category">
-          <legend>2. 카테고리</legend>
+          <legend>카테고리</legend>
           <div>
             <button
               v-for="category in groupCategories"
@@ -209,7 +241,7 @@
         </fieldset>
 
         <section class="group-member-editor" aria-label="모집 인원">
-          <h3>3. 모집 인원</h3>
+          <h3>모집 인원</h3>
           <ul>
             <li v-for="member in editMembers" :key="`edit-${member.name}`">
               <span class="member-editor-avatar">{{ member.initial }}</span>
@@ -220,20 +252,38 @@
         </section>
 
         <label class="group-edit-field">
-          <span>4. 매주 몇 번</span>
-          <select v-model="groupEditForm.weeklyCount">
-            <option v-for="count in [1, 2, 3, 5, 7]" :key="count" :value="count">주 {{ count }}회</option>
+          <span>매주 몇 번</span>
+          <select v-model.number="groupEditForm.weeklyCount">
+            <option v-for="count in 7" :key="count" :value="count">주 {{ count }}회</option>
           </select>
         </label>
 
         <label class="group-edit-field">
-          <span>5. 챌린지 목표</span>
+          <span>챌린지 목표</span>
           <input v-model.trim="groupEditForm.goal" required />
         </label>
 
         <label class="group-edit-field">
-          <span>6. 1인당 최소 예치금</span>
-          <input v-model.number="groupEditForm.deposit" type="number" min="0" required />
+          <span>1인당 최소 예치금</span>
+          <input
+            :value="formatGroupDeposit(groupEditForm.deposit)"
+            type="text"
+            inputmode="numeric"
+            required
+            @input="updateGroupDeposit"
+          />
+        </label>
+
+        <label class="group-edit-field">
+          <span>실패 면제권</span>
+          <select v-model.number="groupEditForm.failurePassCount">
+            <option v-for="count in 29" :key="count - 1" :value="count - 1">{{ count - 1 }}개</option>
+          </select>
+        </label>
+
+        <label class="group-edit-field">
+          <span>추가 규칙 <em>(선택)</em></span>
+          <textarea v-model.trim="groupEditForm.additionalRule" maxlength="120" placeholder="예: 이번 달 꼴찌가 모든 참여자에게 커피 쏘기"></textarea>
         </label>
 
         <button class="group-edit-submit" type="submit">수정완료</button>
@@ -248,6 +298,21 @@
       size="medium"
       @close="selectedPost = null"
     >
+      <template #header>
+        <div class="post-detail-modal-header">
+          <span>인증 게시글</span>
+          <button
+            v-if="selectedPost?.isMe"
+            class="post-delete-button"
+            type="button"
+            aria-label="내 인증 게시글 삭제"
+            title="게시글 삭제"
+            @click="deleteOwnPost"
+          >
+            🗑
+          </button>
+        </div>
+      </template>
       <article v-if="selectedPost" class="post-detail-modal-content">
         <div class="post-detail-image-wrap">
           <img :src="selectedPost.image" :alt="`${selectedPost.name} 인증 사진`" />
@@ -290,7 +355,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseModal from '@/components/base/BaseModal.vue'
 import verificationImageOne from '@/assets/photos/excercise/KakaoTalk_Photo_2026-08-08-01-50-24.jpeg'
@@ -322,7 +387,8 @@ const rankedMembers = computed(() => [...members].sort((a, b) => b.completedCoun
 const inviteCode = 'A7K2P9'
 const inviteModalOpen = ref(false)
 const copyComplete = ref(false)
-const isOwner = true
+// mock 권한: owner=false 쿼리로 비방장 상태를 확인할 수 있습니다.
+const isOwner = computed(() => route.query.owner !== 'false')
 const startDateModalOpen = ref(allMembersJoined && !challengeStarted)
 const startDate = ref('2026-07-24')
 const startDateConfigured = ref(false)
@@ -340,8 +406,14 @@ const newPostComment = ref('')
 const rejectModalOpen = ref(false)
 const rejectReason = ref('')
 const rejectingMember = ref(null)
-const groupEditOpen = ref(route.query.editGroup === 'true')
+const groupEditOpen = ref(isOwner.value && route.query.editGroup === 'true')
 const groupEditComplete = ref(false)
+const draggingFeedName = ref(null)
+let feedLongPressTimer = null
+let mobileFeedDragActive = false
+let mobileFeedPointerId = null
+let preventNextFeedClick = false
+let groupEditSwipeStartY = null
 const groupCategories = ['운동', '독서', '절약', '습관', '기타']
 const groupEditForm = reactive({
   title: '30일 매일 운동 챌린지',
@@ -349,6 +421,8 @@ const groupEditForm = reactive({
   weeklyCount: 5,
   goal: '매일 운동으로 건강한 생활 습관 만들기',
   deposit: 50000,
+  failurePassCount: 0,
+  additionalRule: '',
 })
 const groupInfo = reactive({
   title: '30일 매일 운동 챌린지',
@@ -375,6 +449,8 @@ const handleInvite = () => {
   copyComplete.value = false
   inviteModalOpen.value = true
 }
+
+
 
 const setStartDate = () => {
   startDateConfigured.value = true
@@ -427,17 +503,172 @@ const addPostComment = () => {
   newPostComment.value = ''
 }
 
+const deleteOwnPost = () => {
+  if (!selectedPost.value?.isMe) return
+  if (!window.confirm('이 인증 게시글을 삭제할까요?')) return
+
+  const ownMember = members.find((member) => member.isMe && member.name === selectedPost.value.name)
+  if (!ownMember) return
+
+  ownMember.isVerified = false
+  delete ownMember.image
+  delete ownMember.message
+  delete ownMember.reviewStatus
+  localStorage.removeItem('youngly_group_verification')
+  postDetailOpen.value = false
+  selectedPost.value = null
+}
+
 const removeMember = (name) => {
   const index = editMembers.findIndex((member) => member.name === name)
   if (index >= 0) editMembers.splice(index, 1)
 }
 
+const handleFeedCardClick = (member) => {
+  if (preventNextFeedClick) {
+    preventNextFeedClick = false
+    return
+  }
+  openPostDetail(member)
+}
+
+const moveFeedMember = (targetName) => {
+  if (!targetName || targetName === draggingFeedName.value) return
+  const fromIndex = members.findIndex((member) => member.name === draggingFeedName.value)
+  const targetIndex = members.findIndex((member) => member.name === targetName)
+  if (fromIndex < 0 || targetIndex < 0) return
+
+  const [member] = members.splice(fromIndex, 1)
+  members.splice(targetIndex, 0, member)
+  editMembers.splice(0, editMembers.length, ...members.map((item) => ({ ...item })))
+}
+
+const saveFeedOrder = () => {
+  const expires = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toUTCString()
+  document.cookie = `youngly_group_feed_order=${encodeURIComponent(JSON.stringify(members.map((member) => member.name)))}; expires=${expires}; path=/; SameSite=Lax`
+}
+
+const getFeedOrderCookie = () => {
+  const cookiePrefix = 'youngly_group_feed_order='
+  const storedCookie = document.cookie.split('; ').find((cookie) => cookie.startsWith(cookiePrefix))
+  if (!storedCookie) return []
+
+  try {
+    return JSON.parse(decodeURIComponent(storedCookie.slice(cookiePrefix.length)))
+  } catch {
+    return []
+  }
+}
+
+const handleFeedDesktopDragStart = (memberName, event) => {
+  if (window.matchMedia('(max-width: 767px)').matches) {
+    event.preventDefault()
+    return
+  }
+  draggingFeedName.value = memberName
+  event.dataTransfer.effectAllowed = 'move'
+}
+
+const handleFeedDesktopDrop = (targetName) => {
+  moveFeedMember(targetName)
+  finishFeedDrag()
+}
+
+const finishFeedDrag = () => {
+  if (draggingFeedName.value) saveFeedOrder()
+  if (draggingFeedName.value) {
+    draggingFeedName.value = null
+    window.setTimeout(() => { preventNextFeedClick = false }, 0)
+  }
+}
+
+const handleFeedPointerDown = (memberName, event) => {
+  if (!window.matchMedia('(max-width: 767px)').matches) return
+  if (event.pointerType === 'mouse' || !event.isPrimary) return
+
+  event.preventDefault()
+  clearTimeout(feedLongPressTimer)
+  const startX = event.clientX
+  const startY = event.clientY
+  const cancelLongPress = (moveEvent) => {
+    if (moveEvent.pointerId !== event.pointerId) return
+    if (Math.abs(moveEvent.clientX - startX) > 14 || Math.abs(moveEvent.clientY - startY) > 14) {
+      clearTimeout(feedLongPressTimer)
+      removePendingFeedDragListeners()
+    }
+  }
+  const cancelPendingDrag = (endEvent) => {
+    if (endEvent.pointerId !== event.pointerId) return
+    clearTimeout(feedLongPressTimer)
+    removePendingFeedDragListeners()
+  }
+  const removePendingFeedDragListeners = () => {
+    window.removeEventListener('pointermove', cancelLongPress)
+    window.removeEventListener('pointerup', cancelPendingDrag)
+    window.removeEventListener('pointercancel', cancelPendingDrag)
+  }
+
+  feedLongPressTimer = window.setTimeout(() => {
+    removePendingFeedDragListeners()
+    draggingFeedName.value = memberName
+    mobileFeedDragActive = true
+    mobileFeedPointerId = event.pointerId
+    preventNextFeedClick = true
+    navigator.vibrate?.(25)
+    window.addEventListener('pointermove', handleMobileFeedDragMove, { passive: false })
+    window.addEventListener('pointerup', finishMobileFeedDrag)
+    window.addEventListener('pointercancel', finishMobileFeedDrag)
+  }, 450)
+  window.addEventListener('pointermove', cancelLongPress, { passive: false })
+  window.addEventListener('pointerup', cancelPendingDrag)
+  window.addEventListener('pointercancel', cancelPendingDrag)
+}
+
+const handleMobileFeedDragMove = (event) => {
+  if (!mobileFeedDragActive || event.pointerId !== mobileFeedPointerId) return
+  event.preventDefault()
+  const edgeSize = 72
+  if (event.clientY < edgeSize) window.scrollBy({ top: -12, behavior: 'auto' })
+  if (event.clientY > window.innerHeight - edgeSize) window.scrollBy({ top: 12, behavior: 'auto' })
+  const targetCard = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-feed-member]')
+  moveFeedMember(targetCard?.dataset.feedMember)
+}
+
+const finishMobileFeedDrag = (event) => {
+  if (event?.pointerId != null && event.pointerId !== mobileFeedPointerId) return
+  clearTimeout(feedLongPressTimer)
+  if (mobileFeedDragActive) finishFeedDrag()
+  mobileFeedDragActive = false
+  mobileFeedPointerId = null
+  removeMobileFeedDragListeners()
+}
+
+const removeMobileFeedDragListeners = () => {
+  window.removeEventListener('pointermove', handleMobileFeedDragMove)
+  window.removeEventListener('pointerup', finishMobileFeedDrag)
+  window.removeEventListener('pointercancel', finishMobileFeedDrag)
+}
+
+const formatGroupDeposit = (value) => Number(value || 0).toLocaleString('ko-KR')
+
+const updateGroupDeposit = (event) => {
+  groupEditForm.deposit = Number(event.target.value.replace(/[^0-9]/g, '')) || 0
+}
+
 const saveGroupEdit = () => {
+  members.splice(0, members.length, ...editMembers.map((member) => ({ ...member })))
   groupInfo.title = groupEditForm.title
   groupInfo.goal = groupEditForm.goal
   localStorage.setItem(
     'youngly_group_info',
-    JSON.stringify({ title: groupEditForm.title, goal: groupEditForm.goal }),
+    JSON.stringify({
+      title: groupEditForm.title,
+      goal: groupEditForm.goal,
+      weeklyCount: groupEditForm.weeklyCount,
+      deposit: groupEditForm.deposit,
+      failurePassCount: groupEditForm.failurePassCount,
+      additionalRule: groupEditForm.additionalRule,
+    }),
   )
   window.dispatchEvent(new Event('youngly-group-info-updated'))
   groupEditComplete.value = true
@@ -452,10 +683,32 @@ const closeGroupEdit = () => {
   }
 }
 
+const startGroupEditSwipe = (event) => {
+  if (!event.isPrimary) return
+  const sheet = event.currentTarget.closest('.group-edit-modal')
+  if (sheet?.scrollTop > 0) return
+  groupEditSwipeStartY = event.clientY
+  event.currentTarget.setPointerCapture?.(event.pointerId)
+}
+
+const endGroupEditSwipe = (event) => {
+  if (groupEditSwipeStartY === null) return
+  const swipeDistance = event.clientY - groupEditSwipeStartY
+  groupEditSwipeStartY = null
+  if (swipeDistance < 90) return
+
+  groupEditOpen.value = false
+  closeGroupEdit()
+}
+
+const cancelGroupEditSwipe = () => {
+  groupEditSwipeStartY = null
+}
+
 watch(
   () => route.query.editGroup,
   (isOpen) => {
-    groupEditOpen.value = isOpen === 'true'
+    groupEditOpen.value = isOwner.value && isOpen === 'true'
   },
 )
 
@@ -464,6 +717,19 @@ onMounted(() => {
     const savedGroupInfo = JSON.parse(localStorage.getItem('youngly_group_info') || 'null')
     if (savedGroupInfo?.title) groupInfo.title = savedGroupInfo.title
     if (savedGroupInfo?.goal) groupInfo.goal = savedGroupInfo.goal
+    if (savedGroupInfo?.title) groupEditForm.title = savedGroupInfo.title
+    if (savedGroupInfo?.goal) groupEditForm.goal = savedGroupInfo.goal
+    if (savedGroupInfo?.weeklyCount) groupEditForm.weeklyCount = savedGroupInfo.weeklyCount
+    if (savedGroupInfo?.deposit !== undefined) groupEditForm.deposit = savedGroupInfo.deposit
+    if (savedGroupInfo?.failurePassCount !== undefined) groupEditForm.failurePassCount = savedGroupInfo.failurePassCount
+    if (savedGroupInfo?.additionalRule !== undefined) groupEditForm.additionalRule = savedGroupInfo.additionalRule
+
+    const savedFeedOrder = getFeedOrderCookie()
+    if (Array.isArray(savedFeedOrder) && savedFeedOrder.length) {
+      const orderIndex = new Map(savedFeedOrder.map((name, index) => [name, index]))
+      members.sort((first, second) => (orderIndex.get(first.name) ?? Infinity) - (orderIndex.get(second.name) ?? Infinity))
+      editMembers.splice(0, editMembers.length, ...members.map((member) => ({ ...member })))
+    }
 
     const savedVerification = JSON.parse(localStorage.getItem('youngly_group_verification') || 'null')
     const myPost = members.find((member) => member.isMe)
@@ -475,6 +741,11 @@ onMounted(() => {
   } catch {
     // 저장된 인증 mock 데이터가 없거나 잘못된 경우 기존 화면을 유지합니다.
   }
+})
+
+onBeforeUnmount(() => {
+  clearTimeout(feedLongPressTimer)
+  removeMobileFeedDragListeners()
 })
 </script>
 
@@ -566,6 +837,9 @@ button { font: inherit; }
 .feed-list { display: grid; gap: 14px; }
 .feed-card { min-height: 196px; box-sizing: border-box; background: #fff; color: #111; }
 .my-feed-card { position: relative; padding: 16px 20px; }
+.my-feed-card.is-reordering { opacity: .72; outline: 4px dashed #a78bdf; outline-offset: 3px; cursor: grabbing; }
+.feed-drag-handle { position: absolute; right: 0; bottom: 0; z-index: 8; width: 64px; height: 64px; cursor: grab; touch-action: none; -webkit-touch-callout: none; }
+.feed-drag-handle:active { cursor: grabbing; }
 .feed-owner { display: flex; align-items: center; gap: 6px; color: #444; font-size: 12px; font-weight: 700; }
 .avatar { display: grid; width: 30px; height: 30px; place-items: center; border: 2px solid #fff; border-radius: 50%; background: #d1c4e9; color: #444; font-size: 11px; }
 .me-label { padding: 2px 6px; border-radius: 6px; background: rgba(113, 86, 173, 0.1); color: #7156ad; font-size: 10px; }
@@ -746,14 +1020,16 @@ button { font: inherit; }
 .ranking-member-info span { color: #555; font-size: 12px; font-weight: 600; }
 
 /* 그룹 정보 수정 모달 */
-:global(.group-edit-modal) { max-width: 760px; border: 4px solid #222; border-radius: 0; color: #222; font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif; }
+:global(.group-edit-modal) { max-width: 760px; max-height: 760px; border: 4px solid #222; border-radius: 0; color: #222; font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif; }
 :global(.group-edit-modal .base-modal__header) { padding: 22px 28px 10px; }
 :global(.group-edit-modal .base-modal__title) { color: #222; font-size: 23px; font-weight: 800; }
 :global(.group-edit-modal .base-modal__body) { padding: 8px 28px 28px; }
 .group-edit-form { display: grid; gap: 19px; }
 .group-edit-field, .group-edit-category { display: grid; gap: 9px; min-width: 0; margin: 0; padding: 0; border: 0; }
 .group-edit-field > span, .group-edit-category legend, .group-member-editor h3 { padding: 0; margin: 0; color: #222; font-size: 15px; font-weight: 800; }
-.group-edit-field input, .group-edit-field select { width: 100%; min-height: 48px; box-sizing: border-box; border: 2px solid #222; border-radius: 12px; background: #f0ede8; padding: 0 14px; color: #222; font: inherit; font-size: 15px; }
+.group-edit-field input, .group-edit-field select, .group-edit-field textarea { width: 100%; min-height: 48px; box-sizing: border-box; border: 2px solid #222; border-radius: 12px; background: #f0ede8; padding: 0 14px; color: #222; font: inherit; font-size: 15px; }
+.group-edit-field textarea { height: 84px; padding-top: 12px; padding-bottom: 12px; line-height: 1.45; resize: vertical; }
+.group-edit-field em { color: #85808b; font-size: 12px; font-style: normal; font-weight: 600; }
 .group-edit-category > div { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 9px; }
 .group-edit-category button { min-height: 40px; border: 2px solid #222; border-radius: 9px; background: #f0ede8; color: #71717a; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
 .group-edit-category button.active { background: #7156ad; color: #fff; }
@@ -766,6 +1042,9 @@ button { font: inherit; }
 :global(.group-post-detail-modal .base-modal__header) { padding: 18px 22px 12px; }
 :global(.group-post-detail-modal .base-modal__title) { color: #222; font-size: 19px; font-weight: 800; }
 :global(.group-post-detail-modal .base-modal__body) { padding: 0; }
+.post-detail-modal-header { display: flex; align-items: center; gap: 9px; }
+.post-delete-button { display: grid; width: 30px; height: 30px; padding: 0; border: 1px solid #e4dce9; border-radius: 9px; place-items: center; background: #fff; font-size: 15px; cursor: pointer; }
+.post-delete-button:hover { background: #fff2f2; }
 .post-detail-image-wrap { position: relative; height: min(75vw, 390px); min-height: 290px; background: #222; }.post-detail-image-wrap img { width: 100%; height: 100%; object-fit: cover; }.post-detail-image-wrap > div { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.55), transparent 45%, rgba(0,0,0,.73)); }.post-detail-image-wrap p { position: absolute; top: 16px; left: 18px; z-index: 1; display: flex; align-items: center; gap: 8px; margin: 0; color: #fff; }.post-detail-image-wrap p span { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; background: #7156ad; font-size: 11px; font-weight: 800; }.post-detail-image-wrap p b { font-size: 15px; }.post-detail-image-wrap > strong { position: absolute; right: 20px; bottom: 18px; left: 20px; z-index: 1; color: #fff; font-size: 21px; text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,.75); }
 .post-reaction-info { display: grid; gap: 10px; padding: 18px 20px 14px; }.post-reaction-info p { display: grid; gap: 3px; margin: 0; color: #666; font-size: 13px; }.post-reaction-info p b { color: #222; font-size: 14px; }.post-reaction-info > span { padding-top: 12px; border-top: 1px solid #ece8f2; color: #7156ad; font-size: 13px; font-weight: 700; }
 .post-comments { padding: 0 20px 20px; }.post-comments h3 { margin: 0 0 12px; color: #222; font-size: 17px; }.post-comments h3 small { color: #7156ad; font-size: 13px; }.post-comments ul { display: grid; gap: 9px; max-height: 160px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }.post-comments li { color: #555; font-size: 13px; line-height: 1.4; }.post-comments li b { margin-right: 7px; color: #222; }.post-comments form { display: flex; gap: 8px; margin-top: 15px; padding-top: 14px; border-top: 1px solid #ece8f2; }.post-comments input { flex: 1; min-width: 0; height: 40px; box-sizing: border-box; border: 1px solid #d9d3e4; border-radius: 11px; padding: 0 12px; font: inherit; font-size: 13px; }.post-comments button { min-width: 54px; border: 0; border-radius: 11px; background: #7156ad; color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }.post-comments button:disabled { cursor: not-allowed; opacity: .5; }
@@ -800,11 +1079,15 @@ button { font: inherit; }
   :global(.group-start-date-modal .base-modal__title) { font-size: 20px; }
   .start-date-input { min-height: 64px; font-size: 18px; }
 
-  :global(.group-edit-modal) { width: calc(100% - 40px); max-height: calc(100dvh - 160px); }
-  :global(.group-edit-modal .base-modal__header) { padding: 20px 20px 8px; }
-  :global(.group-edit-modal .base-modal__body) { padding: 8px 20px 22px; }
-  :global(.group-edit-modal .base-modal__title) { font-size: 20px; }
+  :global(.base-modal__overlay:has(.group-edit-modal)) { z-index: 2000 !important; align-items: end; padding: 0; }
+  :global(.group-edit-modal) { position: relative; width: 100%; height: min(88dvh, 760px); max-height: 88dvh; overflow-y: auto; overscroll-behavior: contain; border-width: 3px 0 0; border-radius: 26px 26px 0 0; -webkit-overflow-scrolling: touch; }
+  :global(.group-edit-modal .base-modal__header) { display: block; padding: 14px 20px 8px; }
+  :global(.group-edit-modal .base-modal__body) { padding: 8px 20px calc(22px + env(safe-area-inset-bottom)); }
+  :global(.group-edit-modal .base-modal__title) { display: block; width: 100%; font-size: 20px; }
   .group-edit-category > div { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  .group-edit-sheet-header { display: grid; gap: 8px; width: 100%; color: #222; font-size: 20px; font-weight: 800; text-align: center; touch-action: pan-x; user-select: none; }
+  .group-edit-sheet-handle { display: block; width: 42px; height: 5px; margin: 0 auto; border-radius: 999px; background: #b4adbd; }
 
   :global(.group-post-detail-modal) { width: calc(100% - 32px); max-height: calc(100dvh - 142px); }
   .post-detail-image-wrap { height: 67vw; min-height: 250px; }

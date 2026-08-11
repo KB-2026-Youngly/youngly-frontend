@@ -25,19 +25,21 @@
           class="group-card"
           v-for="group in groups"
           :key="group.id"
-          :class="{ 'is-completed': group.isCompleted }"
+          :class="{ 'is-completed': group.isCompleted, 'is-pending': group.isPending }"
           @click="goToGroupDetail(group.id)"
         >
           <!-- 좌측: 크기를 1/3로 줄인 오버랩 프로필 -->
           <div class="profiles-wrap">
             <div
               class="profile-circle"
-              v-for="(profile, index) in group.profiles"
+              v-for="(profile, index) in group.profiles.slice(0, 2)"
               :key="index"
               :style="{ backgroundColor: getProfileColor(index) }"
             >
               {{ profile }}
             </div>
+            <div v-if="group.profiles.length > 2" class="profile-circle profile-circle--more">+{{ group.profiles.length - 2 }}</div>
+            <div v-if="group.status === '팀원 모집중' && group.vacancyCount" class="profile-circle profile-circle--empty">+{{ group.vacancyCount }}</div>
           </div>
 
           <!-- 중앙: 텍스트 정보 -->
@@ -56,7 +58,8 @@
 
           <!-- 우측: 화살표 -->
           <div class="group-arrow">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <span v-if="group.isPending" class="pending-label">승인 대기</span>
+            <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M9 18L15 12L9 6" stroke="#999999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
@@ -68,27 +71,46 @@
       <button
         class="floating-add-button"
         type="button"
-        aria-label="새로운 그룹 만들기"
-        @click="groupModalOpen = true"
+        aria-label="그룹 메뉴 열기"
+        @click="groupActionModalOpen = true"
       >
         +
       </button>
     </div>
 
     <BaseModal
+      v-model="groupActionModalOpen"
+      modal-class="home-group-action-modal"
+      title="그룹 참여하기"
+      size="small"
+    >
+      <p class="group-action-description">새로운 챌린지를 만들거나 초대 코드로 기존 그룹에 참여하세요.</p>
+      <div class="group-action-buttons">
+        <button type="button" class="group-action-button group-action-button--primary" @click="openCreateModal">
+          <span aria-hidden="true">＋</span> 방 생성하기
+        </button>
+        <button type="button" class="group-action-button" @click="openJoinModal">
+          <span aria-hidden="true">⌘</span> 코드로 입장하기
+        </button>
+      </div>
+    </BaseModal>
+
+    <BaseModal
       v-model="groupModalOpen"
       modal-class="home-group-modal"
-      title="➕ 새로운 그룹 만들기"
+      :title="`새로운 방 만들기`"
       size="large"
+      @close="resetCreateStep"
     >
-      <form class="group-create-form" @submit.prevent="createGroup">
+      <form class="group-create-form" @submit.prevent="groupCreateStep === 1 ? goToCreateStepTwo() : openAccountConnect()">
+        <template v-if="groupCreateStep === 1">
         <label class="form-field form-field--full">
-          <span>1. 그룹 제목</span>
-          <input v-model.trim="newGroup.title" required placeholder="매일 30분 산책 챌린지" />
+          <span>방 이름</span>
+          <input v-model.trim="newGroup.title" required aria-label="방 이름" />
         </label>
 
         <fieldset class="category-field">
-          <legend>2. 카테고리</legend>
+          <legend>카테고리</legend>
           <div class="category-options">
             <button
               v-for="category in categories"
@@ -104,30 +126,149 @@
 
         <div class="form-row">
           <label class="form-field">
-            <span>3. 모집 인원</span>
-            <select v-model="newGroup.memberLimit">
-              <option v-for="count in [3, 4, 5, 6]" :key="count" :value="count">{{ count }}명</option>
+            <span>모집 인원</span>
+            <select v-model.number="newGroup.memberLimit">
+              <option v-for="count in 100" :key="count" :value="count">{{ count }}명</option>
             </select>
           </label>
           <label class="form-field">
-            <span>4. 매주 몇 번</span>
-            <select v-model="newGroup.weeklyCount">
-              <option v-for="count in [1, 2, 3, 5, 7]" :key="count" :value="count">주 {{ count }}회</option>
+            <span>매주 몇 번</span>
+            <select v-model.number="newGroup.weeklyCount">
+              <option v-for="count in 7" :key="count" :value="count">주 {{ count }}회</option>
             </select>
           </label>
         </div>
 
         <label class="form-field form-field--full">
-          <span>5. 챌린지 목표</span>
-          <input v-model.trim="newGroup.goal" required placeholder="매일 운동으로 건강한 생활 습관 만들기" />
+          <span>챌린지 목표</span>
+          <input v-model.trim="newGroup.goal" />
+        </label>
+
+        <button class="create-group-button" type="submit">다음 단계</button>
+        </template>
+
+        <template v-else>
+        <label class="form-field form-field--full">
+          <span>1인당 최소 예치금</span>
+          <input
+            :value="formatDeposit(newGroup.deposit)"
+            type="text"
+            inputmode="numeric"
+            required
+            placeholder="50,000"
+            @input="updateDeposit"
+          />
         </label>
 
         <label class="form-field form-field--full">
-          <span>6. 1인당 최소 예치금</span>
-          <input v-model.number="newGroup.deposit" type="number" min="0" required placeholder="50,000" />
+          <span>실패 면제권</span>
+          <select v-model.number="newGroup.failurePassCount">
+            <option v-for="count in 29" :key="count - 1" :value="count - 1">{{ count - 1 }}개</option>
+          </select>
         </label>
 
-        <button class="create-group-button" type="submit">🚀 그룹 생성하기</button>
+        <label class="form-field form-field--full">
+          <span>추가 규칙 <em>(선택)</em></span>
+          <textarea
+            v-model.trim="newGroup.additionalRule"
+            maxlength="120"
+            placeholder="예: 이번 달 꼴찌가 모든 참여자에게 커피 쏘기"
+          ></textarea>
+        </label>
+
+        <div class="create-step-actions">
+          <button class="back-step-button" type="button" @click="groupCreateStep = 1">이전</button>
+          <button class="create-group-button" type="submit">모임통장 연결하기</button>
+        </div>
+        </template>
+      </form>
+    </BaseModal>
+
+    <BaseModal
+      v-model="accountConnectModalOpen"
+      modal-class="home-account-connect-modal"
+      title="모임통장 연결하기"
+      size="small"
+      @close="resetAccountSelection"
+    >
+      <form class="account-connect-form" @submit.prevent="createGroup">
+        <p>그룹 예치금을 관리할 모임통장을 선택해 주세요.</p>
+        <fieldset class="account-options">
+          <legend>연결할 모임통장</legend>
+          <label v-for="account in groupAccounts" :key="account.id" class="account-option" :class="{ active: selectedAccountId === account.id, disabled: account.isConnected }">
+            <input v-model="selectedAccountId" type="radio" name="group-account" :value="account.id" :disabled="account.isConnected" />
+            <span class="account-option__bank">{{ account.bank }}</span>
+            <span class="account-option__info">
+              <strong>{{ account.name }}</strong>
+              <small>{{ account.isConnected ? '다른 방에 이미 연결됨' : `${account.number} · ${account.balance}` }}</small>
+            </span>
+            <span class="account-option__check" aria-hidden="true">✓</span>
+          </label>
+        </fieldset>
+        <button class="create-group-button" type="submit" :disabled="!selectedAccountId"> 방 만들기 완료</button>
+      </form>
+    </BaseModal>
+
+    <BaseModal
+      v-model="groupCreatedModalOpen"
+      modal-class="home-group-created-modal"
+      title="초대 코드"
+      size="small"
+    >
+      <div class="group-created-content">
+        <p>친구 초대</p>
+        <button class="created-invite-code" type="button" aria-label="초대 코드 복사" @click="copyCreatedInviteCode">
+          <strong>{{ createdInviteCode }}</strong>
+          <span>{{ inviteCodeCopied ? '✓ 복사됨' : '⌘ 복사' }}</span>
+        </button>
+        <button class="share-invite-button" type="button" @click="shareCreatedInvite">
+          ↗ 공유
+        </button>
+      </div>
+    </BaseModal>
+
+    <BaseModal
+      v-model="shareFallbackModalOpen"
+      modal-class="home-share-fallback-modal"
+      title="공유 링크"
+      size="small"
+    >
+      <div class="share-fallback-content">
+        <p>기기 공유 기능을 사용할 수 없습니다.</p>
+        <button class="created-invite-code" type="button" @click="copyShareLink">
+          <strong>🔗</strong>
+          <span>{{ shareLinkCopied ? '✓ 링크 복사됨' : '링크 복사' }}</span>
+        </button>
+      </div>
+    </BaseModal>
+
+    <BaseModal
+      v-model="joinGroupModalOpen"
+      modal-class="home-join-group-modal"
+      title="코드로 입장하기"
+      size="small"
+    >
+      <form class="join-group-form" @submit.prevent="requestJoin">
+        <p>초대 코드를 입력하면 방장에게 참여 요청을 보냅니다.</p>
+        <label class="form-field form-field--full">
+          <span>초대 코드</span>
+          <span class="invite-code-control">
+            <input
+              v-model.trim="inviteCode"
+              class="invite-code-input"
+              required
+              maxlength="6"
+              autocomplete="off"
+              placeholder="예: A1B2C3"
+              @input="inviteCode = inviteCode.toUpperCase().replace(/[^A-Z0-9]/g, '')"
+            />
+            <button class="paste-code-button" type="button" aria-label="초대 코드 붙여넣기" @click="pasteInviteCode">⌘</button>
+          </span>
+        </label>
+        <p v-if="joinRequestSent" class="join-request-message" role="status">초대 요청을 보냈습니다. 방장의 승인을 기다려주세요!</p>
+        <button class="create-group-button" type="submit" :disabled="inviteCode.length !== 6">
+          초대 요청하기
+        </button>
       </form>
     </BaseModal>
   </div>
@@ -143,12 +284,24 @@ const router = useRouter();
 
 // 그룹 카드를 누르면 해당 ID의 상세 페이지로 이동
 const goToGroupDetail = (groupId) => {
+  if (groups.value.find((group) => group.id === groupId)?.isPending) return;
   router.push(`/groups/${groupId}`);
 };
 
 // 상단 인증 개수 상태
 const unverifiedCount = ref(1);
+const groupActionModalOpen = ref(false);
 const groupModalOpen = ref(false);
+const groupCreateStep = ref(1);
+const accountConnectModalOpen = ref(false);
+const groupCreatedModalOpen = ref(false);
+const shareFallbackModalOpen = ref(false);
+const joinGroupModalOpen = ref(false);
+const inviteCode = ref('');
+const joinRequestSent = ref(false);
+const createdInviteCode = ref('KP7A2Q');
+const inviteCodeCopied = ref(false);
+const shareLinkCopied = ref(false);
 const categories = [
   { name: '운동', icon: '🏃' },
   { name: '독서', icon: '📚' },
@@ -163,36 +316,44 @@ const newGroup = ref({
   weeklyCount: 5,
   goal: '',
   deposit: 50000,
+  failurePassCount: 0,
+  additionalRule: '',
 });
+const selectedAccountId = ref('');
+const groupAccounts = [
+  { id: 'account-1', bank: 'KB', name: 'KB 모임통장', number: '025202-92-200001', balance: '400,000원' },
+  { id: 'account-2', bank: 'KB', name: '운동비 모임통장', number: '025202-92-200245', balance: '150,000원', isConnected: true },
+];
 
 // 그룹 리스트 더미 데이터
 const groups = ref([
   {
     id: 1,
-    profiles: ['김', '이', '박'],
+    profiles: ['김', '이', '박', '최', '신', '허'],
     category: '운동',
     status: '진행 중',
     title: '30일 매일 운동 챌린지',
     subtitle: '인증 마감 23:14:32',
-    isCompleted: false
+    isCompleted: false,
   },
   {
     id: 2,
-    profiles: ['김', '이', '정'],
+    profiles: ['김', '이', '정', '박', '최', '허'],
     category: '독서',
     status: '진행 중',
     title: '한 달 독서 마라톤',
     subtitle: '오늘 인증 완료 🌟',
-    isCompleted: true
+    isCompleted: true,
   },
   {
     id: 3,
-    profiles: ['김', '야', '+3'],
+    profiles: ['김', '야'],
     category: '절약',
     status: '팀원 모집중',
     title: '하루 1커피 절약 챌린지',
     subtitle: '팀원 2/5명 모집 완료',
-    isCompleted: false
+    isCompleted: false,
+    vacancyCount: 3,
   },
 ]);
 
@@ -211,9 +372,14 @@ const createGroup = () => {
     status: '팀원 모집중',
     title: newGroup.value.title,
     subtitle: `팀원 1/${newGroup.value.memberLimit}명 모집 완료`,
+    additionalRule: newGroup.value.additionalRule,
+    vacancyCount: newGroup.value.memberLimit - 1,
     isCompleted: false,
   });
+  accountConnectModalOpen.value = false;
   groupModalOpen.value = false;
+  groupCreateStep.value = 1;
+  selectedAccountId.value = '';
   newGroup.value = {
     title: '',
     category: '운동',
@@ -221,7 +387,143 @@ const createGroup = () => {
     weeklyCount: 5,
     goal: '',
     deposit: 50000,
+    failurePassCount: 0,
+    additionalRule: '',
   };
+  inviteCodeCopied.value = false;
+  groupCreatedModalOpen.value = true;
+};
+
+const copyCreatedInviteCode = async () => {
+  try {
+    await navigator.clipboard.writeText(createdInviteCode.value);
+    inviteCodeCopied.value = true;
+  } catch {
+    inviteCodeCopied.value = false;
+  }
+};
+
+// const shareCreatedInvite = async () => {
+//   const shareText = `CHALLENGE PIXEL 방 초대 코드: ${createdInviteCode.value}`;
+//   const shareUrl = `${window.location.origin}/groups/join?code=${createdInviteCode.value}`;
+//   try {
+//     if (typeof navigator.share === 'function') {
+//       await navigator.share({ title: 'CHALLENGE PIXEL 방 초대', text: shareText, url: shareUrl });
+//       return;
+//     }
+//   } catch {
+//     // 사용자가 공유 시트를 닫거나 지원하지 않는 환경이면 링크 복사를 안내합니다.
+//   }
+
+//   shareLinkCopied.value = false;
+//   shareFallbackModalOpen.value = true;
+// };
+
+const shareCreatedInvite = async () => {
+  const shareText = `CHALLENGE PIXEL 방 초대 코드: ${createdInviteCode.value}`;
+  const shareUrl = `${window.location.origin}/groups/join?code=${createdInviteCode.value}`;
+
+  // 1. Web Share API 지원 여부 확인 (HTTPS 환경인지, 브라우저가 지원하는지)
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'CHALLENGE PIXEL 방 초대',
+        text: shareText,
+        url: shareUrl
+      });
+      // 공유 성공하면 함수 종료
+      return;
+    } catch (error) {
+      // 2. 사용자가 공유 창을 그냥 닫은 경우(AbortError) 무시하고 종료
+      if (error.name === 'AbortError') {
+        console.log('사용자가 공유를 취소했습니다.');
+        return;
+      }
+      // 진짜 에러가 난 경우엔 아래 폴백 로직으로 넘어가도록 내버려 둠
+      console.error('공유 중 에러 발생:', error);
+    }
+  }
+
+  // 3. API를 지원하지 않는 환경(데스크톱, HTTP 로컬 IP 등)이거나 에러가 났을 때의 폴백
+  shareLinkCopied.value = false;
+  shareFallbackModalOpen.value = true;
+};
+
+
+const copyShareLink = async () => {
+  const shareUrl = `${window.location.origin}/groups/join?code=${createdInviteCode.value}`;
+  try {
+    await navigator.clipboard.writeText(shareUrl);
+    shareLinkCopied.value = true;
+  } catch {
+    shareLinkCopied.value = false;
+  }
+};
+
+const openAccountConnect = () => {
+  groupModalOpen.value = false;
+  selectedAccountId.value = '';
+  accountConnectModalOpen.value = true;
+};
+
+const goToCreateStepTwo = () => {
+  groupCreateStep.value = 2;
+};
+
+const resetCreateStep = () => {
+  if (!groupModalOpen.value) groupCreateStep.value = 1;
+};
+
+const resetAccountSelection = () => {
+  if (!accountConnectModalOpen.value) selectedAccountId.value = '';
+};
+
+const openCreateModal = () => {
+  groupActionModalOpen.value = false;
+  groupCreateStep.value = 1;
+  groupModalOpen.value = true;
+};
+
+const openJoinModal = () => {
+  groupActionModalOpen.value = false;
+  joinRequestSent.value = false;
+  inviteCode.value = '';
+  joinGroupModalOpen.value = true;
+};
+
+const requestJoin = () => {
+  if (inviteCode.value.length !== 6) return;
+  joinRequestSent.value = true;
+  const exists = groups.value.some((group) => group.inviteCode === inviteCode.value);
+  if (!exists) {
+    groups.value.unshift({
+      id: `pending-${inviteCode.value}`,
+      inviteCode: inviteCode.value,
+      profiles: ['나'],
+      vacancyCount: 3,
+      category: '운동',
+      status: '승인 대기',
+      title: '초대받은 챌린지',
+      subtitle: '방장 승인 대기 중',
+      isCompleted: false,
+      isPending: true,
+    });
+  }
+};
+
+const pasteInviteCode = async () => {
+  try {
+    const clipboardText = await navigator.clipboard.readText();
+    inviteCode.value = clipboardText.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+  } catch {
+    // 브라우저 권한이 없는 경우 사용자가 직접 입력할 수 있도록 유지합니다.
+  }
+};
+
+const formatDeposit = (value) => Number(value || 0).toLocaleString('ko-KR');
+
+const updateDeposit = (event) => {
+  newGroup.value.deposit = Number(event.target.value.replace(/[^0-9]/g, '')) || 0;
 };
 </script>
 
@@ -329,6 +631,12 @@ const createGroup = () => {
   background-color: #F9F7FC;
 }
 
+.group-card.is-pending {
+  border: 2px dashed #9b8abf;
+  background: rgba(255, 255, 255, 0.72);
+  cursor: default;
+}
+
 /* 💡 프로필 영역 크기 축소 (1/3 비율 느낌) */
 .profiles-wrap {
   display: flex;
@@ -363,6 +671,19 @@ const createGroup = () => {
 }
 .profile-circle:nth-child(2) { z-index: 2; }
 .profile-circle:nth-child(3) { z-index: 1; }
+
+.profile-circle--empty {
+  border-style: dashed;
+  border-color: #9b8abf;
+  background: transparent !important;
+  color: #7156ad;
+}
+
+.profile-circle--more {
+  border-color: #7156ad;
+  background: #7156ad !important;
+  color: #fff;
+}
 
 .group-info {
   flex: 1;
@@ -421,6 +742,16 @@ const createGroup = () => {
   justify-content: center;
 }
 
+.pending-label {
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #e5e2fa;
+  color: #69529f;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 /* 우측 하단 그룹 생성 버튼 */
 .floating-add {
   position: fixed;
@@ -454,6 +785,256 @@ const createGroup = () => {
   outline-offset: 3px;
 }
 
+.group-action-description,
+.join-group-form > p {
+  margin: 0;
+  color: #625d69;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.group-action-buttons {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.group-action-button {
+  min-height: 56px;
+  border: 2px solid #222;
+  border-radius: 14px;
+  background: #f0ede8;
+  color: #222;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.group-action-button--primary {
+  border-color: #69529f;
+  background: #69529f;
+  color: #fff;
+}
+
+.join-group-form {
+  display: grid;
+  gap: 16px;
+}
+
+.invite-code-control {
+  position: relative;
+  display: block;
+}
+
+.invite-code-control .invite-code-input {
+  padding-right: 54px;
+}
+
+.paste-code-button {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: grid;
+  width: 38px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  place-items: center;
+  transform: translateY(-50%);
+  background: #e5e2fa;
+  color: #533b85;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.account-connect-form {
+  display: grid;
+  gap: 18px;
+}
+
+.account-connect-form > p {
+  margin: 0;
+  color: #625d69;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.account-options {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.account-options legend {
+  margin-bottom: 2px;
+  color: #222;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.account-option {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 2px solid #222;
+  border-radius: 14px;
+  background: #f0ede8;
+  cursor: pointer;
+}
+
+.account-option.active {
+  border-color: #69529f;
+  background: #e5e2fa;
+}
+
+.account-option.disabled {
+  border-color: #ddd8df;
+  background: #f6f4f2;
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.account-option input {
+  position: absolute;
+  opacity: 0;
+}
+
+.account-option__bank {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 9px;
+  background: #ffcb05;
+  color: #222;
+  font-family: Georgia, serif;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.account-option__info {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.account-option__info strong {
+  color: #222;
+  font-size: 14px;
+}
+
+.account-option__info small {
+  overflow: hidden;
+  color: #71717a;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-option__check {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 2px solid #b3acba;
+  border-radius: 50%;
+  color: transparent;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.account-option.active .account-option__check {
+  border-color: #69529f;
+  background: #69529f;
+  color: #fff;
+}
+
+.group-created-content {
+  display: grid;
+  gap: 14px;
+  text-align: center;
+}
+
+.share-fallback-content {
+  display: grid;
+  gap: 14px;
+  text-align: center;
+}
+
+.share-fallback-content p {
+  margin: 0;
+  color: #625d69;
+  font-size: 14px;
+}
+
+.group-created-content > p {
+  margin: 0;
+  color: #625d69;
+  font-size: 14px;
+}
+
+.created-invite-code {
+  display: grid;
+  gap: 6px;
+  padding: 20px;
+  border: 2px solid #69529f;
+  border-radius: 16px;
+  background: #e5e2fa;
+  color: #3f2c70;
+  cursor: pointer;
+}
+
+.created-invite-code strong {
+  letter-spacing: 0.16em;
+  font-size: 25px;
+}
+
+.created-invite-code span {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.share-invite-button {
+  min-height: 52px;
+  border: 0;
+  border-radius: 14px;
+  background: #69529f;
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.invite-code-input {
+  letter-spacing: 0.14em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.join-request-message {
+  padding: 10px 12px;
+  border: 1px solid #69529f;
+  border-radius: 10px;
+  background: #e5e2fa;
+  color: #533b85 !important;
+  font-weight: 700;
+  text-align: center;
+}
+
+.create-group-button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
 /* 새로운 그룹 만들기 팝업 */
 .group-create-form {
   display: grid;
@@ -479,8 +1060,16 @@ const createGroup = () => {
   font-weight: 700;
 }
 
+.form-field > span em {
+  color: #8c8592;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+}
+
 .form-field input,
-.form-field select {
+.form-field select,
+.form-field textarea {
   width: 100%;
   height: 48px;
   box-sizing: border-box;
@@ -493,8 +1082,17 @@ const createGroup = () => {
   font-size: 15px;
 }
 
+.form-field textarea {
+  height: 88px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
 .form-field input:focus,
-.form-field select:focus {
+.form-field select:focus,
+.form-field textarea:focus {
   outline: 3px solid rgba(113, 86, 173, 0.28);
   border-color: #7156ad;
 }
@@ -543,9 +1141,49 @@ const createGroup = () => {
 
 .create-group-button:hover { background: #5d478c; }
 
+.create-step-actions {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.create-step-actions .create-group-button {
+  margin-top: 0;
+}
+
+.back-step-button {
+  min-height: 54px;
+  border: 2px solid #69529f;
+  border-radius: 14px;
+  background: #fff;
+  color: #69529f;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 :global(.home-group-modal) {
   border-radius: 24px;
   font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
+}
+
+:global(.home-group-action-modal),
+:global(.home-join-group-modal),
+:global(.home-account-connect-modal),
+:global(.home-group-created-modal),
+:global(.home-share-fallback-modal) {
+  border-radius: 22px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
+}
+
+:global(.home-group-action-modal .base-modal__body),
+:global(.home-join-group-modal .base-modal__body),
+:global(.home-account-connect-modal .base-modal__body),
+:global(.home-group-created-modal .base-modal__body),
+:global(.home-share-fallback-modal .base-modal__body) {
+  padding: 6px 22px 22px;
 }
 
 :global(.home-group-modal .base-modal__title) {
