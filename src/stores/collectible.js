@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { drawCharacter, equipCharacter, getOwnedCharacters } from '@/api/collectible'
 
+export const CHARACTER_DRAW_COST = 100
+
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.message || error?.response?.data?.error || fallback
 
@@ -84,9 +86,7 @@ export const useCollectibleStore = defineStore('collectible', {
           Object.prototype.hasOwnProperty.call(character, 'equipped'),
         )
         if (responseIncludesEquippedState) {
-          const equippedCharacter = this.characters.find(
-            (character) => character.equipped === true,
-          )
+          const equippedCharacter = this.characters.find((character) => character.equipped === true)
           this.equippedCharacterId = equippedCharacter?.characterId ?? null
         } else {
           const equippedCharacterStillExists = this.characters.some(
@@ -109,16 +109,32 @@ export const useCollectibleStore = defineStore('collectible', {
       }
     },
 
-    async drawNewCharacter() {
+    async drawNewCharacter(availablePoint) {
       if (this.isDrawing) return null
+
+      if (
+        !Number.isFinite(Number(availablePoint)) ||
+        Number(availablePoint) < CHARACTER_DRAW_COST
+      ) {
+        this.drawError = '포인트가 부족합니다. 캐릭터 뽑기에는 100P가 필요해요.'
+        return null
+      }
 
       this.isDrawing = true
       this.drawError = ''
 
       try {
         const { data } = await drawCharacter()
-        this.drawnCharacter = data
-        return data
+        const remainingPoint = Number(data?.remainingPoint)
+
+        if (!Number.isFinite(remainingPoint) || remainingPoint < 0) {
+          this.drawError = '뽑기 결과를 확인하지 못했어요. 화면을 새로고침해 주세요.'
+          return null
+        }
+
+        const character = data?.character ?? data
+        this.drawnCharacter = character
+        return { character, remainingPoint }
       } catch (error) {
         this.drawError = getDrawErrorMessage(error)
         return null
@@ -130,6 +146,10 @@ export const useCollectibleStore = defineStore('collectible', {
     clearDrawResult() {
       this.drawError = ''
       this.drawnCharacter = null
+    },
+
+    setDrawError(message) {
+      this.drawError = message
     },
 
     selectCharacter(characterId) {

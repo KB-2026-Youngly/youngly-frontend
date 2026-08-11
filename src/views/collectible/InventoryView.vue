@@ -46,11 +46,31 @@
           <p>{{ drawStatusMessage }}</p>
         </div>
         <div class="draw-panel__action">
-          <strong>보유 포인트 {{ formattedBalance }}P</strong>
-          <button type="button" :disabled="drawDisabled" @click="openDrawModal">
-            <Sparkles :size="18" aria-hidden="true" />
+          <div class="draw-panel__points" aria-label="캐릭터 뽑기 포인트 정보">
+            <span
+              >보유 포인트 <strong>{{ formattedBalance }}P</strong></span
+            >
+            <span>뽑기 비용 <strong>100P</strong></span>
+          </div>
+          <button
+            type="button"
+            :disabled="drawDisabled"
+            :aria-busy="isDrawing"
+            @click="openDrawModal"
+          >
+            <span v-if="isDrawing" class="draw-panel__spinner" aria-hidden="true"></span>
+            <Sparkles v-else :size="18" aria-hidden="true" />
             {{ drawButtonLabel }}
           </button>
+          <p
+            v-if="drawNotice"
+            class="draw-panel__notice"
+            :class="{ 'draw-panel__notice--error': drawNoticeIsError }"
+            role="status"
+            aria-live="polite"
+          >
+            {{ drawNotice }}
+          </p>
         </div>
       </section>
 
@@ -120,7 +140,7 @@ import EquipButton from '@/components/collectible/EquipButton.vue'
 import GachaModal from '@/components/collectible/GachaModal.vue'
 import InventoryGrid from '@/components/collectible/InventoryGrid.vue'
 import { KNOWN_CHARACTER_COUNT } from '@/constants/characterImages'
-import { useCollectibleStore } from '@/stores/collectible'
+import { CHARACTER_DRAW_COST, useCollectibleStore } from '@/stores/collectible'
 import { usePointStore } from '@/stores/point'
 
 const collectibleStore = useCollectibleStore()
@@ -147,6 +167,7 @@ const {
   equipSelectedCharacter,
   drawNewCharacter,
   clearDrawResult,
+  setDrawError,
 } = collectibleStore
 
 const isDrawModalOpen = ref(false)
@@ -158,20 +179,27 @@ const drawDisabled = computed(
     isDrawing.value ||
     isPointLoading.value ||
     Boolean(pointError.value) ||
-    balance.value < 100 ||
+    balance.value < CHARACTER_DRAW_COST ||
     allCharactersOwned.value,
 )
 const drawButtonLabel = computed(() => {
+  if (isDrawing.value) return '캐릭터를 뽑는 중...'
+  if (isPointLoading.value) return '포인트 확인 중...'
   if (allCharactersOwned.value) return '모든 캐릭터 수집 완료'
-  if (!isPointLoading.value && balance.value < 100) return '포인트가 부족합니다'
+  if (pointError.value) return '포인트 확인 필요'
+  if (balance.value < CHARACTER_DRAW_COST) return '포인트가 부족합니다'
   return '새 캐릭터 뽑기 · 100P'
 })
 const drawStatusMessage = computed(() => {
   if (allCharactersOwned.value) return '모든 캐릭터를 모았어요.'
   if (pointError.value) return '포인트 정보를 불러오지 못했습니다.'
-  if (!isPointLoading.value && balance.value < 100) return '포인트가 부족합니다.'
+  if (!isPointLoading.value && balance.value < CHARACTER_DRAW_COST) {
+    return `포인트가 ${CHARACTER_DRAW_COST - balance.value}P 부족해요.`
+  }
   return '아직 만나지 못한 캐릭터 한 명을 무작위로 획득해요.'
 })
+const drawNotice = computed(() => drawError.value || (pointError.value ? pointError.value : ''))
+const drawNoticeIsError = computed(() => Boolean(drawError.value || pointError.value))
 
 const selectedIsEquipped = computed(
   () =>
@@ -194,12 +222,23 @@ const closeDrawModal = () => {
 
 const confirmDraw = async () => {
   if (isDrawing.value) return
-  const result = await drawNewCharacter()
+
+  if (balance.value < CHARACTER_DRAW_COST) {
+    setDrawError('포인트가 부족합니다. 캐릭터 뽑기에는 100P가 필요해요.')
+    return
+  }
+
+  const result = await drawNewCharacter(balance.value)
   if (!result) return
 
-  pointStore.setBalance(result.remainingPoint)
-  await fetchOwnedCharacters()
+  const balanceUpdated = pointStore.setBalance(result.remainingPoint)
+  if (!balanceUpdated) {
+    setDrawError('남은 포인트를 반영하지 못했어요. 화면을 새로고침해 주세요.')
+    return
+  }
+
   drawModalMode.value = 'result'
+  await fetchOwnedCharacters()
 }
 
 const equipDrawnCharacter = async () => {
@@ -276,9 +315,7 @@ onMounted(() => {
   overflow: hidden;
   padding: 26px 24px 28px;
   text-align: center;
-  background:
-    linear-gradient(transparent 74%, rgba(113, 86, 173, 0.09) 74%),
-    #ffffff;
+  background: linear-gradient(transparent 74%, rgba(113, 86, 173, 0.09) 74%), #ffffff;
 }
 
 .equipped-stage::before,
@@ -375,10 +412,24 @@ onMounted(() => {
   gap: 8px;
 }
 
-.draw-panel__action > strong {
-  color: #554873;
-  font-size: 12px;
-  text-align: right;
+.draw-panel__points {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.draw-panel__points span {
+  padding: 6px 9px;
+  border: 2px solid #d4c5e7;
+  color: #6e6677;
+  background: #ffffff;
+  font-size: 11px;
+}
+
+.draw-panel__points strong {
+  margin-left: 3px;
+  color: #7156ad;
+  font-size: 13px;
 }
 
 .draw-panel__action button {
@@ -415,6 +466,33 @@ onMounted(() => {
   background: #aaa3b2;
   box-shadow: none;
   cursor: not-allowed;
+}
+
+.draw-panel__spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: draw-spin 0.7s linear infinite;
+}
+
+.draw-panel__notice {
+  margin: 2px 0 0;
+  color: #4f6f63;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.draw-panel__notice--error {
+  color: #b33f54;
+}
+
+@keyframes draw-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .inventory-panel {
@@ -498,13 +576,17 @@ onMounted(() => {
     padding: 20px;
   }
 
-  .draw-panel__action > strong {
-    text-align: left;
+  .draw-panel__points {
+    justify-content: flex-start;
   }
 
   .draw-panel__action button {
     width: 100%;
     min-height: 52px;
+  }
+
+  .draw-panel__notice {
+    text-align: left;
   }
 }
 
@@ -521,6 +603,21 @@ onMounted(() => {
   .equip-panel {
     grid-template-columns: 1fr;
     padding: 14px;
+  }
+
+  .draw-panel__points {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .draw-panel__points span {
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .draw-panel__spinner {
+    animation: none;
   }
 }
 </style>
