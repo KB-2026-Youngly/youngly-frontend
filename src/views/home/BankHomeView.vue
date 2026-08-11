@@ -4,20 +4,38 @@
       <button class="profile" type="button">
         <img :src="familyImage" alt="패밀리" />
       </button>
-      <button class="user-name" type="button">{{ displayName }} 님 <span>›</span></button>
+      <div ref="userMenuRef" class="user-menu">
+        <button
+          class="user-name"
+          type="button"
+          :aria-expanded="userMenuOpen"
+          aria-haspopup="menu"
+          @click="userMenuOpen = !userMenuOpen"
+        >
+          {{ displayName }} 님 <span :class="{ open: userMenuOpen }">›</span>
+        </button>
+        <transition name="user-dropdown">
+          <div v-if="userMenuOpen" class="user-dropdown" role="menu">
+            <button type="button" role="menuitem" :disabled="loggingOut" @click="handleLogout">
+              <span aria-hidden="true">↪</span>
+              {{ loggingOut ? '로그아웃 중...' : '로그아웃' }}
+            </button>
+          </div>
+        </transition>
+      </div>
       <div class="header-actions">
         <img :src="headerMenuImage" alt="알림, 검색, 전체 메뉴" />
       </div>
     </header>
 
     <main>
-      <button class="youngly-banner" type="button" @click="router.push('/home')">
+      <button class="youngly-banner" type="button" :disabled="enteringYoungly" @click="enterYoungly">
         <span class="banner-decoration circle-one"></span>
         <span class="banner-decoration circle-two"></span>
         <span class="banner-content">
           <span class="banner-label">MZ 맞춤 자산관리</span>
           <span class="banner-copy"><span class="yellow-letter">영</span>차영차 쌓은 오늘의 습관<br /><span class="yellow-letter">리</span>치한 내일을 만드는 자산으로</span>
-          <span class="banner-link">Youngly 시작하기 <b>→</b></span>
+          <span class="banner-link">{{ enteringYoungly ? '확인 중...' : 'Youngly 시작하기' }} <b>→</b></span>
         </span>
         <span class="temporary-logo"><i>Y</i><b>YOUNGLY</b><small>습관이 자산이 되는 순간</small></span>
       </button>
@@ -28,11 +46,11 @@
 
       <section class="account-card">
         <div class="account-heading">
-          <div><img class="kb-account-icon" :src="kbIconImage" alt="KB" /><strong>KB마이핏통장</strong></div>
+          <div><img class="kb-account-icon" :src="kbIconImage" alt="KB" /><strong>{{ depositAccount ? 'KB마이핏통장' : '대표 입출금 통장' }}</strong></div>
           <button type="button" aria-label="계좌 메뉴">⋮</button>
         </div>
-        <p class="account-number">025202-00-005158 <button type="button" aria-label="계좌번호 복사"><img :src="accountNumberImage" alt="" /></button></p>
-        <div class="balance"><strong>0</strong>원 <button type="button">숨김</button></div>
+        <p class="account-number">{{ depositAccount?.accountNumber || '연결된 계좌가 없습니다' }} <button v-if="depositAccount" type="button" aria-label="계좌번호 복사" @click="copyAccountNumber"><img :src="accountNumberImage" alt="" /></button></p>
+        <div class="balance"><strong>{{ formatCurrency(depositAccount?.balance) }}</strong>원 <button type="button">숨김</button></div>
         <div class="account-buttons">
           <button type="button">이체</button><button type="button">전용화면</button>
         </div>
@@ -57,8 +75,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { getAccount } from '@/api/account'
+import { logout } from '@/api/auth'
+import { getMyInfo } from '@/api/user'
 import familyImage from '@/assets/second_view/famliy.png'
 import headerMenuImage from '@/assets/second_view/header_menu.png'
 import accountNumberImage from '@/assets/second_view/account_number.png'
@@ -66,6 +87,12 @@ import bottomMenuImage from '@/assets/second_view/bottom_menu.png'
 import kbIconImage from '@/assets/icons/kb_icon.png'
 
 const router = useRouter()
+const depositAccount = ref(null)
+const currentUser = ref(null)
+const enteringYoungly = ref(false)
+const userMenuOpen = ref(false)
+const loggingOut = ref(false)
+const userMenuRef = ref(null)
 const displayName = computed(() => {
   try {
     const user = JSON.parse(localStorage.getItem('youngly_user') || '{}')
@@ -74,6 +101,60 @@ const displayName = computed(() => {
     return 'Youngly'
   }
 })
+
+onMounted(async () => {
+  document.addEventListener('pointerdown', closeUserMenu)
+  const [userResult, accountResult] = await Promise.allSettled([
+    getMyInfo(),
+    getAccount('DEPOSIT'),
+  ])
+  if (userResult.status === 'fulfilled') currentUser.value = userResult.value.data
+  if (accountResult.status === 'fulfilled') depositAccount.value = accountResult.value.data
+})
+onBeforeUnmount(() => document.removeEventListener('pointerdown', closeUserMenu))
+
+function closeUserMenu(event) {
+  if (!userMenuRef.value?.contains(event.target)) userMenuOpen.value = false
+}
+
+async function handleLogout() {
+  if (loggingOut.value) return
+  loggingOut.value = true
+  try {
+    await logout()
+  } catch {
+    // 서버 응답 여부와 관계없이 브라우저 인증 정보를 정리한다.
+  } finally {
+    localStorage.removeItem('youngly_access_token')
+    localStorage.removeItem('youngly_user')
+    userMenuOpen.value = false
+    loggingOut.value = false
+    await router.replace('/login')
+  }
+}
+
+async function enterYoungly() {
+  if (enteringYoungly.value) return
+  enteringYoungly.value = true
+  try {
+    const user = currentUser.value || (await getMyInfo()).data
+    currentUser.value = user
+    await router.push(
+      user.isNotificationAgreement == null ? '/onboarding/terms' : '/youngly-loading',
+    )
+  } finally {
+    enteringYoungly.value = false
+  }
+}
+
+async function copyAccountNumber() {
+  if (!depositAccount.value?.accountNumber) return
+  await navigator.clipboard?.writeText(depositAccount.value.accountNumber)
+}
+
+function formatCurrency(value) {
+  return Number(value || 0).toLocaleString('ko-KR')
+}
 </script>
 
 <style scoped>
@@ -135,4 +216,5 @@ const displayName = computed(() => {
 .user-name{max-width:220px!important;min-width:0;overflow:visible!important;text-overflow:clip!important}
 @media(max-width:600px){.account-card{padding-bottom:52px!important}.user-name{max-width:130px!important;overflow:hidden!important;text-overflow:ellipsis!important}}
 @media(max-width:380px){.user-name{max-width:96px!important}}
+.user-menu{position:relative}.user-name span{display:inline-block;transition:transform .18s}.user-name span.open{transform:rotate(90deg)}.user-dropdown{min-width:145px;padding:7px;position:absolute;top:calc(100% + 9px);left:13px;z-index:30;border:1px solid #e0e2e4;border-radius:12px;background:#fff;box-shadow:0 12px 30px rgba(32,36,40,.15)}.user-dropdown button{width:100%;height:42px;padding:0 12px;display:flex;align-items:center;gap:9px;border-radius:8px!important;color:#474b50;font-size:13px;font-weight:700;text-align:left}.user-dropdown button:hover{background:#f3f1f7}.user-dropdown button:disabled{cursor:wait;opacity:.55}.user-dropdown button span{color:#72549d;font-size:18px}.user-dropdown-enter-active,.user-dropdown-leave-active{transition:opacity .15s,transform .15s;transform-origin:top left}.user-dropdown-enter-from,.user-dropdown-leave-to{opacity:0;transform:translateY(-5px) scale(.98)}
 </style>

@@ -77,7 +77,12 @@
             <p v-if="error" class="login-error" role="alert">{{ error }}</p>
             <div class="login-links">
               <a href="#" @click.prevent="showToast('인증센터 기능은 준비 중입니다.')">인증센터</a>
-              <router-link to="/signup/terms" @click="closeSheet">회원가입</router-link>
+              <a
+                href="https://obank.kbstar.com/quics?page=C019875#loading"
+                target="_blank"
+                rel="noopener noreferrer"
+                @click="closeSheet"
+              >회원가입</a>
             </div>
             <button class="submit-login" type="submit" :disabled="submitting">{{ submitting ? '로그인 중...' : '로그인' }}</button>
           </form>
