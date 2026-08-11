@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { drawCharacter, equipCharacter, getOwnedCharacters } from '@/api/collectible'
+import { useUserStore } from '@/stores/user'
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.message || error?.response?.data?.error || fallback
@@ -84,9 +85,7 @@ export const useCollectibleStore = defineStore('collectible', {
           Object.prototype.hasOwnProperty.call(character, 'equipped'),
         )
         if (responseIncludesEquippedState) {
-          const equippedCharacter = this.characters.find(
-            (character) => character.equipped === true,
-          )
+          const equippedCharacter = this.characters.find((character) => character.equipped === true)
           this.equippedCharacterId = equippedCharacter?.characterId ?? null
         } else {
           const equippedCharacterStillExists = this.characters.some(
@@ -158,6 +157,7 @@ export const useCollectibleStore = defineStore('collectible', {
           ...character,
           equipped: String(character.characterId) === String(equippedId),
         }))
+        await useUserStore().refreshMyInfo()
         return data
       } catch (error) {
         this.equipError = getEquipErrorMessage(error)

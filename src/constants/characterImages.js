@@ -13,6 +13,14 @@ const CHARACTER_IMAGE_BY_NAME = Object.freeze({
   '공룡 옷을 입은 오리': duckImage,
 })
 
+const CHARACTER_IMAGE_BY_FILE_NAME = Object.freeze({
+  'rabbit.png': rabbitImage,
+  'llama.png': llamaImage,
+  'broccoli.png': broccoliImage,
+  'bear.png': bearImage,
+  'duck.png': duckImage,
+})
+
 export const KNOWN_CHARACTER_COUNT = Object.keys(CHARACTER_IMAGE_BY_NAME).length
 
 export function resolveCharacterImage(character) {
@@ -20,4 +28,13 @@ export function resolveCharacterImage(character) {
 
   const characterName = String(character.name || '').trim()
   return CHARACTER_IMAGE_BY_NAME[characterName] || character.imageUrl || ''
+}
+
+export function resolveCharacterProfileImage(profileImageUrl) {
+  const normalizedUrl = String(profileImageUrl || '').trim()
+  if (!normalizedUrl) return ''
+
+  const pathWithoutQuery = normalizedUrl.split(/[?#]/, 1)[0]
+  const fileName = pathWithoutQuery.split('/').pop()?.toLowerCase()
+  return CHARACTER_IMAGE_BY_FILE_NAME[fileName] || normalizedUrl
 }

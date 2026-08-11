@@ -1,36 +1,36 @@
 <template>
-  <div 
-    class="layout-container" 
-    :class="{ 
-      'asset-layout': isAssetRoute, 
-      'home-layout': isHomeRoute, 
-      'feed-write-layout': isFeedWriteRoute, 
-      'group-detail-layout': isGroupDetailRoute 
+  <div
+    class="layout-container"
+    :class="{
+      'asset-layout': isAssetRoute,
+      'home-layout': isHomeRoute,
+      'feed-write-layout': isFeedWriteRoute,
+      'group-detail-layout': isGroupDetailRoute,
     }"
   >
     <!-- 사이드바 (데스크톱 전용 왼쪽 세로 영역 & 모바일 하단바) -->
     <AppNavigation />
 
-    <div 
-      class="main-content-wrapper" 
-      :class="{ 
-        'asset-main-wrapper': isAssetRoute, 
-        'home-main-wrapper': isHomeRoute, 
-        'feed-write-main-wrapper': isFeedWriteRoute, 
-        'group-detail-main-wrapper': isGroupDetailRoute 
+    <div
+      class="main-content-wrapper"
+      :class="{
+        'asset-main-wrapper': isAssetRoute,
+        'home-main-wrapper': isHomeRoute,
+        'feed-write-main-wrapper': isFeedWriteRoute,
+        'group-detail-main-wrapper': isGroupDetailRoute,
       }"
     >
       <!-- 헤더 (사이드바 우측 상단) -->
       <AppHeader />
 
       <!-- 메인 페이지 영역 -->
-      <main 
-        class="content-area" 
-        :class="{ 
-          'asset-content-area': isAssetRoute, 
-          'home-content-area': isHomeRoute, 
-          'feed-write-content-area': isFeedWriteRoute, 
-          'group-detail-content-area': isGroupDetailRoute 
+      <main
+        class="content-area"
+        :class="{
+          'asset-content-area': isAssetRoute,
+          'home-content-area': isHomeRoute,
+          'feed-write-content-area': isFeedWriteRoute,
+          'group-detail-content-area': isGroupDetailRoute,
         }"
       >
         <router-view />
@@ -43,6 +43,7 @@
 import AppHeader from '@/components/common/Header.vue'
 import AppNavigation from '@/components/common/navigation/AppNavigation.vue'
 import { useCollectibleStore } from '@/stores/collectible'
+import { useUserStore } from '@/stores/user'
 
 export default {
   name: 'DefaultLayout',
@@ -63,10 +64,11 @@ export default {
     },
     isGroupDetailRoute() {
       return this.$route.name === 'GroupDetail'
-    }
+    },
   },
   mounted() {
     useCollectibleStore().ensureOwnedCharacters()
+    useUserStore().ensureMyInfo()
   },
 }
 </script>

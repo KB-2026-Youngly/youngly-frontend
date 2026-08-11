@@ -15,12 +15,7 @@
       <BaseSpinner size="large" label="사용자 정보를 불러오는 중..." centered />
     </section>
 
-    <ProfileCard
-      v-else
-      :user="user"
-      :summary="activitySummary"
-      @edit="goToProfileEdit"
-    />
+    <ProfileCard v-else :summary="activitySummary" @edit="goToProfileEdit" />
 
     <section class="character-card" aria-labelledby="character-title">
       <div class="character-card__preview">
@@ -134,7 +129,6 @@ const logout = () => {
 }
 
 onMounted(() => {
-  userStore.fetchMyInfo()
   pointStore.fetchPointBalance()
   collectibleStore.ensureOwnedCharacters()
 })

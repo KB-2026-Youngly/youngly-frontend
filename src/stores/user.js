@@ -27,6 +27,16 @@ export const useUserStore = defineStore('user', {
       }
     },
 
+    ensureMyInfo() {
+      if (this.user) return Promise.resolve(this.user)
+      return this.fetchMyInfo()
+    },
+
+    async refreshMyInfo() {
+      if (userRequest) await userRequest
+      return this.fetchMyInfo()
+    },
+
     async loadMyInfo() {
       this.isLoading = true
       this.error = ''
@@ -54,7 +64,7 @@ export const useUserStore = defineStore('user', {
 
       try {
         await updateMyInfo({ nickname, profileImageUrl })
-        await this.fetchMyInfo()
+        await this.refreshMyInfo()
         return true
       } catch (error) {
         this.saveError = getErrorMessage(

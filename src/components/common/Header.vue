@@ -26,10 +26,9 @@
               :aria-expanded="isMenuOpen"
               @click="isMenuOpen = !isMenuOpen"
             >
-              <CharacterAvatar
+              <UserProfileAvatar
                 class="profile-button__avatar"
-                :character="equippedCharacter"
-                :fallback-text="nickname"
+                :image-url="user?.profileImageUrl"
               />
             </button>
 
@@ -63,23 +62,25 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref, computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
 import bellIconUrl from '@/assets/icons/bell.svg'
-import CharacterAvatar from '@/components/collectible/CharacterAvatar.vue'
+import UserProfileAvatar from '@/components/common/UserProfileAvatar.vue'
 import { useCollectibleStore } from '@/stores/collectible'
+import { useUserStore } from '@/stores/user'
 
 defineOptions({ name: 'AppHeader' })
 
 const router = useRouter()
 const route = useRoute()
 const collectibleStore = useCollectibleStore()
-const { equippedCharacter } = storeToRefs(collectibleStore)
+const userStore = useUserStore()
+const { user } = storeToRefs(userStore)
 const profileMenu = ref(null)
 const isMenuOpen = ref(false)
-const nickname = ref('회원')
 const groupTitle = ref('30일 매일 운동 챌린지')
+const nickname = computed(() => user.value?.nickname || user.value?.loginId || '회원')
 
 // 현재 경로가 그룹 상세 페이지인지 판별 (Composition API 방식)
 const isGroupDetail = computed(() => route.name === 'GroupDetail')
@@ -106,7 +107,7 @@ const loadGroupInfo = () => {
   }
 }
 
-// 그룹 설정(수정) 페이지 열기 
+// 그룹 설정(수정) 페이지 열기
 const openGroupEdit = () => {
   router.replace({ query: { ...route.query, editGroup: 'true' } })
 }
@@ -114,19 +115,13 @@ const openGroupEdit = () => {
 const logout = () => {
   closeMenu()
   collectibleStore.$reset()
+  userStore.$reset()
   localStorage.removeItem('youngly_access_token')
   localStorage.removeItem('youngly_user')
   router.replace('/login')
 }
 
 onMounted(() => {
-  try {
-    const user = JSON.parse(localStorage.getItem('youngly_user') || '{}')
-    nickname.value = user.nickname || user.loginId || '회원'
-  } catch {
-    nickname.value = '회원'
-  }
-
   loadGroupInfo()
   window.addEventListener('youngly-group-info-updated', loadGroupInfo)
   document.addEventListener('pointerdown', handleOutsideClick)
@@ -239,7 +234,9 @@ onBeforeUnmount(() => {
   height: 44px;
   border: 2px solid #2d1f4f;
   border-radius: 50%;
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .profile-button:hover {
@@ -250,9 +247,6 @@ onBeforeUnmount(() => {
 .profile-button__avatar {
   width: 40px;
   height: 40px;
-  font-size: 15px;
-  background: #f4effa;
-  color: #7156ad;
 }
 
 .profile-dropdown {
@@ -307,7 +301,9 @@ onBeforeUnmount(() => {
   justify-content: space-between;
 }
 
-.group-badges { gap: 6px; }
+.group-badges {
+  gap: 6px;
+}
 
 .group-badge {
   padding: 2px 6px;
@@ -326,7 +322,9 @@ onBeforeUnmount(() => {
   font-weight: 700;
 }
 
-.group-actions { gap: 13px; }
+.group-actions {
+  gap: 13px;
+}
 
 .settings-button {
   width: 29px;
@@ -351,7 +349,28 @@ onBeforeUnmount(() => {
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
-  clip-path: polygon(7px 0, calc(100% - 7px) 0, calc(100% - 7px) 3px, calc(100% - 3px) 3px, calc(100% - 3px) 7px, 100% 7px, 100% calc(100% - 7px), calc(100% - 3px) calc(100% - 7px), calc(100% - 3px) calc(100% - 3px), calc(100% - 7px) calc(100% - 3px), calc(100% - 7px) 100%, 7px 100%, 7px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 7px), 0 calc(100% - 7px), 0 7px, 3px 7px, 3px 3px, 7px 3px);
+  clip-path: polygon(
+    7px 0,
+    calc(100% - 7px) 0,
+    calc(100% - 7px) 3px,
+    calc(100% - 3px) 3px,
+    calc(100% - 3px) 7px,
+    100% 7px,
+    100% calc(100% - 7px),
+    calc(100% - 3px) calc(100% - 7px),
+    calc(100% - 3px) calc(100% - 3px),
+    calc(100% - 7px) calc(100% - 3px),
+    calc(100% - 7px) 100%,
+    7px 100%,
+    7px calc(100% - 3px),
+    3px calc(100% - 3px),
+    3px calc(100% - 7px),
+    0 calc(100% - 7px),
+    0 7px,
+    3px 7px,
+    3px 3px,
+    7px 3px
+  );
 }
 
 .group-title {
@@ -402,6 +421,8 @@ onBeforeUnmount(() => {
     right: 0;
     max-width: calc(100vw - 24px);
   }
-  .group-detail-header-content { gap: 6px; }
+  .group-detail-header-content {
+    gap: 6px;
+  }
 }
 </style>
