@@ -1,15 +1,7 @@
 <template>
   <section class="profile-card" aria-labelledby="profile-name">
     <div class="profile-card__top">
-      <span class="profile-card__avatar" aria-hidden="true">
-        <img
-          v-if="user?.profileImageUrl && !profileImageFailed"
-          :src="user?.profileImageUrl"
-          alt=""
-          @error="profileImageFailed = true"
-        />
-        <span v-else>{{ avatarInitial }}</span>
-      </span>
+      <UserProfileAvatar class="profile-card__avatar" :image-url="user?.profileImageUrl" />
 
       <div class="profile-card__info">
         <h2 id="profile-name">{{ user?.name || '이름 없음' }}</h2>
@@ -17,7 +9,12 @@
         <span class="profile-card__badge">{{ user?.nickname || '닉네임 없음' }}</span>
       </div>
 
-      <button class="profile-card__settings" type="button" aria-label="내 정보 수정" @click="emit('edit')">
+      <button
+        class="profile-card__settings"
+        type="button"
+        aria-label="내 정보 수정"
+        @click="emit('edit')"
+      >
         <Settings :size="18" aria-hidden="true" />
       </button>
     </div>
@@ -27,33 +24,21 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { Settings } from 'lucide-vue-next'
+import UserProfileAvatar from '@/components/common/UserProfileAvatar.vue'
 import ActivitySummary from '@/components/mypage/ActivitySummary.vue'
+import { useUserStore } from '@/stores/user'
 
-const props = defineProps({
-  user: {
-    type: Object,
-    default: null,
-  },
+defineProps({
   summary: {
     type: Array,
     required: true,
   },
 })
 
+const { user } = storeToRefs(useUserStore())
 const emit = defineEmits(['edit'])
-const profileImageFailed = ref(false)
-const avatarInitial = computed(() =>
-  String(props.user?.nickname || props.user?.name || '회').trim().charAt(0) || '회',
-)
-
-watch(
-  () => props.user?.profileImageUrl,
-  () => {
-    profileImageFailed.value = false
-  },
-)
 </script>
 
 <style scoped>
@@ -79,20 +64,7 @@ watch(
   place-items: center;
   border: 2px solid var(--color-primary-dark, #7156ad);
   border-radius: 50%;
-  color: #ffffff;
-  background: var(--color-primary, #7156ad);
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.profile-card__avatar:has(img) {
-  background: var(--color-primary-soft, #e6dcf6);
-}
-
-.profile-card__avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  background: #ffffff;
 }
 
 .profile-card__info {

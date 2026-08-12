@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { drawCharacter, equipCharacter, getOwnedCharacters } from '@/api/collectible'
+import { useUserStore } from '@/stores/user'
 
 export const CHARACTER_DRAW_COST = 100
 
@@ -178,6 +179,7 @@ export const useCollectibleStore = defineStore('collectible', {
           ...character,
           equipped: String(character.characterId) === String(equippedId),
         }))
+        await useUserStore().refreshMyInfo()
         return data
       } catch (error) {
         this.equipError = getEquipErrorMessage(error)
