@@ -12,14 +12,28 @@ const routes = [
     component: () => import('@/views/auth/LoginView.vue'),
   },
   {
-    path: '/signup/terms',
-    name: 'SignupTerms',
-    component: () => import('@/views/auth/SignupTermsView.vue'),
+    path: '/bank-home',
+    name: 'BankHome',
+    component: () => import('@/views/home/BankHomeView.vue'),
+    meta: { requiresAuth: true },
   },
   {
-    path: '/signup',
-    name: 'Signup',
-    component: () => import('@/views/auth/SignupView.vue'),
+    path: '/onboarding/terms',
+    name: 'OnboardingTerms',
+    component: () => import('@/views/onboarding/OnboardingTermsView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/onboarding/setup',
+    name: 'OnboardingSetup',
+    component: () => import('@/views/onboarding/OnboardingSetupView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/youngly-loading',
+    name: 'YounglyLoading',
+    component: () => import('@/views/home/YounglyLoadingView.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/home',
@@ -179,7 +193,7 @@ router.beforeEach((to) => {
     return { name: 'Login', query: { redirect: to.fullPath } }
   }
   if (to.name === 'Login' && accessToken) {
-    return { name: 'Home' }
+    return { name: 'BankHome' }
   }
 })
 
