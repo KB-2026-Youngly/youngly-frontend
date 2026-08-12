@@ -48,14 +48,15 @@
             <span class="group-badge">초대 중</span>
             <span class="member-count">♟&nbsp; 1 / 6명</span>
           </div>
-          <div class="group-actions">
+          <div v-if="isGroupOwner" class="group-actions">
             <button class="settings-button" type="button" aria-label="그룹 설정">⚙</button>
             <button class="group-profile" type="button" aria-label="내 프로필">김</button>
           </div>
         </div>
-        <button class="group-title" type="button" @click="openGroupEdit">
+        <button v-if="isGroupOwner" class="group-title" type="button" @click="openGroupEdit">
           {{ groupTitle }} <span aria-hidden="true">›</span>
         </button>
+        <h1 v-else class="group-title">{{ groupTitle }}</h1>
       </div>
     </div>
   </header>
@@ -84,6 +85,8 @@ const nickname = computed(() => user.value?.nickname || user.value?.loginId || '
 
 // 현재 경로가 그룹 상세 페이지인지 판별 (Composition API 방식)
 const isGroupDetail = computed(() => route.name === 'GroupDetail')
+// mock 권한: 실제 API 연결 전에는 owner=false 쿼리로 비방장 상태를 확인할 수 있습니다.
+const isGroupOwner = computed(() => route.query.owner !== 'false')
 
 const closeMenu = () => {
   isMenuOpen.value = false
@@ -109,6 +112,7 @@ const loadGroupInfo = () => {
 
 // 그룹 설정(수정) 페이지 열기
 const openGroupEdit = () => {
+  if (!isGroupOwner.value) return
   router.replace({ query: { ...route.query, editGroup: 'true' } })
 }
 
