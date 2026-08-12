@@ -64,8 +64,12 @@ export const usePointStore = defineStore('point', {
     },
 
     setBalance(balance) {
-      this.balance = Number(balance ?? 0)
+      const nextBalance = Number(balance)
+      if (!Number.isFinite(nextBalance) || nextBalance < 0) return false
+
+      this.balance = nextBalance
       this.error = ''
+      return true
     },
   },
 })
