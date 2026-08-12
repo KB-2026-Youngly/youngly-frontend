@@ -14,7 +14,7 @@
 
       <span class="settings-menu__copy">
         <strong>{{ item.label }}</strong>
-        <small>{{ item.description }}</small>
+        <small v-if="item.description">{{ item.description }}</small>
       </span>
 
       <ChevronRight class="settings-menu__arrow" :size="20" aria-hidden="true" />

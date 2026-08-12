@@ -42,7 +42,7 @@
       </button>
     </section>
 
-    <SettingsMenu :items="settingsItems" />
+    <SettingsMenu :items="settingsItems" @select="handleSettingSelect" />
 
     <BaseButton class="logout-button" variant="ghost" block @click="logout">
       <LogOut :size="16" aria-hidden="true" />
@@ -105,18 +105,20 @@ const settingsItems = [
     id: 'account',
     icon: 'account',
     label: '입출금 계좌 설정',
-    description: '계좌 변경 / KB 신규 발급',
   },
   {
     id: 'challenge-history',
     icon: 'history',
     label: '챌린지 기록',
-    description: '인증 내역 확인',
   },
 ]
 
 const goToProfileEdit = () => {
   router.push('/mypage/profile')
+}
+
+const handleSettingSelect = (settingId) => {
+  if (settingId === 'account') router.push('/mypage/accounts')
 }
 
 const logout = () => {

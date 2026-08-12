@@ -21,7 +21,7 @@ export function updatePensionStatus(accountId, accountStatus) {
 }
 
 export function getAccount(accountType) {
-  return apiClient.get('/accounts', { params: { accountType } })
+  return apiClient.get('/accounts', accountType ? { params: { accountType } } : undefined)
 }
 
 export function updateAccount(accountId, kbAccountId) {
@@ -48,7 +48,13 @@ export function updateMoimAccountName(moimAccountId, accountName) {
   return apiClient.patch(`/group-accounts/${moimAccountId}/name`, { accountName })
 }
 
-export function getAccountTransactions(accountType, accountId, page = 0, size = 20, roundId = null) {
+export function getAccountTransactions(
+  accountType,
+  accountId,
+  page = 0,
+  size = 20,
+  roundId = null,
+) {
   return apiClient.get('/account-transactions', {
     params: {
       accountType,

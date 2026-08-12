@@ -6,7 +6,6 @@
       <div class="profile-card__info">
         <h2 id="profile-name">{{ user?.name || '이름 없음' }}</h2>
         <p>{{ user?.email || '이메일 정보 없음' }}</p>
-        <span class="profile-card__badge">{{ user?.nickname || '닉네임 없음' }}</span>
       </div>
 
       <button
@@ -82,18 +81,6 @@ const emit = defineEmits(['edit'])
   margin: 5px 0 8px;
   color: var(--color-text-muted, #77717f);
   font-size: 12px;
-}
-
-.profile-card__badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border: 1px solid var(--color-primary-border, #e6dcf6);
-  border-radius: 999px;
-  color: var(--color-primary-dark, #7156ad);
-  background: var(--color-primary-soft, #e6dcf6);
-  font-size: 11px;
-  font-weight: 700;
 }
 
 .profile-card__settings {

@@ -62,6 +62,11 @@ const routes = [
         name: 'ProfileEdit',
         component: () => import('@/views/mypage/ProfileEditView.vue'),
       },
+      {
+        path: 'accounts',
+        name: 'AccountSettings',
+        component: () => import('@/views/mypage/AccountSettingsView.vue'),
+      },
     ],
   },
   {
@@ -131,9 +136,9 @@ const routes = [
       {
         path: '',
         name: 'GroupList',
-        component: () => import('@/views/group/GroupListView.vue')
-      }
-    ]
+        component: () => import('@/views/group/GroupListView.vue'),
+      },
+    ],
   },
   {
     path: '/groups/:id',
@@ -143,9 +148,9 @@ const routes = [
       {
         path: '',
         name: 'GroupDetail',
-        component: () => import('@/views/group/GroupDetailView.vue')
-      }
-    ]
+        component: () => import('@/views/group/GroupDetailView.vue'),
+      },
+    ],
   },
   // --- develop 브랜치에서 추가한 라우트들 ---
   {
