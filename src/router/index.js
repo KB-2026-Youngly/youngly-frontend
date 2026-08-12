@@ -50,7 +50,7 @@ const routes = [
   {
     path: '/mypage',
     component: DefaultLayout,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, mypageSurface: true },
     children: [
       {
         path: '',
@@ -157,7 +157,7 @@ const routes = [
     path: '/point',
     alias: '/points',
     component: DefaultLayout,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, mypageSurface: true },
     children: [
       {
         path: '',
@@ -169,7 +169,7 @@ const routes = [
   {
     path: '/characters',
     component: DefaultLayout,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, mypageSurface: true },
     children: [
       {
         path: '',

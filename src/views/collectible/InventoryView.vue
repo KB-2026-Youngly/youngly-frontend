@@ -55,10 +55,10 @@
           <button
             type="button"
             :disabled="drawDisabled"
-            :aria-busy="isDrawing"
+            :aria-busy="isDrawAttemptActive"
             @click="openDrawModal"
           >
-            <span v-if="isDrawing" class="draw-panel__spinner" aria-hidden="true"></span>
+            <span v-if="isDrawAttemptActive" class="draw-panel__spinner" aria-hidden="true"></span>
             <Sparkles v-else :size="18" aria-hidden="true" />
             {{ drawButtonLabel }}
           </button>
@@ -118,7 +118,8 @@
       :mode="drawModalMode"
       :balance="balance"
       :character="drawnCharacter"
-      :loading="isDrawing"
+      :loading="isDrawAttemptActive"
+      :animation-key="drawAnimationKey"
       :equipping="equippingCharacterId != null"
       :error="drawError"
       :equip-error="equipError"
@@ -172,18 +173,22 @@ const {
 
 const isDrawModalOpen = ref(false)
 const drawModalMode = ref('confirm')
+const isDrawAttemptActive = ref(false)
+const drawAnimationKey = ref(0)
+const MIN_DRAW_ANIMATION_MS = 1800
 const allCharactersOwned = computed(() => characters.value.length >= KNOWN_CHARACTER_COUNT)
 const formattedBalance = computed(() => new Intl.NumberFormat('ko-KR').format(balance.value))
 const drawDisabled = computed(
   () =>
     isDrawing.value ||
+    isDrawAttemptActive.value ||
     isPointLoading.value ||
     Boolean(pointError.value) ||
     balance.value < CHARACTER_DRAW_COST ||
     allCharactersOwned.value,
 )
 const drawButtonLabel = computed(() => {
-  if (isDrawing.value) return '캐릭터를 뽑는 중...'
+  if (isDrawAttemptActive.value) return '캐릭터를 뽑는 중...'
   if (isPointLoading.value) return '포인트 확인 중...'
   if (allCharactersOwned.value) return '모든 캐릭터 수집 완료'
   if (pointError.value) return '포인트 확인 필요'
@@ -215,30 +220,56 @@ const openDrawModal = () => {
 }
 
 const closeDrawModal = () => {
-  if (isDrawing.value || equippingCharacterId.value != null) return
+  if (isDrawAttemptActive.value || isDrawing.value || equippingCharacterId.value != null) return
   isDrawModalOpen.value = false
   clearDrawResult()
 }
 
 const confirmDraw = async () => {
-  if (isDrawing.value) return
+  if (isDrawAttemptActive.value || isDrawing.value) return
 
   if (balance.value < CHARACTER_DRAW_COST) {
     setDrawError('포인트가 부족합니다. 캐릭터 뽑기에는 100P가 필요해요.')
+    drawModalMode.value = 'error'
     return
   }
 
-  const result = await drawNewCharacter(balance.value)
-  if (!result) return
-
-  const balanceUpdated = pointStore.setBalance(result.remainingPoint)
-  if (!balanceUpdated) {
-    setDrawError('남은 포인트를 반영하지 못했어요. 화면을 새로고침해 주세요.')
+  if (allCharactersOwned.value) {
+    setDrawError('모든 캐릭터를 모았어요.')
+    drawModalMode.value = 'error'
     return
   }
 
-  drawModalMode.value = 'result'
-  await fetchOwnedCharacters()
+  clearDrawResult()
+  isDrawAttemptActive.value = true
+  drawAnimationKey.value += 1
+  drawModalMode.value = 'drawing'
+
+  try {
+    const [result] = await Promise.all([
+      drawNewCharacter(balance.value),
+      new Promise((resolve) => window.setTimeout(resolve, MIN_DRAW_ANIMATION_MS)),
+    ])
+
+    if (!result) {
+      if (!drawError.value) setDrawError('캐릭터를 뽑지 못했어요. 다시 시도해 주세요.')
+      drawModalMode.value = 'error'
+      return
+    }
+
+    const balanceUpdated = pointStore.setBalance(result.remainingPoint)
+    if (!balanceUpdated) {
+      setDrawError('남은 포인트를 반영하지 못했어요. 화면을 새로고침해 주세요.')
+      drawModalMode.value = 'error'
+      return
+    }
+
+    isDrawAttemptActive.value = false
+    drawModalMode.value = 'result'
+    await fetchOwnedCharacters()
+  } finally {
+    isDrawAttemptActive.value = false
+  }
 }
 
 const equipDrawnCharacter = async () => {
@@ -561,7 +592,8 @@ onMounted(() => {
 @media (max-width: 767px) {
   .character-page {
     gap: 22px;
-    min-height: calc(100vh - 144px);
+    min-height: calc(100dvh - 68px - 76px);
+    margin: 0;
     padding: 28px 20px 54px;
   }
 

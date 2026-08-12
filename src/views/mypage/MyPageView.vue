@@ -1,7 +1,5 @@
 <template>
   <div class="mypage">
-    <h1>마이페이지</h1>
-
     <section v-if="userError" class="state-panel" role="alert">
       <BaseEmptyState
         title="사용자 정보를 불러오지 못했어요"
@@ -146,19 +144,13 @@ onMounted(() => {
   --color-surface-hover: #e6dcf6;
 
   display: grid;
-  gap: 20px;
+  gap: 14px;
   min-height: calc(100vh - 69px);
   margin: -20px;
-  padding: 32px max(20px, calc((100% - 780px) / 2)) 80px;
+  padding: 24px max(20px, calc((100% - 760px) / 2)) 72px;
   color: var(--color-text, #33313d);
   background: #e6dcf6;
   box-sizing: border-box;
-}
-
-.mypage > h1 {
-  margin: 0 0 2px;
-  font-size: 28px;
-  line-height: 1.25;
 }
 
 .state-panel {
@@ -166,42 +158,53 @@ onMounted(() => {
   display: grid;
   place-items: center;
   padding: 24px;
-  border-radius: 12px;
+  border-radius: 18px;
   background: var(--color-surface, #ffffff);
+  box-shadow: 0 8px 24px rgba(62, 45, 92, 0.08);
 }
 
 .character-card {
   display: grid;
-  grid-template-columns: 76px minmax(0, 1fr) 44px;
-  gap: 18px;
+  grid-template-columns: 60px minmax(0, 1fr) 40px;
+  gap: 16px;
   align-items: center;
-  padding: 20px 24px;
-  border: 1px solid var(--color-primary-border, #e6dcf6);
-  border-radius: 12px;
+  min-height: 96px;
+  padding: 18px 20px;
+  border: 1px solid rgba(113, 86, 173, 0.08);
+  border-radius: 18px;
   background: var(--color-surface, #ffffff);
+  box-shadow: 0 8px 24px rgba(62, 45, 92, 0.08);
   box-sizing: border-box;
 }
 
 .character-card__preview {
   display: grid;
-  width: 72px;
-  height: 72px;
-  padding: 5px;
+  width: 58px;
+  height: 58px;
+  padding: 6px;
   place-items: center;
-  border: 1px solid var(--color-primary-border, #e6dcf6);
-  background: #f8f4fc;
+  border-radius: 16px;
+  background: #f2ecf9;
   box-sizing: border-box;
+}
+
+.character-card__copy {
+  min-width: 0;
 }
 
 .character-card__copy h2 {
   margin: 0;
-  font-size: 17px;
+  font-size: 16px;
+  line-height: 1.3;
 }
 
 .character-card__copy p {
-  margin: 6px 0;
+  overflow: hidden;
+  margin: 5px 0 4px;
   color: var(--color-text-muted, #77717f);
   font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .character-card__copy span {
@@ -212,19 +215,25 @@ onMounted(() => {
 
 .character-card__button {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   place-items: center;
   border: 0;
-  border-radius: 4px;
-  color: #ffffff;
-  background: var(--color-primary-dark, #7156ad);
+  border-radius: 50%;
+  color: var(--color-primary-dark, #7156ad);
+  background: #f0e9f8;
   cursor: pointer;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease,
+    transform 0.18s ease;
 }
 
 .character-card__button:hover {
+  color: #ffffff;
   background: var(--color-primary-hover, #7156ad);
+  transform: translateX(2px);
 }
 
 .character-card__button:focus-visible {
@@ -233,39 +242,38 @@ onMounted(() => {
 }
 
 .logout-button {
-  min-height: 44px;
-  border: 1px solid var(--color-border, #ddd9e8);
-  border-radius: 4px;
+  min-height: 54px;
+  border: 0;
+  border-radius: 16px;
   color: var(--color-text-muted, #77717f);
   background: var(--color-surface, #ffffff);
+  box-shadow: 0 8px 24px rgba(62, 45, 92, 0.07);
 }
 
 @media (max-width: 767px) {
   .mypage {
-    gap: 14px;
-    min-height: calc(100vh - 62px);
-    padding: 20px 20px 52px;
-  }
-
-  .mypage > h1 {
-    font-size: 22px;
+    gap: 12px;
+    min-height: calc(100dvh - 68px - 76px);
+    margin: 0;
+    padding: 16px 16px 36px;
   }
 
   .character-card {
-    grid-template-columns: 58px minmax(0, 1fr) 36px;
+    grid-template-columns: 52px minmax(0, 1fr) 34px;
     gap: 12px;
-    padding: 14px 16px;
-    border-radius: 8px;
+    min-height: 84px;
+    padding: 14px;
+    border-radius: 16px;
   }
 
   .character-card__preview {
-    width: 54px;
-    height: 54px;
-    font-size: 30px;
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
   }
 
   .character-card__copy h2 {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .character-card__copy p {
@@ -276,8 +284,13 @@ onMounted(() => {
   }
 
   .character-card__button {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .logout-button {
+    min-height: 52px;
+    border-radius: 16px;
   }
 }
 </style>

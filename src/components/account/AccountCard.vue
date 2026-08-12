@@ -7,25 +7,36 @@
     }"
     type="button"
     :disabled="disabled"
-    :aria-pressed="isSelected"
+    :aria-pressed="isPrimary || isSelected"
     @click="emit('select', account)"
   >
     <span class="account-card__top">
       <span class="account-card__bank">{{ account.bankName || 'KB국민은행' }}</span>
-      <span v-if="isPrimary" class="account-card__badge">대표 계좌</span>
-      <span v-else-if="isSelected" class="account-card__badge account-card__badge--selected">
-        선택한 계좌
-      </span>
+      <span class="account-card__type">{{ accountTypeLabel }}</span>
     </span>
 
     <strong class="account-card__balance">{{ formattedBalance }}원</strong>
     <span class="account-card__number">{{ maskedAccountNumber }}</span>
-    <span class="account-card__type">{{ accountTypeLabel }}</span>
+    <span class="account-card__footer">
+      <span v-if="isPrimary" class="account-card__status">
+        <CircleCheck :size="15" aria-hidden="true" />
+        현재 설정된 계좌
+      </span>
+      <span v-else-if="isSelected" class="account-card__status account-card__status--selected">
+        <Check :size="15" aria-hidden="true" />
+        선택한 계좌
+      </span>
+      <span v-else class="account-card__hint">
+        선택하여 설정
+        <ChevronRight :size="16" aria-hidden="true" />
+      </span>
+    </span>
   </button>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { Check, ChevronRight, CircleCheck } from 'lucide-vue-next'
 
 const props = defineProps({
   account: { type: Object, required: true },
@@ -63,7 +74,7 @@ const accountTypeLabel = computed(() => {
   gap: 8px;
   width: 100%;
   padding: 20px;
-  border: 1px solid #ddd9e8;
+  border: 1px solid #d9d3e2;
   border-radius: 14px;
   color: #33313d;
   background: #ffffff;
@@ -87,8 +98,9 @@ const accountTypeLabel = computed(() => {
 }
 
 .account-card--primary {
-  border-color: #7156ad;
-  background: #faf7fd;
+  border: 2px solid #7156ad;
+  background: #f8f3fc;
+  box-shadow: 0 6px 18px rgba(83, 58, 126, 0.12);
 }
 
 .account-card--selected {
@@ -113,20 +125,6 @@ const accountTypeLabel = computed(() => {
   font-weight: 700;
 }
 
-.account-card__badge {
-  padding: 5px 9px;
-  border-radius: 999px;
-  color: #ffffff;
-  background: #7156ad;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.account-card__badge--selected {
-  color: #7156ad;
-  background: #e6dcf6;
-}
-
 .account-card__balance {
   margin-top: 8px;
   font-size: 22px;
@@ -139,13 +137,50 @@ const accountTypeLabel = computed(() => {
 }
 
 .account-card__type {
-  width: fit-content;
-  margin-top: 4px;
   padding: 4px 8px;
-  border-radius: 6px;
-  color: #655e6d;
-  background: #f2eff5;
+  border: 1px solid #d8cbed;
+  border-radius: 999px;
+  color: #65518e;
+  background: #f2ecf9;
   font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.account-card__footer {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  margin-top: 7px;
+  padding-top: 12px;
+  border-top: 1px solid #e7e1ec;
+}
+
+.account-card__status,
+.account-card__hint {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.account-card__status {
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #7156ad;
+}
+
+.account-card__status--selected {
+  color: #604795;
+  background: #e6dcf6;
+}
+
+.account-card__hint {
+  width: 100%;
+  justify-content: space-between;
+  color: #81778c;
 }
 
 @media (max-width: 480px) {

@@ -8,8 +8,8 @@
       @click="emit('select', item.id)"
     >
       <span class="settings-menu__icon" aria-hidden="true">
-        <WalletCards v-if="item.icon === 'account'" :size="20" />
-        <ChartNoAxesColumnIncreasing v-else :size="20" />
+        <WalletCards v-if="item.icon === 'account'" :size="19" />
+        <ChartNoAxesColumnIncreasing v-else :size="19" />
       </span>
 
       <span class="settings-menu__copy">
@@ -17,7 +17,7 @@
         <small v-if="item.description">{{ item.description }}</small>
       </span>
 
-      <ChevronRight class="settings-menu__arrow" :size="20" aria-hidden="true" />
+      <ChevronRight class="settings-menu__arrow" :size="18" aria-hidden="true" />
     </button>
   </nav>
 </template>
@@ -38,19 +38,20 @@ const emit = defineEmits(['select'])
 <style scoped>
 .settings-menu {
   display: grid;
-  padding: 0 20px;
-  border: 1px solid var(--color-border, #ddd9e8);
-  border-radius: 12px;
+  padding: 4px 18px;
+  border: 1px solid rgba(113, 86, 173, 0.08);
+  border-radius: 18px;
   background: var(--color-surface, #ffffff);
+  box-shadow: 0 8px 24px rgba(62, 45, 92, 0.08);
 }
 
 .settings-menu__item {
   display: grid;
-  grid-template-columns: 38px minmax(0, 1fr) auto;
+  grid-template-columns: 40px minmax(0, 1fr) 24px;
   gap: 12px;
   align-items: center;
-  min-height: 70px;
-  padding: 10px 0;
+  min-height: 64px;
+  padding: 8px 0;
   border: 0;
   border-bottom: 1px solid var(--color-border, #ddd9e8);
   color: var(--color-text, #33313d);
@@ -76,11 +77,11 @@ const emit = defineEmits(['select'])
 
 .settings-menu__icon {
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   place-items: center;
-  border: 1px solid var(--color-primary-border, #e6dcf6);
-  border-radius: 50%;
+  border: 0;
+  border-radius: 12px;
   color: var(--color-primary-dark, #7156ad);
   background: var(--color-primary-soft, #e6dcf6);
 }
@@ -100,28 +101,29 @@ const emit = defineEmits(['select'])
 }
 
 .settings-menu__arrow {
+  justify-self: end;
   color: var(--color-text-muted, #77717f);
 }
 
 @media (max-width: 480px) {
   .settings-menu {
-    padding: 0 14px;
-    border-radius: 8px;
+    padding: 3px 14px;
+    border-radius: 16px;
   }
 
   .settings-menu__item {
-    grid-template-columns: 34px minmax(0, 1fr) auto;
-    min-height: 64px;
+    grid-template-columns: 38px minmax(0, 1fr) 22px;
+    min-height: 60px;
     gap: 10px;
   }
 
   .settings-menu__icon {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
   }
 
   .settings-menu__copy strong {
-    font-size: 13px;
+    font-size: 14px;
   }
 }
 </style>

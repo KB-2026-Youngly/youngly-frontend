@@ -144,7 +144,8 @@ onMounted(fetchPointOverview)
 @media (max-width: 767px) {
   .point-page {
     gap: 22px;
-    min-height: calc(100vh - 144px);
+    min-height: calc(100dvh - 68px - 76px);
+    margin: 0;
     padding: 28px 20px 54px;
   }
 }

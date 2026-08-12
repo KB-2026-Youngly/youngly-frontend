@@ -2,10 +2,12 @@
   <Teleport to="body">
     <div v-if="open" class="gacha-overlay" @mousedown.self="requestClose">
       <section
+        ref="modalRef"
         class="gacha-modal"
         role="dialog"
         aria-modal="true"
         :aria-labelledby="titleId"
+        tabindex="-1"
         @keydown.esc="requestClose"
       >
         <template v-if="mode === 'confirm'">
@@ -28,37 +30,48 @@
             </div>
           </dl>
 
-          <p v-if="error" class="gacha-modal__error" role="alert">{{ error }}</p>
-          <p v-else-if="loading" class="gacha-modal__loading" role="status" aria-live="polite">
-            <span class="gacha-modal__spinner" aria-hidden="true"></span>
-            캐릭터를 뽑고 있어요. 잠시만 기다려 주세요.
-          </p>
-
           <div class="gacha-modal__actions">
-            <button
-              type="button"
-              class="gacha-modal__secondary"
-              :disabled="loading"
-              @click="requestClose"
-            >
+            <button type="button" class="gacha-modal__secondary" @click="requestClose">
               취소
             </button>
-            <button
-              type="button"
-              class="gacha-modal__primary"
-              :disabled="loading"
-              :aria-busy="loading"
-              @click="emit('confirm')"
-            >
-              <span v-if="loading" class="gacha-modal__spinner" aria-hidden="true"></span>
-              {{ loading ? '뽑는 중...' : '100P로 뽑기' }}
+            <button type="button" class="gacha-modal__primary" @click="emit('confirm')">
+              100P로 뽑기
             </button>
           </div>
         </template>
 
-        <template v-else>
+        <template v-else-if="mode === 'drawing'">
+          <span class="gacha-modal__eyebrow">DRAWING...</span>
+          <h2 :id="titleId">새로운 친구를 만나고 있어요</h2>
+          <div class="gacha-modal__animation" aria-hidden="true">
+            <img :key="animationKey" :src="animationSrc" alt="" draggable="false" />
+          </div>
+          <p class="gacha-modal__drawing-copy" role="status" aria-live="polite">
+            캐릭터를 뽑는 중...
+          </p>
+        </template>
+
+        <template v-else-if="mode === 'error'">
+          <span class="gacha-modal__eyebrow gacha-modal__eyebrow--error">DRAW FAILED</span>
+          <h2 :id="titleId">캐릭터를 뽑지 못했어요</h2>
+          <div class="gacha-modal__error-icon" aria-hidden="true">!</div>
+          <p class="gacha-modal__error" role="alert">
+            {{ error || '잠시 후 다시 시도해 주세요.' }}
+          </p>
+
+          <div class="gacha-modal__actions">
+            <button type="button" class="gacha-modal__secondary" @click="requestClose">
+              닫기
+            </button>
+            <button type="button" class="gacha-modal__primary" @click="emit('confirm')">
+              다시 시도
+            </button>
+          </div>
+        </template>
+
+        <template v-else-if="mode === 'result'">
           <span class="gacha-modal__eyebrow">NEW FRIEND!</span>
-          <h2 :id="titleId">새 캐릭터를 획득했어요!</h2>
+          <h2 :id="titleId">새 캐릭터 획득!</h2>
           <div class="gacha-modal__result">
             <CharacterPreview :character="character" size="hero" />
           </div>
@@ -93,8 +106,9 @@
 </template>
 
 <script setup>
-import { computed, nextTick, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import CharacterPreview from '@/components/collectible/CharacterPreview.vue'
+import gachaDrawAnimation from '@/assets/images/gacha-draw-animation.gif'
 
 defineOptions({ name: 'GachaModal' })
 
@@ -103,7 +117,7 @@ const props = defineProps({
   mode: {
     type: String,
     default: 'confirm',
-    validator: (value) => ['confirm', 'result'].includes(value),
+    validator: (value) => ['confirm', 'drawing', 'error', 'result'].includes(value),
   },
   balance: {
     type: Number,
@@ -114,6 +128,10 @@ const props = defineProps({
     default: null,
   },
   loading: Boolean,
+  animationKey: {
+    type: Number,
+    default: 0,
+  },
   equipping: Boolean,
   error: {
     type: String,
@@ -127,21 +145,24 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'confirm', 'equip'])
 const titleId = 'gacha-modal-title'
+const modalRef = ref(null)
 const formattedBalance = computed(() => new Intl.NumberFormat('ko-KR').format(props.balance))
 const formattedExpectedBalance = computed(() =>
   new Intl.NumberFormat('ko-KR').format(Math.max(0, props.balance - 100)),
 )
+const animationSrc = computed(() => `${gachaDrawAnimation}?attempt=${props.animationKey}`)
 
 const requestClose = () => {
   if (!props.loading && !props.equipping) emit('close')
 }
 
 watch(
-  () => props.open,
-  async (open) => {
+  [() => props.open, () => props.mode],
+  async ([open]) => {
     if (!open) return
     await nextTick()
-    document.querySelector('.gacha-modal button:not([disabled])')?.focus()
+    const focusTarget = modalRef.value?.querySelector('button:not([disabled])') || modalRef.value
+    focusTarget?.focus()
   },
 )
 </script>
@@ -239,6 +260,50 @@ watch(
   border-radius: 50%;
   background: #f6f1fb;
   box-sizing: border-box;
+}
+
+.gacha-modal__animation {
+  display: grid;
+  width: min(280px, 72vw);
+  aspect-ratio: 1;
+  margin: 10px auto 4px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 28px;
+  background: radial-gradient(circle, #ffffff 0 42%, #f2eafb 72%, #e6dcf6 100%);
+}
+
+.gacha-modal__animation img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
+  user-select: none;
+}
+
+.gacha-modal .gacha-modal__drawing-copy {
+  margin: 10px 0 0;
+  color: #7156ad;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.gacha-modal__eyebrow--error {
+  color: #a9445b;
+}
+
+.gacha-modal__error-icon {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  margin: 20px auto 10px;
+  place-items: center;
+  border-radius: 50%;
+  color: #ffffff;
+  background: #a9445b;
+  font-size: 28px;
+  font-weight: 900;
 }
 
 .gacha-modal__name {
@@ -357,6 +422,11 @@ watch(
   .gacha-modal__result {
     width: 170px;
     height: 170px;
+  }
+
+  .gacha-modal__animation {
+    width: min(240px, 70vw);
+    border-radius: 22px;
   }
 
   .gacha-modal__actions {

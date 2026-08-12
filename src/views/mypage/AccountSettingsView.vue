@@ -285,7 +285,8 @@ onBeforeUnmount(() => clearTimeout(messageTimer))
 
 @media (max-width: 767px) {
   .account-settings {
-    min-height: calc(100vh - 185px);
+    min-height: calc(100dvh - 68px - 76px);
+    margin: 0;
     padding: 20px 20px 36px;
   }
 

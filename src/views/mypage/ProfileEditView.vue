@@ -190,7 +190,8 @@ onMounted(() => {
 
 @media (max-width: 767px) {
   .profile-edit-page {
-    min-height: calc(100vh - 62px);
+    min-height: calc(100dvh - 68px - 76px);
+    margin: 0;
     padding: 20px 20px 52px;
   }
 
