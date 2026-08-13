@@ -263,21 +263,30 @@ onMounted(() => {
 
 <style scoped>
 .mypage {
-  --color-primary: #7156ad;
-  --color-primary-dark: #5e4499;
-  --color-primary-hover: #6448a3;
-  --color-primary-soft: #f0eafd;
-  --color-primary-border: #ded2f1;
+  --color-primary: #7658b5;
+  --color-primary-dark: #51367f;
+  --color-primary-hover: #60429a;
+  --color-primary-soft: #eee7fb;
+  --color-primary-border: #cdbfe6;
   --color-surface-hover: #f7f3fc;
+  --mypage-ink: #342843;
+  --mypage-shadow: #c8b7e5;
 
   display: grid;
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
   min-height: calc(100vh - 69px);
   margin: -20px;
-  padding: 24px max(20px, calc((100% - 680px) / 2)) 72px;
+  padding: 32px max(24px, calc((100% - 860px) / 2)) 84px;
   color: var(--color-text, #33313d);
   background: #e6dcf6;
   box-sizing: border-box;
+}
+
+.mypage > :first-child,
+.character-card,
+.logout-button {
+  grid-column: 1 / -1;
 }
 
 .state-panel {
@@ -285,48 +294,60 @@ onMounted(() => {
   display: grid;
   place-items: center;
   padding: 24px;
-  border-radius: 18px;
+  border: 2px solid var(--mypage-ink);
+  border-radius: 20px;
   background: var(--color-surface, #ffffff);
-  box-shadow: 0 8px 24px rgba(62, 45, 92, 0.08);
+  box-shadow: 7px 7px 0 var(--mypage-shadow);
 }
 
 .character-card {
   position: relative;
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr) 40px;
-  gap: 18px;
+  grid-template-columns: 106px minmax(0, 1fr) 48px;
+  gap: 22px;
   align-items: center;
-  min-height: 132px;
-  padding: 34px 22px 20px;
+  min-height: 156px;
+  padding: 38px 28px 24px;
   overflow: hidden;
-  border: 1px solid rgba(113, 86, 173, 0.1);
-  border-radius: 22px;
-  background:
-    radial-gradient(circle at 12% 100%, rgba(218, 202, 240, 0.7), transparent 34%),
-    var(--color-surface, #ffffff);
-  box-shadow: 0 14px 34px rgba(66, 43, 99, 0.09);
+  border: 2px solid var(--mypage-ink);
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 8px 8px 0 var(--mypage-shadow);
   box-sizing: border-box;
+}
+
+.character-card::after {
+  position: absolute;
+  top: 18px;
+  right: 82px;
+  width: 8px;
+  height: 8px;
+  background: #d9c9ef;
+  box-shadow:
+    14px 0 0 #a98bd3,
+    28px 0 0 #7658b5;
+  content: '';
 }
 
 .character-card__badge {
   position: absolute;
-  top: 15px;
-  left: 22px;
+  top: 17px;
+  left: 28px;
   color: var(--color-primary, #7156ad);
   font-size: 9px;
   font-weight: 900;
-  letter-spacing: 0.13em;
+  letter-spacing: 0.18em;
 }
 
 .character-card__preview {
   display: grid;
-  width: 82px;
-  height: 82px;
+  width: 104px;
+  height: 104px;
   padding: 0;
   place-items: center;
   overflow: hidden;
   border: 0;
-  border-radius: 14px;
+  border-radius: 18px;
   background: transparent;
   box-sizing: border-box;
 }
@@ -337,7 +358,8 @@ onMounted(() => {
 
 .character-card__copy h2 {
   margin: 0;
-  font-size: 18px;
+  color: var(--mypage-ink);
+  font-size: 21px;
   line-height: 1.3;
 }
 
@@ -352,25 +374,27 @@ onMounted(() => {
 
 .character-card__action {
   display: inline-flex;
-  margin-top: 8px;
-  padding: 5px 9px;
-  border-radius: 999px;
+  margin-top: 10px;
+  padding: 6px 10px;
+  border: 1px solid #d8ccea;
+  border-radius: 8px;
   color: var(--color-primary-dark, #7156ad);
   background: var(--color-primary-soft, #f0eafd);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .character-card__button {
   display: grid;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   place-items: center;
-  border: 0;
-  border-radius: 50%;
+  border: 2px solid var(--mypage-ink);
+  border-radius: 12px;
   color: var(--color-primary-dark, #7156ad);
-  background: #f0e9f8;
+  background: #eee7fb;
+  box-shadow: 3px 3px 0 #cbbbe4;
   cursor: pointer;
   transition:
     color 0.18s ease,
@@ -381,7 +405,8 @@ onMounted(() => {
 .character-card__button:hover {
   color: #ffffff;
   background: var(--color-primary-hover, #7156ad);
-  transform: translateX(2px);
+  box-shadow: 1px 1px 0 #cbbbe4;
+  transform: translate(2px, 2px);
 }
 
 .character-card__button:focus-visible {
@@ -390,12 +415,14 @@ onMounted(() => {
 }
 
 .logout-button {
-  min-height: 48px;
+  min-height: 54px;
   margin-top: 2px;
-  border: 1px solid rgba(113, 86, 173, 0.1);
-  border-radius: 14px;
-  color: var(--color-text-muted, #77717f);
-  background: rgba(255, 255, 255, 0.62);
+  border: 2px solid rgba(52, 40, 67, 0.18);
+  border-radius: 16px;
+  color: #655b6d;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 5px 5px 0 rgba(114, 84, 165, 0.12);
+  font-weight: 800;
 }
 
 .logout-button:hover:not(:disabled) {
@@ -469,33 +496,39 @@ onMounted(() => {
 
 @media (max-width: 767px) {
   .mypage {
-    gap: 14px;
+    grid-template-columns: 1fr;
+    gap: 17px;
     min-height: calc(100dvh - 68px - 76px);
     margin: 0;
-    padding: 16px 16px 36px;
+    padding: 18px 16px 44px;
+  }
+
+  .mypage > * {
+    grid-column: 1;
   }
 
   .character-card {
-    grid-template-columns: 68px minmax(0, 1fr) 34px;
-    gap: 12px;
-    min-height: 116px;
-    padding: 32px 16px 16px;
+    grid-template-columns: 76px minmax(0, 1fr) 36px;
+    gap: 14px;
+    min-height: 126px;
+    padding: 34px 18px 18px;
     border-radius: 20px;
+    box-shadow: 5px 5px 0 var(--mypage-shadow);
   }
 
   .character-card__badge {
     top: 13px;
-    left: 16px;
+    left: 18px;
   }
 
   .character-card__preview {
-    width: 66px;
-    height: 66px;
-    border-radius: 18px;
+    width: 74px;
+    height: 74px;
+    border-radius: 14px;
   }
 
   .character-card__copy h2 {
-    font-size: 16px;
+    font-size: 17px;
   }
 
   .character-card__copy p {
@@ -506,13 +539,32 @@ onMounted(() => {
   }
 
   .character-card__button {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
   }
 
   .logout-button {
     min-height: 48px;
     border-radius: 14px;
+  }
+}
+
+@media (max-width: 390px) {
+  .character-card {
+    grid-template-columns: 64px minmax(0, 1fr) 32px;
+    gap: 11px;
+    padding-inline: 14px;
+  }
+
+  .character-card__preview {
+    width: 62px;
+    height: 62px;
+  }
+
+  .character-card__action {
+    padding-inline: 7px;
+    font-size: 10px;
   }
 }
 </style>

@@ -70,9 +70,7 @@
           <button
             type="button"
             :aria-label="
-              visibility.confirmation
-                ? '새 비밀번호 확인 숨기기'
-                : '새 비밀번호 확인 표시하기'
+              visibility.confirmation ? '새 비밀번호 확인 숨기기' : '새 비밀번호 확인 표시하기'
             "
             aria-controls="new-password-confirmation"
             @click="visibility.confirmation = !visibility.confirmation"
@@ -83,20 +81,22 @@
         </span>
       </label>
 
-      <p v-if="errorMessage" class="password-form__message password-form__message--error" role="alert">
+      <p
+        v-if="errorMessage"
+        class="password-form__message password-form__message--error"
+        role="alert"
+      >
         {{ errorMessage }}
       </p>
-      <p v-else-if="successMessage" class="password-form__message password-form__message--success" role="status">
+      <p
+        v-else-if="successMessage"
+        class="password-form__message password-form__message--success"
+        role="status"
+      >
         {{ successMessage }}
       </p>
 
-      <BaseButton
-        type="submit"
-        size="large"
-        block
-        :loading="isSubmitting"
-        :disabled="isSuccess"
-      >
+      <BaseButton type="submit" size="large" block :loading="isSubmitting" :disabled="isSuccess">
         <template #loading>변경 중...</template>
         {{ isSuccess ? '변경 완료' : '비밀번호 변경' }}
       </BaseButton>
@@ -353,6 +353,58 @@ onBeforeUnmount(() => window.clearTimeout(redirectTimer))
     gap: 17px;
     padding: 20px 18px;
     border-radius: 18px;
+  }
+}
+</style>
+
+<style scoped>
+.password-page {
+  --mypage-ink: #342843;
+  --mypage-shadow: #c8b7e5;
+  padding-inline: max(22px, calc((100% - 660px) / 2));
+}
+
+.password-header button {
+  border: 2px solid var(--mypage-ink);
+  border-radius: 11px;
+  background: #ffffff;
+  box-shadow: 4px 4px 0 var(--mypage-shadow);
+}
+
+.password-header button:hover {
+  box-shadow: 2px 2px 0 var(--mypage-shadow);
+  transform: translate(2px, 2px);
+}
+
+.password-header h1 {
+  color: var(--mypage-ink);
+  font-size: 27px;
+}
+
+.password-form {
+  border: 2px solid var(--mypage-ink);
+  box-shadow: 7px 7px 0 var(--mypage-shadow);
+}
+
+.password-form__intro > span {
+  border: 1px solid #d8ccea;
+  border-radius: 11px;
+}
+
+.password-field__control {
+  border-width: 2px;
+  border-radius: 10px;
+}
+
+.password-form :deep(.base-button) {
+  border: 2px solid var(--mypage-ink);
+  border-radius: 10px;
+  box-shadow: 4px 4px 0 var(--mypage-shadow);
+}
+
+@media (max-width: 767px) {
+  .password-page {
+    padding-inline: 16px;
   }
 }
 </style>

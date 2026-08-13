@@ -232,3 +232,44 @@ onMounted(() => {
   }
 }
 </style>
+
+<style scoped>
+.profile-edit-page {
+  --mypage-ink: #342843;
+  --mypage-shadow: #c8b7e5;
+  padding-inline: max(22px, calc((100% - 700px) / 2));
+}
+
+.back-link {
+  min-height: 40px;
+  padding-inline: 14px;
+  border: 2px solid var(--mypage-ink);
+  border-radius: 11px;
+  background: #ffffff;
+  box-shadow: 4px 4px 0 var(--mypage-shadow);
+  backdrop-filter: none;
+}
+
+.back-link:hover {
+  box-shadow: 2px 2px 0 var(--mypage-shadow);
+  transform: translate(2px, 2px);
+}
+
+.profile-edit-page :is(.state-panel, .account-menu) {
+  border: 2px solid var(--mypage-ink);
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 6px 6px 0 var(--mypage-shadow);
+}
+
+.account-menu__icon {
+  border: 1px solid #d8ccea;
+  border-radius: 11px;
+}
+
+@media (max-width: 767px) {
+  .profile-edit-page {
+    padding-inline: 16px;
+  }
+}
+</style>

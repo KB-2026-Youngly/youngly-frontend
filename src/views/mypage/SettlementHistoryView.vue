@@ -53,14 +53,22 @@
             @click="isDropdownOpen = !isDropdownOpen"
           >
             <span class="group-dropdown__name">{{ selectedGroup?.groupName }}</span>
-            <span class="group-status" :class="`group-status--${selectedGroup?.status.toLowerCase()}`">
+            <span
+              class="group-status"
+              :class="`group-status--${selectedGroup?.status.toLowerCase()}`"
+            >
               {{ getGroupStatusLabel(selectedGroup?.status) }}
             </span>
             <ChevronDown class="group-dropdown__chevron" :size="19" aria-hidden="true" />
           </button>
 
           <transition name="dropdown">
-            <div v-if="isDropdownOpen" class="group-dropdown__menu" role="listbox" aria-label="참여한 그룹 선택">
+            <div
+              v-if="isDropdownOpen"
+              class="group-dropdown__menu"
+              role="listbox"
+              aria-label="참여한 그룹 선택"
+            >
               <button
                 v-for="group in groups"
                 :key="group.groupId"
@@ -186,8 +194,7 @@ const getGroupStatusLabel = (status) =>
   ({ IN_PROGRESS: '진행 중', ENDED: '종료' })[status] || '상태 미정'
 
 const getSettlementStatusLabel = (status) =>
-  ({ COMPLETED: '정산 완료', PROCESSING: '처리 중', PENDING: '정산 예정' })[status] ||
-  '상태 미정'
+  ({ COMPLETED: '정산 완료', PROCESSING: '처리 중', PENDING: '정산 예정' })[status] || '상태 미정'
 
 const selectGroup = (groupId) => {
   selectedGroupId.value = groupId
@@ -651,6 +658,83 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   .dropdown-enter-active,
   .dropdown-leave-active {
     transition: none;
+  }
+}
+</style>
+
+<style scoped>
+.settlement-page {
+  --mypage-ink: #342843;
+  --mypage-shadow: #c8b7e5;
+  --color-primary: #7658b5;
+  padding-inline: max(22px, calc((100% - 800px) / 2));
+}
+
+.back-button {
+  border: 2px solid var(--mypage-ink);
+  border-radius: 11px;
+  background: #ffffff;
+  box-shadow: 4px 4px 0 var(--mypage-shadow);
+}
+
+.back-button:hover {
+  box-shadow: 2px 2px 0 var(--mypage-shadow);
+  transform: translate(2px, 2px);
+}
+
+.settlement-header h1 {
+  color: var(--mypage-ink);
+  font-size: 28px;
+}
+
+.settlement-page :is(.state-panel, .group-section, .history-section) {
+  border: 2px solid var(--mypage-ink);
+  box-shadow: 7px 7px 0 var(--mypage-shadow);
+}
+
+.summary-card {
+  border: 2px solid var(--mypage-ink);
+  color: #ffffff;
+  background: #7658b5;
+  box-shadow: 8px 8px 0 #b8a2da;
+}
+
+.summary-card__icon {
+  border: 2px solid rgba(255, 255, 255, 0.72);
+  border-radius: 12px;
+  color: #ffe590;
+}
+
+.group-dropdown__trigger {
+  border: 2px solid #d7cbe7;
+  border-radius: 11px;
+  background: #ffffff;
+}
+
+.group-dropdown__trigger[aria-expanded='true'] {
+  border-color: #7658b5;
+  box-shadow: 0 0 0 3px rgba(118, 88, 181, 0.12);
+}
+
+.group-dropdown__menu {
+  border: 2px solid var(--mypage-ink);
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 var(--mypage-shadow);
+}
+
+.settlement-card {
+  border: 2px solid #d9cfe5;
+  border-radius: 14px;
+  box-shadow: 3px 3px 0 #eee7f8;
+}
+
+.settlement-card__heading {
+  background: #f6f1fb;
+}
+
+@media (max-width: 767px) {
+  .settlement-page {
+    padding-inline: 16px;
   }
 }
 </style>

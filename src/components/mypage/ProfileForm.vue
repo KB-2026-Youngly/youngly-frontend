@@ -145,3 +145,21 @@ const handleSubmit = () => {
   }
 }
 </style>
+
+<style scoped>
+.profile-form {
+  border: 2px solid #342843;
+  box-shadow: 7px 7px 0 #c8b7e5;
+}
+
+.profile-form :deep(.base-field__control) {
+  border-width: 2px;
+  border-radius: 10px;
+}
+
+.profile-form :deep(.base-button) {
+  border: 2px solid #342843;
+  border-radius: 10px;
+  box-shadow: 4px 4px 0 #c8b7e5;
+}
+</style>

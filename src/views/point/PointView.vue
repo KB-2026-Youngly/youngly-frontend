@@ -187,3 +187,43 @@ onMounted(fetchPointOverview)
   }
 }
 </style>
+
+<style scoped>
+.point-page {
+  --mypage-ink: #342843;
+  --mypage-shadow: #c8b7e5;
+  --color-primary: #7658b5;
+  padding-inline: max(22px, calc((100% - 760px) / 2));
+}
+
+.back-button {
+  border: 2px solid var(--mypage-ink);
+  border-radius: 11px;
+  background: #ffffff;
+  box-shadow: 4px 4px 0 var(--mypage-shadow);
+}
+
+.back-button:hover {
+  box-shadow: 2px 2px 0 var(--mypage-shadow);
+  transform: translate(2px, 2px);
+}
+
+.page-heading h1 {
+  color: var(--mypage-ink);
+}
+
+.point-page :is(.state-panel, .history-panel) {
+  border: 2px solid var(--mypage-ink);
+  box-shadow: 7px 7px 0 var(--mypage-shadow);
+}
+
+.history-panel__heading {
+  background: #f6f1fb;
+}
+
+@media (max-width: 767px) {
+  .point-page {
+    padding-inline: 16px;
+  }
+}
+</style>

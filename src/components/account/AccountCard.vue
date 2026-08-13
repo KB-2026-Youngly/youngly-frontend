@@ -205,3 +205,28 @@ const accountTypeLabel = computed(() => {
   }
 }
 </style>
+
+<style scoped>
+.account-card {
+  border: 2px solid #342843;
+  box-shadow: 6px 6px 0 #c8b7e5;
+}
+
+.account-card:hover:not(:disabled) {
+  border-color: #7658b5;
+  box-shadow: 3px 3px 0 #c8b7e5;
+  transform: translate(3px, 3px);
+}
+
+.account-card--primary {
+  border: 3px solid #7658b5;
+  background: #f8f4fd;
+  box-shadow: 6px 6px 0 #b8a2da;
+}
+
+.account-card--selected {
+  border-color: #7658b5;
+  background: #fbf9fd;
+  box-shadow: 6px 6px 0 #a98bd3;
+}
+</style>

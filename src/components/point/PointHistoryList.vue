@@ -42,7 +42,8 @@ const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
 
 const getType = (history) => (history.pointType === 'EARN' ? 'earn' : 'use')
 const getTypeLabel = (history) => (getType(history) === 'earn' ? '포인트 적립' : '포인트 사용')
-const formatAmount = (amount) => new Intl.NumberFormat('ko-KR').format(Math.abs(Number(amount) || 0))
+const formatAmount = (amount) =>
+  new Intl.NumberFormat('ko-KR').format(Math.abs(Number(amount) || 0))
 const formatDate = (date) => {
   const parsedDate = new Date(date)
   return Number.isNaN(parsedDate.getTime()) ? '날짜 정보 없음' : dateFormatter.format(parsedDate)
@@ -152,5 +153,20 @@ const formatDate = (date) => {
     grid-column: 2;
     justify-self: start;
   }
+}
+</style>
+
+<style scoped>
+.point-history__item {
+  transition: background-color 0.16s ease;
+}
+
+.point-history__item:hover {
+  background: #faf7fd;
+}
+
+.point-history__type-icon {
+  border: 1px solid currentColor;
+  border-radius: 10px;
 }
 </style>

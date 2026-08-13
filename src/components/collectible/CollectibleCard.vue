@@ -197,3 +197,21 @@ const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
   }
 }
 </style>
+
+<style scoped>
+.character-card {
+  border: 2px solid #342843;
+  box-shadow: 5px 5px 0 #d5c8e9;
+}
+
+.character-card:hover {
+  border-color: #7658b5;
+  box-shadow: 3px 3px 0 #c8b7e5;
+  transform: translate(2px, 2px);
+}
+
+.character-card--equipped {
+  border: 3px solid var(--character-equipped);
+  box-shadow: 6px 6px 0 rgba(52, 112, 90, 0.24);
+}
+</style>

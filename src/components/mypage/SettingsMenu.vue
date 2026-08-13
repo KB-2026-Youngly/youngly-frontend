@@ -57,20 +57,22 @@ const emit = defineEmits(['select'])
 <style scoped>
 .settings-menu {
   display: grid;
-  padding: 6px 20px;
-  border: 1px solid rgba(113, 86, 173, 0.09);
+  grid-auto-rows: 1fr;
+  align-self: stretch;
+  padding: 8px 18px;
+  border: 2px solid #342843;
   border-radius: 20px;
   background: var(--color-surface, #ffffff);
-  box-shadow: 0 14px 34px rgba(66, 43, 99, 0.09);
+  box-shadow: 6px 6px 0 #c8b7e5;
 }
 
 .settings-menu__item {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) 24px;
+  grid-template-columns: 42px minmax(0, 1fr) 24px;
   gap: 12px;
   align-items: center;
-  min-height: 62px;
-  padding: 8px 0;
+  min-height: 66px;
+  padding: 9px 0;
   box-sizing: border-box;
   border: 0;
   border-bottom: 1px solid var(--color-border, #ddd9e8);
@@ -91,6 +93,12 @@ const emit = defineEmits(['select'])
   color: var(--color-primary, #7156ad);
 }
 
+.settings-menu__item:hover .settings-menu__icon {
+  color: #ffffff;
+  background: var(--color-primary, #7156ad);
+  transform: translateY(-2px);
+}
+
 .settings-menu__item--danger,
 .settings-menu__item--danger:hover strong,
 .settings-menu__item--danger:hover .settings-menu__arrow {
@@ -100,6 +108,11 @@ const emit = defineEmits(['select'])
 .settings-menu__item--danger .settings-menu__icon {
   color: var(--color-danger, #e96363);
   background: #fff0f1;
+}
+
+.settings-menu__item--danger:hover .settings-menu__icon {
+  color: #ffffff;
+  background: var(--color-danger, #e96363);
 }
 
 .settings-menu__item:focus-visible {
@@ -112,10 +125,14 @@ const emit = defineEmits(['select'])
   width: 38px;
   height: 38px;
   place-items: center;
-  border: 0;
-  border-radius: 12px;
+  border: 1px solid #d8ccea;
+  border-radius: 11px;
   color: var(--color-primary-dark, #7156ad);
   background: var(--color-primary-soft, #f0eafd);
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease,
+    transform 0.18s ease;
 }
 
 .settings-menu__copy {
@@ -124,7 +141,9 @@ const emit = defineEmits(['select'])
 }
 
 .settings-menu__copy strong {
+  color: #3b3045;
   font-size: 14px;
+  font-weight: 800;
 }
 
 .settings-menu__copy small {
@@ -139,8 +158,9 @@ const emit = defineEmits(['select'])
 
 @media (max-width: 480px) {
   .settings-menu {
-    padding: 4px 16px;
+    padding: 5px 16px;
     border-radius: 18px;
+    box-shadow: 5px 5px 0 #c8b7e5;
   }
 
   .settings-menu__item {

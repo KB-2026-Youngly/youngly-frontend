@@ -110,3 +110,34 @@ const formattedBalance = computed(() => new Intl.NumberFormat('ko-KR').format(pr
   }
 }
 </style>
+
+<style scoped>
+.point-summary {
+  border: 2px solid #342843;
+  background: #7658b5;
+  box-shadow: 8px 8px 0 #b8a2da;
+}
+
+.point-summary::after {
+  position: absolute;
+  right: 28px;
+  bottom: 18px;
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow:
+    14px 0 0 rgba(255, 255, 255, 0.12),
+    28px 0 0 rgba(255, 255, 255, 0.08);
+  content: '';
+}
+
+.point-summary__icon {
+  border: 2px solid rgba(255, 255, 255, 0.72);
+  border-radius: 12px;
+}
+
+.point-summary__badge {
+  border-width: 2px;
+  border-radius: 8px;
+}
+</style>

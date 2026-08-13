@@ -42,16 +42,38 @@ const displayName = computed(() => user.value?.nickname || user.value?.name || '
 <style scoped>
 .profile-card {
   position: relative;
-  padding: 24px;
+  padding: 28px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  border-radius: 22px;
+  border: 2px solid #342843;
+  border-radius: 24px;
   color: #ffffff;
-  background:
-    radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.18), transparent 24%),
-    linear-gradient(135deg, #7156ad 0%, #8d6fc5 100%);
-  box-shadow: 0 16px 36px rgba(83, 57, 128, 0.22);
+  background: #7658b5;
+  box-shadow: 9px 9px 0 #bca7dc;
   box-sizing: border-box;
+}
+
+.profile-card::before,
+.profile-card::after {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.22);
+  content: '';
+}
+
+.profile-card::before {
+  top: 20px;
+  right: 82px;
+  width: 10px;
+  height: 10px;
+  box-shadow:
+    16px 0 0 rgba(255, 255, 255, 0.13),
+    0 16px 0 rgba(255, 255, 255, 0.13);
+}
+
+.profile-card::after {
+  right: 0;
+  bottom: 22px;
+  width: 5px;
+  height: 38px;
 }
 
 .profile-card__top {
@@ -69,15 +91,15 @@ const displayName = computed(() => user.value?.nickname || user.value?.name || '
 .profile-card__info h2 {
   margin: 0;
   color: #ffffff;
-  font-size: 20px;
+  font-size: 23px;
   line-height: 1.35;
 }
 
 .profile-card__info p {
   overflow: hidden;
-  margin: 3px 0 0;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 12px;
+  margin: 5px 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -88,16 +110,19 @@ const displayName = computed(() => user.value?.nickname || user.value?.name || '
   height: 38px;
   padding: 0;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.72);
+  border-radius: 11px;
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.13);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 3px 3px 0 rgba(51, 35, 75, 0.28);
   cursor: pointer;
 }
 
 .profile-card__settings:hover {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.22);
+  box-shadow: 1px 1px 0 rgba(51, 35, 75, 0.28);
+  transform: translate(2px, 2px);
 }
 
 .profile-card__settings:focus-visible {
@@ -107,8 +132,9 @@ const displayName = computed(() => user.value?.nickname || user.value?.name || '
 
 @media (max-width: 480px) {
   .profile-card {
-    padding: 20px 16px 16px;
+    padding: 22px 18px 18px;
     border-radius: 20px;
+    box-shadow: 6px 6px 0 #bca7dc;
   }
 
   .profile-card__top {
@@ -117,7 +143,7 @@ const displayName = computed(() => user.value?.nickname || user.value?.name || '
   }
 
   .profile-card__info h2 {
-    font-size: 18px;
+    font-size: 20px;
   }
 
   .profile-card__settings {

@@ -311,3 +311,39 @@ onBeforeUnmount(() => clearTimeout(messageTimer))
   }
 }
 </style>
+
+<style scoped>
+.account-settings {
+  --mypage-ink: #342843;
+  --mypage-shadow: #c8b7e5;
+  padding-inline: max(22px, calc((100% - 760px) / 2));
+}
+
+.account-settings__header button {
+  border: 2px solid var(--mypage-ink);
+  border-radius: 11px;
+  background: #ffffff;
+  box-shadow: 4px 4px 0 var(--mypage-shadow);
+}
+
+.account-settings__header button:hover {
+  box-shadow: 2px 2px 0 var(--mypage-shadow);
+  transform: translate(2px, 2px);
+}
+
+.account-settings__header h1 {
+  color: var(--mypage-ink);
+  font-size: 27px;
+}
+
+.state-panel {
+  border: 2px solid var(--mypage-ink);
+  box-shadow: 7px 7px 0 var(--mypage-shadow);
+}
+
+@media (max-width: 767px) {
+  .account-settings {
+    padding-inline: 16px;
+  }
+}
+</style>

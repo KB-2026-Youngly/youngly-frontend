@@ -664,3 +664,70 @@ onMounted(() => {
   }
 }
 </style>
+
+<style scoped>
+.character-page {
+  --mypage-ink: #342843;
+  --mypage-shadow: #c8b7e5;
+  --color-primary: #7658b5;
+  padding-inline: max(24px, calc((100% - 960px) / 2));
+}
+
+.back-button {
+  border: 2px solid var(--mypage-ink);
+  border-radius: 11px;
+  background: #ffffff;
+  box-shadow: 4px 4px 0 var(--mypage-shadow);
+}
+
+.back-button:hover {
+  box-shadow: 2px 2px 0 var(--mypage-shadow);
+  transform: translate(2px, 2px);
+}
+
+.character-page :is(.state-panel, .equipped-stage, .draw-panel, .inventory-panel) {
+  border: 2px solid var(--mypage-ink);
+  box-shadow: 8px 8px 0 var(--mypage-shadow);
+}
+
+.equipped-stage:not(.equipped-stage--cover) {
+  background: #ffffff;
+}
+
+.draw-panel {
+  background: #f6f1fb;
+}
+
+.draw-panel__points span {
+  border: 2px solid #d8ccea;
+  border-radius: 8px;
+}
+
+.draw-panel__action button {
+  border: 2px solid var(--mypage-ink);
+  border-radius: 10px;
+  background: #7658b5;
+  box-shadow: 4px 4px 0 #b8a2da;
+}
+
+.draw-panel__action button:hover:not(:disabled) {
+  box-shadow: 2px 2px 0 #b8a2da;
+  transform: translate(2px, 2px);
+}
+
+.inventory-panel__heading {
+  background: #f6f1fb;
+}
+
+.equip-panel {
+  border: 2px solid #d8ccea;
+  border-radius: 12px;
+  background: #faf7fd;
+}
+
+@media (max-width: 767px) {
+  .character-page {
+    padding-inline: 16px;
+  }
+}
+</style>
