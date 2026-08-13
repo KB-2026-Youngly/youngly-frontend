@@ -5,11 +5,6 @@
       <span>마이페이지</span>
     </router-link>
 
-    <header class="page-header">
-      <h1>내 정보</h1>
-      <p>프로필과 계정 정보를 관리하세요.</p>
-    </header>
-
     <section v-if="isLoading" class="state-panel">
       <BaseSpinner size="large" label="사용자 정보를 불러오는 중..." centered />
     </section>
@@ -33,16 +28,24 @@
     />
 
     <nav class="account-menu" aria-label="계정 관리">
+      <p class="account-menu__title">계정 관리</p>
       <button class="account-menu__item" type="button">
-        <span class="account-menu__label">
-          <LockKeyhole :size="16" aria-hidden="true" />
-          비밀번호 변경
+        <span class="account-menu__icon" aria-hidden="true">
+          <LockKeyhole :size="18" />
+        </span>
+        <span class="account-menu__copy">
+          <strong>비밀번호 변경</strong>
         </span>
         <ChevronRight :size="18" aria-hidden="true" />
       </button>
 
       <button class="account-menu__item account-menu__item--danger" type="button">
-        <span>회원 탈퇴</span>
+        <span class="account-menu__icon" aria-hidden="true">
+          <UserRoundX :size="18" />
+        </span>
+        <span class="account-menu__copy">
+          <strong>회원 탈퇴</strong>
+        </span>
         <ChevronRight :size="18" aria-hidden="true" />
       </button>
     </nav>
@@ -52,7 +55,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { ArrowLeft, ChevronRight, LockKeyhole } from 'lucide-vue-next'
+import { ArrowLeft, ChevronRight, LockKeyhole, UserRoundX } from 'lucide-vue-next'
 import BaseEmptyState from '@/components/base/BaseEmptyState.vue'
 import BaseSpinner from '@/components/base/BaseSpinner.vue'
 import ProfileForm from '@/components/mypage/ProfileForm.vue'
@@ -77,15 +80,15 @@ onMounted(() => {
 <style scoped>
 .profile-edit-page {
   --color-primary: #7156ad;
-  --color-primary-dark: #7156ad;
-  --color-primary-hover: #7156ad;
-  --color-primary-soft: #e6dcf6;
-  --color-primary-border: #e6dcf6;
-  --color-surface-hover: #e6dcf6;
+  --color-primary-dark: #5e4499;
+  --color-primary-hover: #6448a3;
+  --color-primary-soft: #f0eafd;
+  --color-primary-border: #ded2f1;
+  --color-surface-hover: #f7f3fc;
 
   min-height: calc(100vh - 69px);
   margin: -20px;
-  padding: 32px max(20px, calc((100% - 720px) / 2)) 80px;
+  padding: 34px max(20px, calc((100% - 680px) / 2)) 80px;
   color: var(--color-text, #33313d);
   background: #e6dcf6;
   box-sizing: border-box;
@@ -94,16 +97,23 @@ onMounted(() => {
 .back-link {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  min-height: 32px;
-  padding: 0 10px;
-  border: 1px solid var(--color-border, #ddd9e8);
-  border-radius: 4px;
-  color: var(--color-text, #33313d);
-  background: var(--color-surface, #ffffff);
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 13px;
+  border: 1px solid rgba(113, 86, 173, 0.12);
+  border-radius: 999px;
+  color: var(--color-primary-dark, #5e4499);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 4px 14px rgba(75, 50, 113, 0.06);
+  backdrop-filter: blur(8px);
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
+}
+
+.back-link + .state-panel,
+.back-link + .profile-form {
+  margin-top: 20px;
 }
 
 .back-link:hover {
@@ -116,30 +126,21 @@ onMounted(() => {
   outline-offset: 2px;
 }
 
-.page-header {
-  margin: 14px 0 20px;
-}
-
-.page-header h1 {
-  margin: 0;
-  color: var(--color-text, #33313d);
-  font-size: 28px;
-  line-height: 1.25;
-}
-
-.page-header p {
-  margin: 7px 0 0;
-  color: var(--color-text-muted, #77717f);
-  font-size: 14px;
-}
-
 .account-menu {
   display: grid;
-  margin-top: 20px;
-  padding: 0 20px;
-  border: 1px solid var(--color-border, #ddd9e8);
-  border-radius: 12px;
+  margin-top: 18px;
+  padding: 20px 22px 4px;
+  border: 1px solid rgba(113, 86, 173, 0.09);
+  border-radius: 20px;
   background: var(--color-surface, #ffffff);
+  box-shadow: 0 14px 34px rgba(66, 43, 99, 0.09);
+}
+
+.account-menu__title {
+  margin: 0 0 8px;
+  color: #4d4755;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .state-panel {
@@ -152,19 +153,19 @@ onMounted(() => {
 }
 
 .account-menu__item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 12px;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  min-height: 58px;
+  min-height: 62px;
   padding: 0;
   border: 0;
   border-bottom: 1px solid var(--color-border, #ddd9e8);
   color: var(--color-text, #33313d);
   background: transparent;
   font-family: inherit;
-  font-size: 14px;
-  font-weight: 700;
   text-align: left;
   cursor: pointer;
 }
@@ -177,10 +178,24 @@ onMounted(() => {
   color: var(--color-primary, #7156ad);
 }
 
-.account-menu__label {
-  display: inline-flex;
+.account-menu__icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
+  border-radius: 12px;
+  color: var(--color-primary, #7156ad);
+  background: var(--color-primary-soft, #f0eafd);
+}
+
+.account-menu__copy {
+  display: grid;
+  gap: 4px;
+}
+
+.account-menu__copy strong {
+  font-size: 14px;
 }
 
 .account-menu__item--danger,
@@ -188,34 +203,32 @@ onMounted(() => {
   color: var(--color-danger, #e96363);
 }
 
+.account-menu__item--danger .account-menu__icon {
+  color: var(--color-danger, #e96363);
+  background: #fff1f1;
+}
+
 @media (max-width: 767px) {
   .profile-edit-page {
     min-height: calc(100dvh - 68px - 76px);
     margin: 0;
-    padding: 20px 20px 52px;
-  }
-
-  .page-header {
-    margin: 12px 0 16px;
-  }
-
-  .page-header h1 {
-    font-size: 22px;
-  }
-
-  .page-header p {
-    font-size: 13px;
+    padding: 20px 16px 52px;
   }
 
   .account-menu {
     margin-top: 14px;
-    padding: 0 14px;
-    border-radius: 8px;
+    padding: 18px 16px 2px;
+    border-radius: 18px;
+  }
+
+  .back-link + .state-panel,
+  .back-link + .profile-form {
+    margin-top: 16px;
   }
 
   .account-menu__item {
-    min-height: 54px;
-    font-size: 13px;
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    min-height: 60px;
   }
 }
 </style>

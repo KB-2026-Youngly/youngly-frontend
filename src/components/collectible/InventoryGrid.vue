@@ -36,7 +36,7 @@ const emit = defineEmits(['select'])
 .inventory-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
+  gap: 16px;
 }
 
 @media (max-width: 860px) {

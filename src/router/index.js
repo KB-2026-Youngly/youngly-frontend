@@ -67,6 +67,16 @@ const routes = [
         name: 'AccountSettings',
         component: () => import('@/views/mypage/AccountSettingsView.vue'),
       },
+      {
+        path: 'settlements',
+        name: 'SettlementHistory',
+        component: () => import('@/views/mypage/SettlementHistoryView.vue'),
+      },
+      {
+        path: 'password',
+        name: 'PasswordChange',
+        component: () => import('@/views/mypage/PasswordChangeView.vue'),
+      },
     ],
   },
   {

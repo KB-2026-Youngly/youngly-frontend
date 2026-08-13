@@ -1,5 +1,9 @@
 <template>
   <div class="point-page">
+    <button class="back-button" type="button" aria-label="마이페이지로 돌아가기" @click="goBack">
+      <ArrowLeft :size="18" aria-hidden="true" />
+    </button>
+
     <header class="page-heading">
       <span>REWARD LOG</span>
       <h1>내 포인트</h1>
@@ -49,7 +53,8 @@
 <script setup>
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { AlertTriangle } from 'lucide-vue-next'
+import { AlertTriangle, ArrowLeft } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
 import BaseEmptyState from '@/components/base/BaseEmptyState.vue'
 import BaseSpinner from '@/components/base/BaseSpinner.vue'
 import PointHistoryList from '@/components/point/PointHistoryList.vue'
@@ -57,8 +62,10 @@ import PointSummary from '@/components/point/PointSummary.vue'
 import { usePointStore } from '@/stores/point'
 
 const pointStore = usePointStore()
+const router = useRouter()
 const { balance, histories, isLoading, error } = storeToRefs(pointStore)
 const { fetchPointOverview } = pointStore
+const goBack = () => router.push('/mypage')
 
 onMounted(fetchPointOverview)
 </script>
@@ -66,19 +73,41 @@ onMounted(fetchPointOverview)
 <style scoped>
 .point-page {
   --color-primary: #7156ad;
+  --color-primary-dark: #5e4499;
   --color-primary-hover: #62479e;
-  --color-primary-soft: #eee7f8;
+  --color-primary-soft: #f0eafd;
 
   display: grid;
-  gap: 28px;
+  gap: 20px;
   min-height: calc(100vh - 69px);
   margin: -20px;
-  padding: 42px max(24px, calc((100% - 880px) / 2)) 80px;
+  padding: 28px max(20px, calc((100% - 720px) / 2)) 72px;
   color: #342e3c;
-  background-color: #e6dcf6;
-  background-image: radial-gradient(rgba(113, 86, 173, 0.1) 1px, transparent 1px);
-  background-size: 16px 16px;
+  background: #e6dcf6;
   box-sizing: border-box;
+}
+
+.back-button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid rgba(113, 86, 173, 0.12);
+  border-radius: 50%;
+  color: var(--color-primary-dark);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 5px 14px rgba(66, 43, 99, 0.07);
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background: #ffffff;
+}
+
+.back-button:focus-visible {
+  outline: 3px solid rgba(113, 86, 173, 0.25);
+  outline-offset: 2px;
 }
 
 .page-heading span,
@@ -90,8 +119,9 @@ onMounted(fetchPointOverview)
 }
 
 .page-heading h1 {
-  margin: 6px 0 8px;
-  font-size: clamp(28px, 5vw, 38px);
+  margin: 7px 0 8px;
+  font-size: clamp(27px, 5vw, 34px);
+  letter-spacing: -0.04em;
   line-height: 1.15;
 }
 
@@ -103,10 +133,10 @@ onMounted(fetchPointOverview)
 
 .state-panel,
 .history-panel {
-  border: 3px solid #322a43;
-  border-radius: 6px;
+  border: 1px solid rgba(113, 86, 173, 0.09);
+  border-radius: 20px;
   background: #ffffff;
-  box-shadow: 7px 7px 0 #7156ad;
+  box-shadow: 0 14px 34px rgba(66, 43, 99, 0.09);
 }
 
 .state-panel {
@@ -124,8 +154,8 @@ onMounted(fetchPointOverview)
   align-items: center;
   justify-content: space-between;
   padding: 21px 22px 18px;
-  border-bottom: 3px solid #322a43;
-  background: #fbf9fd;
+  border-bottom: 1px solid #eee8f3;
+  background: linear-gradient(180deg, #fdfcfe, #faf8fc);
 }
 
 .history-panel__heading h2 {
@@ -134,8 +164,9 @@ onMounted(fetchPointOverview)
 }
 
 .history-panel__heading > strong {
-  padding: 5px 9px;
-  border: 2px solid #d4c5e7;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 999px;
   color: #7156ad;
   background: #eee7f8;
   font-size: 12px;
@@ -143,10 +174,10 @@ onMounted(fetchPointOverview)
 
 @media (max-width: 767px) {
   .point-page {
-    gap: 22px;
+    gap: 18px;
     min-height: calc(100dvh - 68px - 76px);
     margin: 0;
-    padding: 28px 20px 54px;
+    padding: 20px 16px 48px;
   }
 }
 

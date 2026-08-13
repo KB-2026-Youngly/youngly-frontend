@@ -123,6 +123,12 @@ let toastTimer
 onMounted(() => {
   const savedId = localStorage.getItem('youngly_saved_login_id')
   if (savedId) { form.userId = savedId; rememberId.value = true }
+  if (route.query.notice === 'account-deactivated') {
+    showToast('회원 탈퇴가 완료되었습니다.')
+    const nextQuery = { ...route.query }
+    delete nextQuery.notice
+    router.replace({ name: 'Login', query: nextQuery })
+  }
 })
 onBeforeUnmount(() => { document.body.style.overflow = ''; clearTimeout(toastTimer) })
 watch(sheetOpen, value => { document.body.style.overflow = value ? 'hidden' : '' })

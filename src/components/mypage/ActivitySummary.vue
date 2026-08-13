@@ -37,11 +37,12 @@ defineProps({
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   overflow: hidden;
-  margin: 18px 0 0;
+  margin: 22px 0 0;
   padding: 6px;
-  border: 1px solid #eee9f3;
-  border-radius: 14px;
-  background: #faf8fc;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
 }
 
 .activity-summary__item {
@@ -54,7 +55,7 @@ defineProps({
   min-height: 72px;
   padding: 9px 14px;
   border: 0;
-  border-right: 1px solid #e5dfea;
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
   color: inherit;
   text-align: center;
   text-decoration: none;
@@ -66,24 +67,23 @@ defineProps({
 }
 
 .activity-summary__label {
-  color: var(--color-text-muted, #77717f);
+  color: rgba(255, 255, 255, 0.7);
   font-size: 11px;
   white-space: nowrap;
 }
 
 .activity-summary__item > strong {
-  color: var(--color-text, #33313d);
+  color: #ffffff;
   font-size: 20px;
   font-weight: 800;
 }
 
 .activity-summary .activity-summary__value--point {
-  color: var(--color-primary-dark, #7156ad);
+  color: #ffffff;
 }
 
 .activity-summary__item--point {
-  border-radius: 10px;
-  background: #f1eafa;
+  background: transparent;
 }
 
 .activity-summary__item--link {
@@ -100,7 +100,7 @@ defineProps({
 }
 
 .activity-summary__item--link:hover {
-  background: #e8ddf5;
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .activity-summary__item--link:focus-visible {
@@ -112,7 +112,7 @@ defineProps({
   position: absolute;
   top: 50%;
   right: 8px;
-  color: var(--color-primary-dark, #7156ad);
+  color: #ffffff;
   transform: translateY(-50%);
   transition: transform 0.18s ease;
 }

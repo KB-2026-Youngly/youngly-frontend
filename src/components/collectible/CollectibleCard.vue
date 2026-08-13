@@ -11,9 +11,6 @@
     @click="emit('select', character.characterId)"
   >
     <span v-if="equipped" class="character-card__badge">장착 중</span>
-    <span v-else-if="selected" class="character-card__badge character-card__badge--selected">
-      선택됨
-    </span>
 
     <span class="character-card__image">
       <CharacterPreview :character="character" />
@@ -49,28 +46,34 @@ const emit = defineEmits(['select'])
 
 <style scoped>
 .character-card {
+  --character-selected: #f59e0b;
+  --character-equipped: #34705a;
+  --character-equipped-shadow: rgba(52, 112, 90, 0.22);
+
   position: relative;
   display: grid;
-  gap: 10px;
+  gap: 11px;
   min-width: 0;
-  padding: 12px 12px 14px;
-  border: 3px solid #d7cce7;
-  border-radius: 5px;
+  padding: 11px 11px 15px;
+  border: 1px solid #e2d9eb;
+  border-radius: 16px;
   color: #342e3c;
   background: #ffffff;
   font-family: inherit;
   text-align: center;
   cursor: pointer;
-  box-shadow: 4px 4px 0 #d7cce7;
+  box-shadow: 0 7px 18px rgba(66, 43, 99, 0.07);
+  box-sizing: border-box;
   transition:
-    transform 0.12s ease,
-    border-color 0.12s ease,
-    box-shadow 0.12s ease;
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .character-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   border-color: #9d89c4;
+  box-shadow: 0 12px 24px rgba(83, 57, 128, 0.13);
 }
 
 .character-card:focus-visible {
@@ -78,22 +81,20 @@ const emit = defineEmits(['select'])
   outline-offset: 3px;
 }
 
-.character-card--selected {
-  transform: translateY(-2px);
-  border-color: #7156ad;
-  box-shadow: 5px 5px 0 #7156ad;
-}
-
 .character-card--equipped {
-  border-color: #4f8874;
-  box-shadow: 5px 5px 0 #4f8874;
+  border: 3px solid var(--character-equipped);
+  box-shadow:
+    0 0 0 3px rgba(52, 112, 90, 0.1),
+    0 13px 26px var(--character-equipped-shadow);
 }
 
 .character-card__image {
   display: block;
   width: 100%;
   aspect-ratio: 1;
-  border: 2px solid #ede7f5;
+  overflow: hidden;
+  border: 1px solid #ede7f5;
+  border-radius: 12px;
   background:
     linear-gradient(45deg, #f4effa 25%, transparent 25%) 0 0 / 20px 20px,
     linear-gradient(45deg, transparent 75%, #f4effa 75%) 0 0 / 20px 20px,
@@ -110,19 +111,15 @@ const emit = defineEmits(['select'])
 .character-card__badge {
   position: absolute;
   z-index: 1;
-  top: 7px;
-  left: 7px;
-  padding: 4px 7px;
-  border: 2px solid #2f594a;
+  top: 8px;
+  left: 8px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 999px;
   color: #ffffff;
-  background: #4f8874;
+  background: var(--character-equipped);
   font-size: 10px;
   font-weight: 900;
-}
-
-.character-card__badge--selected {
-  border-color: #4d397b;
-  background: #7156ad;
 }
 
 .character-card__check {
@@ -136,10 +133,14 @@ const emit = defineEmits(['select'])
   border: 2px solid #ffffff;
   border-radius: 50%;
   color: #ffffff;
-  background: #7156ad;
+  background: var(--character-selected);
 }
 
 .character-card--selected .character-card__check {
   display: grid;
+}
+
+.character-card--equipped .character-card__check {
+  display: none;
 }
 </style>

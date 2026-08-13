@@ -172,23 +172,23 @@ onBeforeUnmount(() => clearTimeout(messageTimer))
 <style scoped>
 .account-settings {
   --color-primary: #7156ad;
-  --color-primary-dark: #7156ad;
+  --color-primary-dark: #5e4499;
   --color-primary-hover: #604795;
-  --color-primary-soft: #e6dcf6;
+  --color-primary-soft: #f0eafd;
   --color-primary-border: #d8c8ed;
 
   min-height: calc(100vh - 109px);
   margin: -20px;
-  padding: 32px max(20px, calc((100% - 780px) / 2)) 60px;
+  padding: 24px max(20px, calc((100% - 720px) / 2)) 72px;
   color: #33313d;
   background: #e6dcf6;
   box-sizing: border-box;
 }
 
 .account-settings__header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
   align-items: center;
-  gap: 12px;
 }
 
 .account-settings__header button {
@@ -198,10 +198,11 @@ onBeforeUnmount(() => clearTimeout(messageTimer))
   flex: 0 0 40px;
   padding: 0;
   place-items: center;
-  border: 1px solid #ddd9e8;
-  border-radius: 10px;
-  color: #4a4452;
-  background: #ffffff;
+  border: 1px solid rgba(113, 86, 173, 0.12);
+  border-radius: 50%;
+  color: var(--color-primary-dark);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 5px 14px rgba(66, 43, 99, 0.07);
   cursor: pointer;
 }
 
@@ -212,19 +213,22 @@ onBeforeUnmount(() => clearTimeout(messageTimer))
 
 .account-settings__header h1 {
   margin: 0;
-  font-size: 25px;
+  font-size: 21px;
+  letter-spacing: -0.03em;
+  text-align: center;
 }
 
 .account-settings__description {
-  margin: 14px 0 24px 52px;
+  margin: 14px 0 24px;
   color: #77717f;
   font-size: 13px;
+  text-align: center;
 }
 
 .account-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
 }
 
 .state-panel {
@@ -232,15 +236,17 @@ onBeforeUnmount(() => clearTimeout(messageTimer))
   display: grid;
   place-items: center;
   padding: 24px;
-  border: 1px solid #e8e3ed;
-  border-radius: 14px;
+  border: 1px solid rgba(113, 86, 173, 0.09);
+  border-radius: 20px;
   background: #ffffff;
+  box-shadow: 0 14px 34px rgba(66, 43, 99, 0.09);
 }
 
 .message {
   margin: 16px 0 0;
   padding: 13px 16px;
-  border-radius: 10px;
+  border: 1px solid transparent;
+  border-radius: 13px;
   font-size: 13px;
   text-align: center;
 }
@@ -249,11 +255,13 @@ onBeforeUnmount(() => clearTimeout(messageTimer))
 .modal-error {
   color: #a84242;
   background: #fff0f0;
+  border-color: #f4d8d8;
 }
 
 .message--success {
   color: #4f3978;
   background: #eee6f8;
+  border-color: #ded0ed;
 }
 
 .confirm-copy {
@@ -287,15 +295,11 @@ onBeforeUnmount(() => clearTimeout(messageTimer))
   .account-settings {
     min-height: calc(100dvh - 68px - 76px);
     margin: 0;
-    padding: 20px 20px 36px;
+    padding: 16px 16px 40px;
   }
 
   .account-settings__header h1 {
     font-size: 21px;
-  }
-
-  .account-settings__description {
-    margin-left: 0;
   }
 
   .account-list {

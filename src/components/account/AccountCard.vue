@@ -71,16 +71,17 @@ const accountTypeLabel = computed(() => {
 <style scoped>
 .account-card {
   display: grid;
-  gap: 8px;
+  gap: 9px;
   width: 100%;
-  padding: 20px;
-  border: 1px solid #d9d3e2;
-  border-radius: 14px;
+  padding: 21px;
+  border: 1px solid rgba(113, 86, 173, 0.12);
+  border-radius: 18px;
   color: #33313d;
   background: #ffffff;
   font-family: inherit;
   text-align: left;
   cursor: pointer;
+  box-shadow: 0 10px 26px rgba(66, 43, 99, 0.08);
   transition:
     border-color 0.18s ease,
     box-shadow 0.18s ease,
@@ -89,7 +90,8 @@ const accountTypeLabel = computed(() => {
 
 .account-card:hover:not(:disabled) {
   border-color: #a891ca;
-  transform: translateY(-1px);
+  box-shadow: 0 15px 30px rgba(66, 43, 99, 0.13);
+  transform: translateY(-2px);
 }
 
 .account-card:focus-visible {
@@ -98,14 +100,21 @@ const accountTypeLabel = computed(() => {
 }
 
 .account-card--primary {
-  border: 2px solid #7156ad;
-  background: #f8f3fc;
-  box-shadow: 0 6px 18px rgba(83, 58, 126, 0.12);
+  border: 1px solid #9c83c3;
+  background:
+    radial-gradient(circle at 90% 8%, rgba(255, 255, 255, 0.8), transparent 30%),
+    linear-gradient(145deg, #ffffff, #f2eafa);
+  box-shadow:
+    0 0 0 2px rgba(113, 86, 173, 0.08),
+    0 14px 30px rgba(83, 58, 126, 0.14);
 }
 
 .account-card--selected {
   border-color: #7156ad;
-  box-shadow: 0 0 0 2px rgba(113, 86, 173, 0.16);
+  background: #fbf9fd;
+  box-shadow:
+    0 0 0 3px rgba(113, 86, 173, 0.13),
+    0 14px 30px rgba(83, 58, 126, 0.12);
 }
 
 .account-card:disabled {
@@ -127,7 +136,9 @@ const accountTypeLabel = computed(() => {
 
 .account-card__balance {
   margin-top: 8px;
-  font-size: 22px;
+  font-size: clamp(20px, 4vw, 24px);
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
 }
 
 .account-card__number {
@@ -137,11 +148,11 @@ const accountTypeLabel = computed(() => {
 }
 
 .account-card__type {
-  padding: 4px 8px;
-  border: 1px solid #d8cbed;
+  padding: 5px 9px;
+  border: 0;
   border-radius: 999px;
   color: #65518e;
-  background: #f2ecf9;
+  background: #eee7f8;
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
@@ -153,7 +164,7 @@ const accountTypeLabel = computed(() => {
   align-items: center;
   margin-top: 7px;
   padding-top: 12px;
-  border-top: 1px solid #e7e1ec;
+  border-top: 1px solid #ebe5ef;
 }
 
 .account-card__status,
@@ -166,7 +177,7 @@ const accountTypeLabel = computed(() => {
 }
 
 .account-card__status {
-  padding: 5px 9px;
+  padding: 6px 10px;
   border-radius: 999px;
   color: #ffffff;
   background: #7156ad;
@@ -174,7 +185,7 @@ const accountTypeLabel = computed(() => {
 
 .account-card__status--selected {
   color: #604795;
-  background: #e6dcf6;
+  background: #eee7f8;
 }
 
 .account-card__hint {
@@ -185,8 +196,8 @@ const accountTypeLabel = computed(() => {
 
 @media (max-width: 480px) {
   .account-card {
-    padding: 17px;
-    border-radius: 10px;
+    padding: 18px;
+    border-radius: 17px;
   }
 
   .account-card__balance {

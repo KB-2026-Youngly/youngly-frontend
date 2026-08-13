@@ -38,10 +38,10 @@ const emit = defineEmits(['equip'])
 <style scoped>
 .equip-button {
   min-height: 52px;
-  border: 3px solid #3d2e60;
-  border-radius: 4px;
+  border: 0;
+  border-radius: 12px;
   background: #7156ad;
-  box-shadow: 5px 5px 0 #3d2e60;
+  box-shadow: 0 9px 20px rgba(113, 86, 173, 0.22);
 }
 
 .equip-button:hover:not(:disabled) {

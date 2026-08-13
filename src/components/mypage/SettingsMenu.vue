@@ -1,14 +1,22 @@
 <template>
-  <nav class="settings-menu" aria-label="마이페이지 설정">
-    <button
+  <nav class="settings-menu" :aria-label="ariaLabel">
+    <component
+      :is="item.href ? 'a' : 'button'"
       v-for="item in items"
       :key="item.id"
       class="settings-menu__item"
-      type="button"
-      @click="emit('select', item.id)"
+      :class="{ 'settings-menu__item--danger': item.danger }"
+      :type="item.href ? undefined : 'button'"
+      :href="item.href || undefined"
+      :target="item.href ? '_blank' : undefined"
+      :rel="item.href ? 'noopener noreferrer' : undefined"
+      @click="!item.href && emit('select', item.id)"
     >
       <span class="settings-menu__icon" aria-hidden="true">
         <WalletCards v-if="item.icon === 'account'" :size="19" />
+        <Headphones v-else-if="item.icon === 'support'" :size="19" />
+        <LockKeyhole v-else-if="item.icon === 'password'" :size="19" />
+        <UserRoundX v-else-if="item.icon === 'withdrawal'" :size="19" />
         <ChartNoAxesColumnIncreasing v-else :size="19" />
       </span>
 
@@ -18,14 +26,25 @@
       </span>
 
       <ChevronRight class="settings-menu__arrow" :size="18" aria-hidden="true" />
-    </button>
+    </component>
   </nav>
 </template>
 
 <script setup>
-import { ChartNoAxesColumnIncreasing, ChevronRight, WalletCards } from 'lucide-vue-next'
+import {
+  ChartNoAxesColumnIncreasing,
+  ChevronRight,
+  Headphones,
+  LockKeyhole,
+  UserRoundX,
+  WalletCards,
+} from 'lucide-vue-next'
 
 defineProps({
+  ariaLabel: {
+    type: String,
+    default: '마이페이지 설정',
+  },
   items: {
     type: Array,
     required: true,
@@ -38,11 +57,11 @@ const emit = defineEmits(['select'])
 <style scoped>
 .settings-menu {
   display: grid;
-  padding: 4px 18px;
-  border: 1px solid rgba(113, 86, 173, 0.08);
-  border-radius: 18px;
+  padding: 6px 20px;
+  border: 1px solid rgba(113, 86, 173, 0.09);
+  border-radius: 20px;
   background: var(--color-surface, #ffffff);
-  box-shadow: 0 8px 24px rgba(62, 45, 92, 0.08);
+  box-shadow: 0 14px 34px rgba(66, 43, 99, 0.09);
 }
 
 .settings-menu__item {
@@ -50,14 +69,16 @@ const emit = defineEmits(['select'])
   grid-template-columns: 40px minmax(0, 1fr) 24px;
   gap: 12px;
   align-items: center;
-  min-height: 64px;
+  min-height: 62px;
   padding: 8px 0;
+  box-sizing: border-box;
   border: 0;
   border-bottom: 1px solid var(--color-border, #ddd9e8);
   color: var(--color-text, #33313d);
   background: transparent;
   font-family: inherit;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
 }
 
@@ -68,6 +89,17 @@ const emit = defineEmits(['select'])
 .settings-menu__item:hover .settings-menu__arrow,
 .settings-menu__item:hover strong {
   color: var(--color-primary, #7156ad);
+}
+
+.settings-menu__item--danger,
+.settings-menu__item--danger:hover strong,
+.settings-menu__item--danger:hover .settings-menu__arrow {
+  color: var(--color-danger, #e96363);
+}
+
+.settings-menu__item--danger .settings-menu__icon {
+  color: var(--color-danger, #e96363);
+  background: #fff0f1;
 }
 
 .settings-menu__item:focus-visible {
@@ -83,7 +115,7 @@ const emit = defineEmits(['select'])
   border: 0;
   border-radius: 12px;
   color: var(--color-primary-dark, #7156ad);
-  background: var(--color-primary-soft, #e6dcf6);
+  background: var(--color-primary-soft, #f0eafd);
 }
 
 .settings-menu__copy {
@@ -107,8 +139,8 @@ const emit = defineEmits(['select'])
 
 @media (max-width: 480px) {
   .settings-menu {
-    padding: 3px 14px;
-    border-radius: 16px;
+    padding: 4px 16px;
+    border-radius: 18px;
   }
 
   .settings-menu__item {

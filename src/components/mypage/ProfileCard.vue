@@ -2,7 +2,7 @@
   <section class="profile-card" aria-labelledby="profile-name">
     <div class="profile-card__top">
       <div class="profile-card__info">
-        <h2 id="profile-name">{{ user?.name || '이름 없음' }}</h2>
+        <h2 id="profile-name">{{ displayName }}님</h2>
         <p>{{ user?.email || '이메일 정보 없음' }}</p>
       </div>
 
@@ -12,7 +12,7 @@
         aria-label="내 정보 수정"
         @click="emit('edit')"
       >
-        <Settings :size="18" aria-hidden="true" />
+        <Settings :size="17" aria-hidden="true" />
       </button>
     </div>
 
@@ -21,6 +21,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Settings } from 'lucide-vue-next'
 import ActivitySummary from '@/components/mypage/ActivitySummary.vue'
@@ -35,21 +36,27 @@ defineProps({
 
 const { user } = storeToRefs(useUserStore())
 const emit = defineEmits(['edit'])
+const displayName = computed(() => user.value?.nickname || user.value?.name || '이름 없음')
 </script>
 
 <style scoped>
 .profile-card {
-  padding: 20px;
-  border: 1px solid rgba(113, 86, 173, 0.08);
-  border-radius: 18px;
-  background: var(--color-surface, #ffffff);
-  box-shadow: 0 8px 24px rgba(62, 45, 92, 0.08);
+  position: relative;
+  padding: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 22px;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.18), transparent 24%),
+    linear-gradient(135deg, #7156ad 0%, #8d6fc5 100%);
+  box-shadow: 0 16px 36px rgba(83, 57, 128, 0.22);
   box-sizing: border-box;
 }
 
 .profile-card__top {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 40px;
+  grid-template-columns: minmax(0, 1fr) 38px;
   align-items: center;
   gap: 16px;
 }
@@ -61,15 +68,15 @@ const emit = defineEmits(['edit'])
 
 .profile-card__info h2 {
   margin: 0;
-  color: var(--color-text, #33313d);
-  font-size: 19px;
+  color: #ffffff;
+  font-size: 20px;
   line-height: 1.35;
 }
 
 .profile-card__info p {
   overflow: hidden;
-  margin: 4px 0 0;
-  color: var(--color-text-muted, #77717f);
+  margin: 3px 0 0;
+  color: rgba(255, 255, 255, 0.72);
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -81,16 +88,16 @@ const emit = defineEmits(['edit'])
   height: 38px;
   padding: 0;
   place-items: center;
-  border: 0;
-  border-radius: 50%;
-  color: var(--color-primary-dark, #7156ad);
-  background: #f2ecf9;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.13);
   cursor: pointer;
 }
 
 .profile-card__settings:hover {
-  color: var(--color-primary, #7156ad);
-  background: var(--color-surface-hover, #f4f2f8);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .profile-card__settings:focus-visible {
@@ -100,22 +107,22 @@ const emit = defineEmits(['edit'])
 
 @media (max-width: 480px) {
   .profile-card {
-    padding: 16px 14px 14px;
-    border-radius: 16px;
+    padding: 20px 16px 16px;
+    border-radius: 20px;
   }
 
   .profile-card__top {
-    grid-template-columns: minmax(0, 1fr) 36px;
+    grid-template-columns: minmax(0, 1fr) 34px;
     gap: 10px;
   }
 
   .profile-card__info h2 {
-    font-size: 17px;
+    font-size: 18px;
   }
 
   .profile-card__settings {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
   }
 }
 </style>
