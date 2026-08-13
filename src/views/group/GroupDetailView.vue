@@ -6,24 +6,27 @@
         뒤로
       </button>
 
-      <section class="challenge-summary pixel-step-card pixel-step-solid" aria-label="챌린지 안내">
-        <div class="challenge-summary-surface pixel-step-surface">
-          <div class="summary-copy">
-            <p class="status-message">
-              <span aria-hidden="true">{{ challengeStarted ? '🚩' : '🚩' }}</span>
-              {{ challengeStarted ? `${challengeDay}/${challengeDuration}일` : '아직 시작 전입니다!' }}
-            </p>
-            <p class="goal-message"><span aria-hidden="true">🎯</span> {{ groupInfo.goal }}</p>
+      <div class="detail-card-shadow detail-card-shadow--summary yl-stepped-card-shadow">
+        <section class="challenge-summary yl-card-frame pixel-step-card pixel-step-solid" aria-label="챌린지 안내">
+          <div class="challenge-summary-surface pixel-step-surface">
+            <div class="summary-copy">
+              <p class="status-message">
+                <span aria-hidden="true">{{ challengeStarted ? '🚩' : '🚩' }}</span>
+                {{ challengeStarted ? `${challengeDay}/${challengeDuration}일` : '아직 시작 전입니다!' }}
+              </p>
+              <p class="goal-message"><span aria-hidden="true">🎯</span> {{ groupInfo.goal }}</p>
+            </div>
+            <button class="pixel-button pixel-step-button account-button" type="button" @click="router.push('/asset')">
+              <span class="account-icon" aria-hidden="true">♧</span>
+              통장
+            </button>
           </div>
-          <button class="pixel-button pixel-step-button account-button" type="button" @click="router.push('/asset')">
-            <span class="account-icon" aria-hidden="true">♧</span>
-            통장
-          </button>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      <section class="ranking-panel pixel-frame pixel-step-card pixel-step-solid" aria-label="현재 랭킹">
-        <div class="ranking-panel-surface pixel-step-surface">
+      <div class="detail-card-shadow yl-stepped-card-shadow">
+        <section class="ranking-panel pixel-frame yl-card-frame pixel-step-card pixel-step-solid" aria-label="현재 랭킹">
+          <div class="ranking-panel-surface pixel-step-surface">
           <div class="ranking-heading">
             <span>랭킹</span>
             <button class="expand-button" type="button" aria-label="랭킹 크게 보기" @click="rankingModalOpen = true">↗</button>
@@ -45,8 +48,9 @@
             <span class="goal-flag" aria-hidden="true">⚑</span>
           </div>
           <span class="ranking-percent">내 진행률 {{ myProgress }}%</span>
-        </div>
-      </section>
+          </div>
+        </section>
+      </div>
 
       <div class="day-selector" aria-label="인증 날짜 선택">
         <button type="button" aria-label="이전 날짜">‹</button>
@@ -200,19 +204,16 @@
 
     <BaseModal
       v-model="groupEditOpen"
-      modal-class="youngly-modal group-edit-modal"
+      :modal-class="['youngly-modal', 'group-edit-modal', { 'is-expanded': groupEditSheetExpanded }]"
       title="그룹 정보 수정"
       size="large"
       :show-close-button="false"
+      :auto-focus="false"
       @close="closeGroupEdit"
     >
       <template #header>
         <div
           class="group-edit-sheet-header"
-          @pointerdown="startGroupEditSwipe"
-          @pointermove="moveGroupEditSwipe"
-          @pointerup="endGroupEditSwipe"
-          @pointercancel="cancelGroupEditSwipe"
         >
           <span class="group-edit-sheet-handle" aria-hidden="true"></span>
           <span>그룹 정보 수정</span>
@@ -357,7 +358,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseModal from '@/components/base/BaseModal.vue'
 import verificationImageOne from '@/assets/photos/excercise/KakaoTalk_Photo_2026-08-08-01-50-24.jpeg'
@@ -410,6 +411,7 @@ const rejectReason = ref('')
 const rejectingMember = ref(null)
 const groupEditOpen = ref(isOwner.value && route.query.editGroup === 'true')
 const groupEditComplete = ref(false)
+const groupEditSheetExpanded = ref(false)
 const draggingFeedName = ref(null)
 let feedLongPressTimer = null
 let mobileFeedDragActive = false
@@ -417,6 +419,7 @@ let mobileFeedPointerId = null
 let preventNextFeedClick = false
 let groupEditSwipeState = null
 let groupEditCloseTimer = null
+let groupEditSheetElement = null
 const groupCategories = ['운동', '독서', '절약', '습관', '기타']
 const groupEditForm = reactive({
   title: '30일 매일 운동 챌린지',
@@ -679,6 +682,7 @@ const saveGroupEdit = () => {
 
 const closeGroupEdit = () => {
   groupEditComplete.value = false
+  groupEditSheetExpanded.value = false
   if (route.query.editGroup) {
     const query = { ...route.query }
     delete query.editGroup
@@ -691,6 +695,7 @@ const resetGroupEditSheetStyles = (sheet, overlay) => {
     sheet.style.removeProperty('transform')
     sheet.style.removeProperty('transition')
     sheet.style.removeProperty('will-change')
+    sheet.style.removeProperty('height')
   }
   if (overlay) {
     overlay.style.removeProperty('background-color')
@@ -698,52 +703,102 @@ const resetGroupEditSheetStyles = (sheet, overlay) => {
   }
 }
 
+const unbindGroupEditSheetGestures = () => {
+  if (!groupEditSheetElement) return
+  groupEditSheetElement.removeEventListener('touchstart', startGroupEditSwipe)
+  groupEditSheetElement.removeEventListener('touchmove', moveGroupEditSwipe)
+  groupEditSheetElement.removeEventListener('touchend', endGroupEditSwipe)
+  groupEditSheetElement.removeEventListener('touchcancel', cancelGroupEditSwipe)
+  groupEditSheetElement = null
+}
+
+const bindGroupEditSheetGestures = async () => {
+  await nextTick()
+  unbindGroupEditSheetGestures()
+  if (!groupEditOpen.value || !window.matchMedia('(max-width: 767px)').matches) return
+
+  groupEditSheetElement = document.querySelector('.group-edit-modal')
+  if (!groupEditSheetElement) return
+  groupEditSheetElement.addEventListener('touchstart', startGroupEditSwipe, { passive: true })
+  groupEditSheetElement.addEventListener('touchmove', moveGroupEditSwipe, { passive: false })
+  groupEditSheetElement.addEventListener('touchend', endGroupEditSwipe, { passive: true })
+  groupEditSheetElement.addEventListener('touchcancel', cancelGroupEditSwipe, { passive: true })
+}
+
 const startGroupEditSwipe = (event) => {
-  if (!event.isPrimary || !window.matchMedia('(max-width: 767px)').matches) return
-  const sheet = event.currentTarget.closest('.group-edit-modal')
-  if (sheet?.scrollTop > 0) return
+  if (!window.matchMedia('(max-width: 767px)').matches || event.touches.length !== 1) return
+  const sheet = groupEditSheetElement
+  if (!sheet || (groupEditSheetExpanded.value && sheet.scrollTop > 0)) return
+  const touch = event.touches[0]
   const now = performance.now()
   groupEditSwipeState = {
-    pointerId: event.pointerId,
-    startY: event.clientY,
+    startY: touch.clientY,
     startTime: now,
-    lastY: event.clientY,
+    lastY: touch.clientY,
     lastTime: now,
     velocity: 0,
     distance: 0,
+    direction: null,
+    initialHeight: sheet.offsetHeight,
     sheet,
     overlay: sheet?.closest('.base-modal__overlay'),
   }
   sheet.style.transition = 'none'
   sheet.style.willChange = 'transform'
-  event.currentTarget.setPointerCapture?.(event.pointerId)
 }
 
 const moveGroupEditSwipe = (event) => {
   const state = groupEditSwipeState
-  if (!state || event.pointerId !== state.pointerId) return
-  const distance = Math.max(0, event.clientY - state.startY)
+  if (!state || event.touches.length !== 1) return
+  const touch = event.touches[0]
+  const delta = touch.clientY - state.startY
+
+  if (!state.direction && Math.abs(delta) > 8) {
+    state.direction = delta < 0 && !groupEditSheetExpanded.value ? 'expand' : delta > 0 ? 'dismiss' : 'scroll'
+  }
+  if (!state.direction || state.direction === 'scroll') return
+
+  event.preventDefault()
   const now = performance.now()
   const elapsed = Math.max(1, now - state.lastTime)
-  state.velocity = (event.clientY - state.lastY) / elapsed
-  state.lastY = event.clientY
+  state.velocity = (touch.clientY - state.lastY) / elapsed
+  state.lastY = touch.clientY
   state.lastTime = now
-  state.distance = distance
+  state.distance = Math.abs(delta)
 
-  if (distance > 0) event.preventDefault()
-  state.sheet.style.transform = `translate3d(0, ${distance}px, 0)`
-  const progress = Math.min(distance / Math.max(state.sheet.offsetHeight * 0.72, 1), 1)
+  if (state.direction === 'expand') {
+    const maximumHeight = window.innerHeight * 0.88
+    state.sheet.style.height = `${Math.min(state.initialHeight + state.distance, maximumHeight)}px`
+    return
+  }
+
+  state.sheet.style.transform = `translate3d(0, ${state.distance}px, 0)`
+  const progress = Math.min(state.distance / Math.max(state.sheet.offsetHeight * 0.72, 1), 1)
   state.overlay?.style.setProperty('background-color', `rgba(24, 20, 36, ${0.5 * (1 - progress)})`)
 }
 
-const endGroupEditSwipe = (event) => {
+const endGroupEditSwipe = () => {
   const state = groupEditSwipeState
-  if (!state || event.pointerId !== state.pointerId) return
+  if (!state) return
   groupEditSwipeState = null
+
+  if (state.direction === 'expand') {
+    groupEditSheetExpanded.value = state.distance >= 54 || state.velocity < -0.55
+    state.sheet.style.transition = 'height 300ms cubic-bezier(0.22, 1, 0.36, 1)'
+    state.sheet.style.height = groupEditSheetExpanded.value ? '88dvh' : '56dvh'
+    window.setTimeout(() => resetGroupEditSheetStyles(state.sheet, state.overlay), 310)
+    return
+  }
+
+  if (state.direction !== 'dismiss') {
+    resetGroupEditSheetStyles(state.sheet, state.overlay)
+    return
+  }
+
   const elapsed = Math.max(1, performance.now() - state.startTime)
   const averageVelocity = state.distance / elapsed
-  const closeDistance = Math.min(240, state.sheet.offsetHeight * 0.36)
-  const isIntentionalFlick = state.distance >= 100 && averageVelocity > 1.1 && state.velocity > 0.7
+  const closeDistance = Math.min(140, state.sheet.offsetHeight * 0.24)
+  const isIntentionalFlick = state.distance >= 45 && averageVelocity > 0.55 && state.velocity > 0.4
   const shouldClose = state.distance >= closeDistance || isIntentionalFlick
 
   state.sheet.style.transition = 'transform 380ms cubic-bezier(0.22, 1, 0.36, 1)'
@@ -783,7 +838,13 @@ watch(
   },
 )
 
+watch(groupEditOpen, (isOpen) => {
+  if (isOpen) bindGroupEditSheetGestures()
+  else unbindGroupEditSheetGestures()
+})
+
 onMounted(() => {
+  if (groupEditOpen.value) bindGroupEditSheetGestures()
   try {
     const savedGroupInfo = JSON.parse(localStorage.getItem('youngly_group_info') || 'null')
     if (savedGroupInfo?.title) groupInfo.title = savedGroupInfo.title
@@ -818,6 +879,7 @@ onBeforeUnmount(() => {
   clearTimeout(feedLongPressTimer)
   clearTimeout(groupEditCloseTimer)
   removeMobileFeedDragListeners()
+  unbindGroupEditSheetGestures()
 })
 </script>
 
@@ -1152,13 +1214,15 @@ button { font: inherit; }
   .start-date-input { min-height: 64px; font-size: 18px; }
 
   :global(.base-modal__overlay:has(.group-edit-modal)) { z-index: 2000 !important; align-items: end; padding: 0; }
-  :global(.group-edit-modal) { position: relative; width: 100%; height: min(88dvh, 760px); max-height: 88dvh; overflow-y: auto; overscroll-behavior: contain; border-width: 3px 0 0; border-radius: 26px 26px 0 0; -webkit-overflow-scrolling: touch; }
-  :global(.group-edit-modal .base-modal__header) { display: block; padding: 14px 20px 8px; }
+  :global(.group-edit-modal) { position: relative; width: 100%; height: 56dvh; max-height: 88dvh; overflow: hidden; overscroll-behavior: contain; border-width: 3px 0 0; border-radius: 26px 26px 0 0; transition: height 300ms cubic-bezier(0.22, 1, 0.36, 1); -webkit-overflow-scrolling: touch; }
+  :global(.group-edit-modal.is-expanded) { height: 88dvh; overflow-y: auto; }
+  :global(.group-edit-modal .base-modal__header) { position: sticky; top: 0; z-index: 5; display: block; padding: 14px 20px 8px; background: var(--yl-yellow); }
   :global(.group-edit-modal .base-modal__body) { padding: 8px 20px calc(22px + env(safe-area-inset-bottom)); }
   :global(.group-edit-modal .base-modal__title) { display: block; width: 100%; font-size: 20px; }
   .group-edit-category > div { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
   .group-edit-sheet-header { display: grid; gap: 8px; width: 100%; color: #222; font-size: 20px; font-weight: 800; text-align: center; touch-action: none; user-select: none; cursor: grab; }
+  .group-edit-form { touch-action: pan-y; }
   .group-edit-sheet-header:active { cursor: grabbing; }
   .group-edit-sheet-handle { display: block; width: 42px; height: 5px; margin: 0 auto; border-radius: 999px; background: #b4adbd; }
 
@@ -1351,9 +1415,36 @@ button { font: inherit; }
 .challenge-summary.pixel-step-solid,
 .ranking-panel.pixel-step-solid,
 .feed-card.pixel-step-solid {
-  --pixel-outline-width: 3px;
   display: block;
   box-sizing: border-box;
+}
+
+.detail-card-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 5px;
+  margin-bottom: 20px;
+}
+
+.detail-card-shadow--summary {
+  margin-top: 18px;
+}
+
+.challenge-summary.pixel-step-solid,
+.ranking-panel.pixel-step-solid {
+  width: 100%;
+  margin: 0;
+  --pixel-outline-color: #ac99d2;
+  filter: none !important;
+}
+
+.feed-card.pixel-step-solid {
+  --pixel-outline-width: 3px;
+}
+
+.rank-marker.pixel-step-circle,
+.ranking-avatar.pixel-step-circle {
+  --pixel-outline-width: 1px;
+  box-shadow: 1px 1px 0 var(--yl-ink);
 }
 
 .challenge-summary-surface {
@@ -1393,7 +1484,7 @@ button { font: inherit; }
 
 @media (max-width: 767px) {
   .group-detail-content { padding-inline: 16px; }
-  .challenge-summary-surface { align-items: flex-start; padding: 14px; }
+  .challenge-summary-surface { align-items: center; padding: 14px; }
   .day-selector { gap: 24px; }
 
   :global(.group-edit-modal) {

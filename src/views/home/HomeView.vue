@@ -2,17 +2,21 @@
   <div class="home-container">
     <!-- 최상단 인증 알림 카드 -->
     <section class="alert-section">
-      <div class="alert-card">
-        <div class="alert-content">
-          <div class="alert-icon-wrap">
-            <span class="alert-icon">!</span>
-          </div>
-          <div class="alert-text">
-            <h3>오늘 인증이 {{ unverifiedCount }}개 남았어요!</h3>
-            <p>마감 전 인증을 완료하세요</p>
+      <div class="alert-card-shadow yl-stepped-card-shadow">
+        <div class="alert-card yl-card-frame pixel-step-card pixel-step-solid">
+          <div class="alert-card-surface pixel-step-surface">
+            <div class="alert-content">
+              <div class="alert-icon-wrap">
+                <span class="alert-icon">!</span>
+              </div>
+              <div class="alert-text">
+                <h3>오늘 인증이 {{ unverifiedCount }}개 남았어요!</h3>
+                <p>마감 전 인증을 완료하세요</p>
+              </div>
+            </div>
+            <button class="action-btn">인증하기 ➔</button>
           </div>
         </div>
-        <button class="action-btn">인증하기 ➔</button>
       </div>
     </section>
 
@@ -21,14 +25,13 @@
       <h3 class="section-title">그룹</h3>
 
       <div class="group-list">
-        <div
-          class="group-card pixel-step-card pixel-step-solid"
-          v-for="group in groups"
-          :key="group.id"
-          :class="{ 'is-completed': group.isCompleted, 'is-pending': group.isPending }"
-          @click="goToGroupDetail(group.id)"
-        >
-          <div class="group-card-surface pixel-step-surface">
+        <div v-for="group in groups" :key="group.id" class="group-card-shadow yl-stepped-card-shadow">
+          <div
+            class="group-card yl-card-frame pixel-step-card pixel-step-solid"
+            :class="{ 'is-completed': group.isCompleted, 'is-pending': group.isPending }"
+            @click="goToGroupDetail(group.id)"
+          >
+            <div class="group-card-surface pixel-step-surface">
             <!-- 좌측: 크기를 1/3로 줄인 오버랩 프로필 -->
             <div class="profiles-wrap">
               <div
@@ -63,6 +66,7 @@
               <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M9 18L15 12L9 6" stroke="#999999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
+            </div>
             </div>
           </div>
         </div>
@@ -533,7 +537,7 @@ const updateDeposit = (event) => {
 /* 배경 설정 */
 .home-container {
   margin: -20px;
-  padding: 24px 20px 100px;
+  padding: 12px 20px 100px;
   min-height: 100vh;
   background-color: #E6DCF6;
   box-sizing: border-box;
@@ -1235,11 +1239,27 @@ const updateDeposit = (event) => {
 }
 
 .alert-card {
-  padding: 18px;
-  border: var(--yl-pixel-border);
+  padding: 0;
+  border: 0;
   border-radius: 0;
+  --pixel-outline-width: 2px;
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: var(--yl-purple);
+  filter: none !important;
+  box-shadow: none;
+}
+
+.alert-card-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px 18px;
   background: var(--yl-purple);
-  box-shadow: 6px 6px 0 var(--yl-ink);
+}
+
+.alert-card-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 5px;
 }
 
 .alert-icon-wrap {
@@ -1277,14 +1297,14 @@ const updateDeposit = (event) => {
   display: inline-block;
   margin: 0 0 18px;
   padding: 6px 10px;
-  border: 3px solid var(--yl-ink);
+  border: 3px solid #ac99d2;
   background: var(--yl-yellow);
-  box-shadow: 3px 3px 0 var(--yl-ink);
+  box-shadow: 4px 4px 0 #c8b7e5;
   font-size: 17px;
 }
 
 .group-list {
-  gap: 17px;
+  gap: 16px;
 }
 
 .group-card,
@@ -1477,7 +1497,7 @@ const updateDeposit = (event) => {
 
 @media (max-width: 767px) {
   .home-container {
-    padding: 18px 14px 112px;
+    padding: 8px 14px 112px;
   }
 
   .alert-card {
@@ -1770,6 +1790,30 @@ const updateDeposit = (event) => {
 
 .floating-add-button {
   --pixel-fill: #69529f;
+  --pixel-outline-color: #69529f;
+  --pixel-outline-width: 0px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  clip-path: polygon(
+    8px 0, calc(100% - 8px) 0,
+    calc(100% - 8px) 3px, calc(100% - 3px) 3px,
+    calc(100% - 3px) 8px, 100% 8px,
+    100% calc(100% - 8px), calc(100% - 3px) calc(100% - 8px),
+    calc(100% - 3px) calc(100% - 3px), calc(100% - 8px) calc(100% - 3px),
+    calc(100% - 8px) 100%, 8px 100%,
+    8px calc(100% - 3px), 3px calc(100% - 3px),
+    3px calc(100% - 8px), 0 calc(100% - 8px),
+    0 8px, 3px 8px, 3px 3px, 8px 3px
+  ) !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.floating-add-button:hover,
+.floating-add-button:active {
+  box-shadow: none !important;
+  filter: none !important;
+  transform: none;
 }
 
 .group-action-button:active {
@@ -1782,7 +1826,15 @@ const updateDeposit = (event) => {
   display: block;
   min-height: 96px;
   --pixel-outline-width: 2px;
+  --pixel-outline-color: #ac99d2;
+  width: 100%;
+  filter: none !important;
   box-sizing: border-box;
+}
+
+.group-card-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 5px;
 }
 
 .group-card-surface {

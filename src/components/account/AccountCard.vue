@@ -1,6 +1,6 @@
 <template>
   <button
-    class="account-card"
+    class="account-card yl-mypage-card"
     :class="{
       'account-card--primary': isPrimary,
       'account-card--selected': isSelected,

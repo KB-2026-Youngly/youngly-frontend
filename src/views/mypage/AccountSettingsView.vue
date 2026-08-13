@@ -1,9 +1,11 @@
 <template>
   <div class="account-settings">
     <header class="account-settings__header">
-      <button type="button" aria-label="마이페이지로 돌아가기" @click="goBack">
-        <ArrowLeft :size="22" aria-hidden="true" />
-      </button>
+      <div class="account-back-shadow mypage-back-shadow yl-stepped-card-shadow">
+        <button class="account-back-button mypage-back-button pixel-step-button pixel-step-solid" type="button" aria-label="마이페이지로 돌아가기" @click="goBack">
+          <span class="account-back-button__surface mypage-back-surface pixel-step-surface"><ArrowLeft :size="22" aria-hidden="true" /></span>
+        </button>
+      </div>
       <h1>입출금 계좌 설정</h1>
     </header>
 
@@ -11,11 +13,11 @@
       Youngly에서 사용할 대표 입출금 계좌를 선택해 주세요.
     </p>
 
-    <section v-if="isLoading" class="state-panel" aria-live="polite">
+    <section v-if="isLoading" class="state-panel yl-mypage-card" aria-live="polite">
       <BaseSpinner size="large" label="계좌를 불러오는 중..." centered />
     </section>
 
-    <section v-else-if="error" class="state-panel" role="alert">
+    <section v-else-if="error" class="state-panel yl-mypage-card" role="alert">
       <BaseEmptyState
         title="계좌를 불러오지 못했어요"
         :description="error"
@@ -24,7 +26,7 @@
       />
     </section>
 
-    <section v-else-if="accounts.length === 0" class="state-panel">
+    <section v-else-if="accounts.length === 0" class="state-panel yl-mypage-card">
       <BaseEmptyState
         title="등록할 수 있는 계좌가 없어요"
         description="사용 가능한 KB 입출금 계좌를 찾지 못했어요."
@@ -34,15 +36,19 @@
     </section>
 
     <section v-else class="account-list" aria-label="KB 입출금 계좌 목록">
-      <AccountCard
+      <div
         v-for="account in accounts"
         :key="account.kbAccountId"
-        :account="account"
-        :is-primary="isPrimary(account)"
-        :is-selected="selectedAccount?.kbAccountId === account.kbAccountId"
-        :disabled="isSaving"
-        @select="selectAccount"
-      />
+        class="account-card-shadow yl-stepped-card-shadow"
+      >
+        <AccountCard
+          :account="account"
+          :is-primary="isPrimary(account)"
+          :is-selected="selectedAccount?.kbAccountId === account.kbAccountId"
+          :disabled="isSaving"
+          @select="selectAccount"
+        />
+      </div>
     </section>
 
     <p v-if="saveError" class="message message--error" role="alert">{{ saveError }}</p>
@@ -206,6 +212,26 @@ onBeforeUnmount(() => clearTimeout(messageTimer))
   cursor: pointer;
 }
 
+.account-back-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 4px;
+  width: 40px !important;
+}
+
+.account-back-button {
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: #ffffff;
+}
+
+.account-back-button__surface {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: var(--color-primary-dark);
+  background: #ffffff;
+}
+
 .account-settings__header button:focus-visible {
   outline: 3px solid rgba(113, 86, 173, 0.24);
   outline-offset: 2px;
@@ -229,6 +255,11 @@ onBeforeUnmount(() => clearTimeout(messageTimer))
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+}
+
+.account-card-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 6px;
 }
 
 .state-panel {
@@ -320,10 +351,12 @@ onBeforeUnmount(() => clearTimeout(messageTimer))
 }
 
 .account-settings__header button {
-  border: 2px solid var(--mypage-ink);
-  border-radius: 11px;
+  border: 0;
+  border-radius: 0;
   background: #ffffff;
-  box-shadow: 4px 4px 0 var(--mypage-shadow);
+  box-shadow: none;
+  filter: none;
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, calc(100% - 8px) 3px, calc(100% - 3px) 3px, calc(100% - 3px) 8px, 100% 8px, 100% calc(100% - 8px), calc(100% - 3px) calc(100% - 8px), calc(100% - 3px) calc(100% - 3px), calc(100% - 8px) calc(100% - 3px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 8px), 0 calc(100% - 8px), 0 8px, 3px 8px, 3px 3px, 8px 3px);
 }
 
 .account-settings__header button:hover {

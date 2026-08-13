@@ -1,5 +1,5 @@
 <template>
-  <section class="point-summary" aria-labelledby="point-balance-title">
+  <div class="point-summary-shadow yl-stepped-card-shadow"><section class="point-summary pixel-step-card pixel-step-solid" aria-labelledby="point-balance-title"><div class="point-summary__surface pixel-step-surface">
     <div class="point-summary__icon" aria-hidden="true">
       <Coins :size="30" :stroke-width="2.4" />
     </div>
@@ -8,7 +8,7 @@
       <strong>{{ formattedBalance }}<span>P</span></strong>
     </div>
     <span class="point-summary__badge">MY POINT</span>
-  </section>
+  </div></section></div>
 </template>
 
 <script setup>
@@ -27,13 +27,12 @@ const formattedBalance = computed(() => new Intl.NumberFormat('ko-KR').format(pr
 
 <style scoped>
 .point-summary {
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: #7658b5;
   position: relative;
-  display: grid;
-  grid-template-columns: 64px 1fr auto;
-  gap: 18px;
-  align-items: center;
+  display: block;
   min-height: 142px;
-  padding: 28px 30px;
+  padding: 2px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 22px;
@@ -44,6 +43,9 @@ const formattedBalance = computed(() => new Intl.NumberFormat('ko-KR').format(pr
   box-shadow: 0 16px 36px rgba(83, 57, 128, 0.22);
   box-sizing: border-box;
 }
+
+.point-summary-shadow { --yl-stepped-shadow-color: #c8b7e5; --yl-stepped-shadow-offset: 5px; }
+.point-summary__surface { position: relative; display: grid; grid-template-columns: 64px 1fr auto; gap: 18px; align-items: center; min-height: 138px; padding: 26px 28px; overflow: hidden; color: #ffffff; background: #7658b5; box-sizing: border-box; }
 
 .point-summary__icon {
   display: grid;
@@ -91,10 +93,15 @@ const formattedBalance = computed(() => new Intl.NumberFormat('ko-KR').format(pr
 
 @media (max-width: 560px) {
   .point-summary {
-    grid-template-columns: 52px 1fr;
     min-height: 116px;
-    padding: 22px 18px;
+    padding: 2px;
     border-radius: 19px;
+  }
+
+  .point-summary__surface {
+    grid-template-columns: 52px 1fr;
+    min-height: 112px;
+    padding: 20px 16px;
   }
 
   .point-summary__icon {
@@ -113,12 +120,13 @@ const formattedBalance = computed(() => new Intl.NumberFormat('ko-KR').format(pr
 
 <style scoped>
 .point-summary {
-  border: 2px solid #342843;
+  border: 0;
   background: #7658b5;
-  box-shadow: 8px 8px 0 #b8a2da;
+  box-shadow: none;
+  filter: none !important;
 }
 
-.point-summary::after {
+.point-summary__surface::after {
   position: absolute;
   right: 28px;
   bottom: 18px;

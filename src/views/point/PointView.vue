@@ -1,8 +1,8 @@
 <template>
   <div class="point-page">
-    <button class="back-button" type="button" aria-label="마이페이지로 돌아가기" @click="goBack">
-      <ArrowLeft :size="18" aria-hidden="true" />
-    </button>
+    <div class="point-back-shadow mypage-back-shadow yl-stepped-card-shadow"><button class="back-button mypage-back-button pixel-step-button pixel-step-solid" type="button" aria-label="마이페이지로 돌아가기" @click="goBack">
+      <span class="point-back-surface mypage-back-surface pixel-step-surface"><ArrowLeft :size="18" aria-hidden="true" /></span>
+    </button></div>
 
     <header class="page-heading">
       <span>REWARD LOG</span>
@@ -30,7 +30,7 @@
     <template v-else>
       <PointSummary :balance="balance" />
 
-      <section class="history-panel" aria-labelledby="point-history-title">
+      <div class="point-card-shadow yl-stepped-card-shadow"><section class="history-panel pixel-step-card pixel-step-solid" aria-labelledby="point-history-title"><div class="history-panel__surface pixel-step-surface">
         <div class="history-panel__heading">
           <div>
             <span>HISTORY</span>
@@ -45,7 +45,7 @@
           title="포인트 내역이 없습니다"
           description="챌린지에 참여하면 포인트 기록이 이곳에 쌓여요."
         />
-      </section>
+      </div></section></div>
     </template>
   </div>
 </template>
@@ -88,6 +88,8 @@ onMounted(fetchPointOverview)
 }
 
 .back-button {
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: #ffffff;
   display: grid;
   width: 38px;
   height: 38px;
@@ -100,6 +102,10 @@ onMounted(fetchPointOverview)
   box-shadow: 0 5px 14px rgba(66, 43, 99, 0.07);
   cursor: pointer;
 }
+
+.point-back-shadow { --yl-stepped-shadow-color: #c8b7e5; --yl-stepped-shadow-offset: 4px; width: 42px !important; }
+.point-back-surface { display: grid; width: 100%; height: 100%; place-items: center; color: var(--color-primary-dark); background: #ffffff; }
+.point-card-shadow { --yl-stepped-shadow-color: #c8b7e5; --yl-stepped-shadow-offset: 5px; }
 
 .back-button:hover {
   background: #ffffff;
@@ -146,8 +152,15 @@ onMounted(fetchPointOverview)
 }
 
 .history-panel {
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: #ffffff;
   overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
+
+.history-panel__surface { overflow: hidden; background: #ffffff; }
 
 .history-panel__heading {
   display: flex;
@@ -197,10 +210,11 @@ onMounted(fetchPointOverview)
 }
 
 .back-button {
-  border: 2px solid var(--mypage-ink);
-  border-radius: 11px;
+  border: 0;
+  border-radius: 0;
   background: #ffffff;
-  box-shadow: 4px 4px 0 var(--mypage-shadow);
+  box-shadow: none;
+  filter: none;
 }
 
 .back-button:hover {
@@ -213,8 +227,8 @@ onMounted(fetchPointOverview)
 }
 
 .point-page :is(.state-panel, .history-panel) {
-  border: 2px solid var(--mypage-ink);
-  box-shadow: 7px 7px 0 var(--mypage-shadow);
+  border-color: #ac99d2;
+  box-shadow: none;
 }
 
 .history-panel__heading {

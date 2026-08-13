@@ -1,6 +1,6 @@
 <template>
   <div class="mypage">
-    <section v-if="userError" class="state-panel" role="alert">
+    <section v-if="userError" class="state-panel yl-mypage-card" role="alert">
       <BaseEmptyState
         title="사용자 정보를 불러오지 못했어요"
         :description="userError"
@@ -9,13 +9,15 @@
       />
     </section>
 
-    <section v-else-if="isUserLoading || !user" class="state-panel">
+    <section v-else-if="isUserLoading || !user" class="state-panel yl-mypage-card">
       <BaseSpinner size="large" label="사용자 정보를 불러오는 중..." centered />
     </section>
 
     <ProfileCard v-else :summary="activitySummary" @edit="goToProfileEdit" />
 
-    <section class="character-card" aria-labelledby="character-title">
+    <div class="character-card-shadow yl-stepped-card-shadow">
+    <section class="character-card yl-stepped-card-shape" aria-labelledby="character-title">
+      <div class="character-card__surface yl-stepped-card-shape">
       <span class="character-card__badge">MY CHARACTER</span>
       <div class="character-card__preview">
         <BaseSpinner
@@ -31,14 +33,15 @@
         <span class="character-card__action">캐릭터 뽑기 · 선택 및 장착</span>
       </div>
       <button
-        class="character-card__button"
+        class="character-card__button pixel-step-button pixel-step-button--compact pixel-step-solid"
         type="button"
         aria-label="내 캐릭터 선택 화면으로 이동"
         @click="router.push('/characters')"
       >
-        <ChevronRight :size="20" aria-hidden="true" />
+        <span class="character-card__button-surface pixel-step-surface"><ChevronRight :size="20" aria-hidden="true" /></span>
       </button>
-    </section>
+      </div>
+    </section></div>
 
     <SettingsMenu :items="settingsItems" @select="handleSettingSelect" />
 
@@ -48,10 +51,12 @@
       @select="handleAccountManagementSelect"
     />
 
-    <BaseButton class="logout-button" variant="ghost" block @click="logout">
-      <LogOut :size="16" aria-hidden="true" />
-      로그아웃
-    </BaseButton>
+    <div class="logout-button-shadow yl-stepped-card-shadow"><BaseButton class="logout-button pixel-step-button pixel-step-solid" variant="ghost" block @click="logout">
+      <span class="logout-button__surface pixel-step-surface">
+        <LogOut :size="16" aria-hidden="true" />
+        로그아웃
+      </span>
+    </BaseButton></div>
 
     <BaseModal
       v-model="isWithdrawalOpen"
@@ -277,16 +282,28 @@ onMounted(() => {
   gap: 22px;
   min-height: calc(100vh - 69px);
   margin: -20px;
-  padding: 32px max(24px, calc((100% - 860px) / 2)) 84px;
+  padding: 12px 20px 84px;
   color: var(--color-text, #33313d);
   background: #e6dcf6;
   box-sizing: border-box;
 }
 
 .mypage > :first-child,
-.character-card,
-.logout-button {
+.character-card-shadow,
+.logout-button-shadow {
   grid-column: 1 / -1;
+}
+
+.logout-button__surface {
+  display: inline-flex;
+  width: 100%;
+  min-height: 50px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #655b6d;
+  background: rgba(255, 255, 255, 0.74);
+  box-sizing: border-box;
 }
 
 .state-panel {
@@ -302,21 +319,33 @@ onMounted(() => {
 
 .character-card {
   position: relative;
+  display: block;
+  min-height: 156px;
+  padding: 2px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #ac99d2;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.character-card__surface {
+  position: relative;
   display: grid;
   grid-template-columns: 106px minmax(0, 1fr) 48px;
   gap: 22px;
   align-items: center;
-  min-height: 156px;
-  padding: 38px 28px 24px;
+  min-height: 152px;
+  padding: 36px 26px 22px;
   overflow: hidden;
-  border: 2px solid var(--mypage-ink);
-  border-radius: 24px;
   background: #ffffff;
-  box-shadow: 8px 8px 0 var(--mypage-shadow);
   box-sizing: border-box;
 }
 
-.character-card::after {
+.character-card-shadow { --yl-stepped-shadow-color: #c8b7e5; --yl-stepped-shadow-offset: 6px; }
+
+.character-card__surface::after {
   position: absolute;
   top: 18px;
   right: 82px;
@@ -385,22 +414,27 @@ onMounted(() => {
 }
 
 .character-card__button {
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: #eee7fb;
   display: grid;
   width: 44px;
   height: 44px;
-  padding: 0;
+  padding: 2px;
   place-items: center;
-  border: 2px solid var(--mypage-ink);
-  border-radius: 12px;
+  border: 0;
+  border-radius: 0;
   color: var(--color-primary-dark, #7156ad);
   background: #eee7fb;
-  box-shadow: 3px 3px 0 #cbbbe4;
+  box-shadow: none;
+  filter: drop-shadow(4px 4px 0 #c8b7e5) !important;
   cursor: pointer;
   transition:
     color 0.18s ease,
     background-color 0.18s ease,
     transform 0.18s ease;
 }
+
+.character-card__button-surface { display: grid; width: 100%; height: 100%; place-items: center; color: var(--color-primary-dark, #7156ad); background: #eee7fb; }
 
 .character-card__button:hover {
   color: #ffffff;
@@ -415,14 +449,23 @@ onMounted(() => {
 }
 
 .logout-button {
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: rgba(255, 255, 255, 0.74);
   min-height: 54px;
   margin-top: 2px;
-  border: 2px solid rgba(52, 40, 67, 0.18);
-  border-radius: 16px;
+  padding: 2px;
+  border: 0;
+  border-radius: 0;
   color: #655b6d;
   background: rgba(255, 255, 255, 0.74);
-  box-shadow: 5px 5px 0 rgba(114, 84, 165, 0.12);
+  box-shadow: none;
+  filter: none !important;
   font-weight: 800;
+}
+
+.logout-button-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 5px;
 }
 
 .logout-button:hover:not(:disabled) {
@@ -500,7 +543,7 @@ onMounted(() => {
     gap: 17px;
     min-height: calc(100dvh - 68px - 76px);
     margin: 0;
-    padding: 18px 16px 44px;
+    padding: 8px 14px 44px;
   }
 
   .mypage > * {
@@ -508,12 +551,17 @@ onMounted(() => {
   }
 
   .character-card {
+    min-height: 126px;
+    padding: 2px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .character-card__surface {
     grid-template-columns: 76px minmax(0, 1fr) 36px;
     gap: 14px;
-    min-height: 126px;
-    padding: 34px 18px 18px;
-    border-radius: 20px;
-    box-shadow: 5px 5px 0 var(--mypage-shadow);
+    min-height: 122px;
+    padding: 32px 16px 16px;
   }
 
   .character-card__badge {
@@ -552,9 +600,13 @@ onMounted(() => {
 
 @media (max-width: 390px) {
   .character-card {
+    padding: 2px;
+  }
+
+  .character-card__surface {
     grid-template-columns: 64px minmax(0, 1fr) 32px;
     gap: 11px;
-    padding-inline: 14px;
+    padding-inline: 12px;
   }
 
   .character-card__preview {

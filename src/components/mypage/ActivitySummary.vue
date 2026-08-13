@@ -1,22 +1,28 @@
 <template>
   <div class="activity-summary" role="list" aria-label="활동 요약">
-    <component
-      :is="item.to ? RouterLink : 'div'"
+    <div
       v-for="item in items"
       :key="item.label"
-      :to="item.to || undefined"
-      class="activity-summary__item"
-      :class="{
-        'activity-summary__item--link': item.to,
-        'activity-summary__item--point': item.isPoint,
-      }"
-      role="listitem"
-      :aria-label="item.to ? `${item.label} ${item.value}, 포인트 내역 보기` : undefined"
+      class="activity-summary__shadow yl-stepped-card-shadow"
     >
-      <span class="activity-summary__label">{{ item.label }}</span>
-      <strong :class="{ 'activity-summary__value--point': item.isPoint }">{{ item.value }}</strong>
-      <ChevronRight v-if="item.to" class="activity-summary__arrow" :size="17" aria-hidden="true" />
-    </component>
+      <component
+        :is="item.to ? RouterLink : 'div'"
+        :to="item.to || undefined"
+        class="activity-summary__item pixel-step-card pixel-step-solid"
+        :class="{
+          'activity-summary__item--link': item.to,
+          'activity-summary__item--point': item.isPoint,
+        }"
+        role="listitem"
+        :aria-label="item.to ? `${item.label} ${item.value}, 포인트 내역 보기` : undefined"
+      >
+        <span class="activity-summary__surface pixel-step-surface">
+          <span class="activity-summary__label">{{ item.label }}</span>
+          <strong :class="{ 'activity-summary__value--point': item.isPoint }">{{ item.value }}</strong>
+          <ChevronRight v-if="item.to" class="activity-summary__arrow" :size="17" aria-hidden="true" />
+        </span>
+      </component>
+    </div>
   </div>
 </template>
 
@@ -36,35 +42,50 @@ defineProps({
 .activity-summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 7px;
-  overflow: hidden;
+  gap: 11px;
+  overflow: visible;
   margin: 24px 0 0;
   padding: 0;
+  border: 0;
   border: 0;
   border-radius: 14px;
   background: transparent;
 }
 
 .activity-summary__item {
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: rgba(255, 255, 255, 0.11);
   position: relative;
-  display: grid;
-  gap: 5px;
-  align-content: center;
+  display: block;
   min-width: 0;
   margin: 0;
   min-height: 76px;
-  padding: 10px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  border-radius: 12px;
+  padding: 2px;
+  border: 0;
+  border-radius: 0;
   color: inherit;
   text-align: center;
   text-decoration: none;
   box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.11);
+  background: #ac99d2;
+  filter: none !important;
 }
 
-.activity-summary__item:last-child {
-  border-right: 1px solid rgba(255, 255, 255, 0.24);
+.activity-summary__shadow {
+  --yl-stepped-shadow-color: rgba(64, 42, 94, 0.3);
+  --yl-stepped-shadow-offset: 3px;
+  min-width: 0;
+}
+
+.activity-summary__surface {
+  position: relative;
+  display: grid;
+  gap: 5px;
+  align-content: center;
+  min-height: 72px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.11);
+  box-sizing: border-box;
 }
 
 .activity-summary__label {
@@ -88,7 +109,6 @@ defineProps({
 }
 
 .activity-summary__item--link {
-  padding-right: 26px;
   cursor: pointer;
   transition:
     border-color 0.18s ease,
@@ -97,7 +117,7 @@ defineProps({
 }
 
 .activity-summary__item--link:last-child {
-  padding-right: 26px;
+  padding-right: 2px;
 }
 
 .activity-summary__item--link:hover {
@@ -125,7 +145,7 @@ defineProps({
 
 @media (max-width: 480px) {
   .activity-summary {
-    gap: 5px;
+    gap: 8px;
     margin-top: 18px;
     padding: 0;
     border-radius: 12px;
@@ -133,6 +153,11 @@ defineProps({
 
   .activity-summary__item {
     min-height: 68px;
+    padding: 2px;
+  }
+
+  .activity-summary__surface {
+    min-height: 64px;
     padding: 8px 5px;
   }
 
@@ -145,11 +170,11 @@ defineProps({
   }
 
   .activity-summary__item--link {
-    padding-right: 18px;
+    padding-right: 2px;
   }
 
   .activity-summary__item--link:last-child {
-    padding-right: 18px;
+    padding-right: 2px;
   }
 
   .activity-summary__arrow {

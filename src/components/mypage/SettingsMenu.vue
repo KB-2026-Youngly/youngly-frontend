@@ -1,33 +1,40 @@
 <template>
-  <nav class="settings-menu" :aria-label="ariaLabel">
-    <component
-      :is="item.href ? 'a' : 'button'"
-      v-for="item in items"
-      :key="item.id"
-      class="settings-menu__item"
-      :class="{ 'settings-menu__item--danger': item.danger }"
-      :type="item.href ? undefined : 'button'"
-      :href="item.href || undefined"
-      :target="item.href ? '_blank' : undefined"
-      :rel="item.href ? 'noopener noreferrer' : undefined"
-      @click="!item.href && emit('select', item.id)"
+  <div class="settings-menu-shell yl-stepped-card-shadow">
+    <nav
+      class="settings-menu yl-card-frame pixel-step-card pixel-step-solid"
+      :aria-label="ariaLabel"
     >
-      <span class="settings-menu__icon" aria-hidden="true">
-        <WalletCards v-if="item.icon === 'account'" :size="19" />
-        <Headphones v-else-if="item.icon === 'support'" :size="19" />
-        <LockKeyhole v-else-if="item.icon === 'password'" :size="19" />
-        <UserRoundX v-else-if="item.icon === 'withdrawal'" :size="19" />
-        <ChartNoAxesColumnIncreasing v-else :size="19" />
-      </span>
+      <div class="settings-menu__surface pixel-step-surface">
+        <component
+          :is="item.href ? 'a' : 'button'"
+          v-for="item in items"
+          :key="item.id"
+          class="settings-menu__item"
+          :class="{ 'settings-menu__item--danger': item.danger }"
+          :type="item.href ? undefined : 'button'"
+          :href="item.href || undefined"
+          :target="item.href ? '_blank' : undefined"
+          :rel="item.href ? 'noopener noreferrer' : undefined"
+          @click="!item.href && emit('select', item.id)"
+        >
+          <span class="settings-menu__icon" aria-hidden="true">
+            <WalletCards v-if="item.icon === 'account'" :size="19" />
+            <Headphones v-else-if="item.icon === 'support'" :size="19" />
+            <LockKeyhole v-else-if="item.icon === 'password'" :size="19" />
+            <UserRoundX v-else-if="item.icon === 'withdrawal'" :size="19" />
+            <ChartNoAxesColumnIncreasing v-else :size="19" />
+          </span>
 
-      <span class="settings-menu__copy">
-        <strong>{{ item.label }}</strong>
-        <small v-if="item.description">{{ item.description }}</small>
-      </span>
+          <span class="settings-menu__copy">
+            <strong>{{ item.label }}</strong>
+            <small v-if="item.description">{{ item.description }}</small>
+          </span>
 
-      <ChevronRight class="settings-menu__arrow" :size="18" aria-hidden="true" />
-    </component>
-  </nav>
+          <ChevronRight class="settings-menu__arrow" :size="18" aria-hidden="true" />
+        </component>
+      </div>
+    </nav>
+  </div>
 </template>
 
 <script setup>
@@ -56,14 +63,31 @@ const emit = defineEmits(['select'])
 
 <style scoped>
 .settings-menu {
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: #ffffff;
   display: grid;
   grid-auto-rows: 1fr;
   align-self: stretch;
+  border: 0;
+  border-radius: 0;
+  background: #ac99d2;
+  box-shadow: none;
+  filter: none !important;
+}
+
+.settings-menu-shell {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 6px;
+  align-self: stretch;
+}
+
+.settings-menu__surface {
+  display: grid;
+  grid-auto-rows: 1fr;
+  height: 100%;
   padding: 8px 18px;
-  border: 2px solid #342843;
-  border-radius: 20px;
   background: var(--color-surface, #ffffff);
-  box-shadow: 6px 6px 0 #c8b7e5;
+  box-sizing: border-box;
 }
 
 .settings-menu__item {
@@ -158,9 +182,15 @@ const emit = defineEmits(['select'])
 
 @media (max-width: 480px) {
   .settings-menu {
+    padding: 2px;
+  }
+
+  .settings-menu-shell {
+    --yl-stepped-shadow-offset: 5px;
+  }
+
+  .settings-menu__surface {
     padding: 5px 16px;
-    border-radius: 18px;
-    box-shadow: 5px 5px 0 #c8b7e5;
   }
 
   .settings-menu__item {

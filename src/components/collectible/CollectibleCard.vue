@@ -1,6 +1,6 @@
 <template>
   <button
-    class="character-card"
+    class="character-card collectible-step-card"
     :class="{
       'character-card--selected': selected,
       'character-card--equipped': equipped,
@@ -73,6 +73,29 @@ const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
     border-color 0.18s ease,
     box-shadow 0.18s ease;
 }
+
+.collectible-step-card {
+  isolation: isolate;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #ac99d2 !important;
+  box-shadow: none !important;
+  filter: drop-shadow(5px 5px 0 #c8b7e5);
+  clip-path: polygon(9px 0, calc(100% - 9px) 0, calc(100% - 9px) 3px, calc(100% - 3px) 3px, calc(100% - 3px) 9px, 100% 9px, 100% calc(100% - 9px), calc(100% - 3px) calc(100% - 9px), calc(100% - 3px) calc(100% - 3px), calc(100% - 9px) calc(100% - 3px), calc(100% - 9px) 100%, 9px 100%, 9px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 9px), 0 calc(100% - 9px), 0 9px, 3px 9px, 3px 3px, 9px 3px);
+}
+
+.collectible-step-card::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  z-index: 0;
+  clip-path: inherit;
+  background: #ffffff;
+  pointer-events: none;
+}
+
+.collectible-step-card > * { position: relative; z-index: 1; }
+.collectible-step-card.character-card--equipped { background: var(--character-equipped) !important; }
 
 .character-card:hover {
   transform: translateY(-3px);

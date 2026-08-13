@@ -1,17 +1,17 @@
 <template>
   <div class="settlement-page">
     <header class="settlement-header">
-      <button type="button" class="back-button" aria-label="마이페이지로 돌아가기" @click="goBack">
-        <ArrowLeft :size="18" aria-hidden="true" />
-      </button>
+      <div class="settlement-back-shadow mypage-back-shadow yl-stepped-card-shadow"><button type="button" class="back-button mypage-back-button pixel-step-button pixel-step-solid" aria-label="마이페이지로 돌아가기" @click="goBack">
+        <span class="settlement-back-surface mypage-back-surface pixel-step-surface"><ArrowLeft :size="18" aria-hidden="true" /></span>
+      </button></div>
       <h1>정산 내역</h1>
     </header>
 
-    <section v-if="isLoading" class="state-panel">
+    <section v-if="isLoading" class="state-panel yl-mypage-card">
       <BaseSpinner size="large" label="정산 내역을 불러오는 중..." centered />
     </section>
 
-    <section v-else-if="error" class="state-panel" role="alert">
+    <section v-else-if="error" class="state-panel yl-mypage-card" role="alert">
       <BaseEmptyState
         title="정산 내역을 불러오지 못했어요"
         :description="error"
@@ -25,17 +25,17 @@
     </section>
 
     <template v-else>
-      <section class="summary-card" aria-label="전체 정산 완료 금액">
+      <section class="summary-card settlement-stepped-panel" aria-label="전체 정산 완료 금액">
         <span class="summary-card__icon" aria-hidden="true">
           <CircleDollarSign :size="25" />
         </span>
         <div>
           <span>전체 정산 완료 금액</span>
-          <strong>{{ formatAmount(totalCompletedAmount) }}</strong>
+          <strong class="summary-card__value">{{ formatAmount(totalCompletedAmount) }}</strong>
         </div>
       </section>
 
-      <section class="group-section" aria-labelledby="group-select-title">
+      <section class="group-section settlement-stepped-panel" aria-labelledby="group-select-title">
         <div class="section-heading">
           <div>
             <span>MY GROUP</span>
@@ -94,7 +94,7 @@
         />
       </section>
 
-      <section v-if="selectedGroup" class="history-section" aria-labelledby="settlement-list-title">
+      <section v-if="selectedGroup" class="history-section settlement-stepped-panel" aria-labelledby="settlement-list-title">
         <div class="section-heading">
           <div>
             <span>SETTLEMENT</span>
@@ -107,7 +107,7 @@
           <article
             v-for="settlement in sortedSettlements"
             :key="settlement.settlementId"
-            class="settlement-card"
+            class="settlement-card settlement-stepped-panel settlement-stepped-panel--small"
           >
             <div class="settlement-card__heading">
               <strong>{{ settlement.round }}라운드</strong>
@@ -386,6 +386,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
 
 .group-dropdown {
   position: relative;
+  z-index: 50;
 }
 
 .group-dropdown__trigger {
@@ -396,8 +397,8 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   width: 100%;
   min-height: 56px;
   padding: 0 15px 0 17px;
-  border: 1px solid #ddd3e7;
-  border-radius: 14px;
+  border: 2px solid #d7cbe7;
+  border-radius: 11px;
   color: #43394d;
   background: #faf8fc;
   font: inherit;
@@ -427,16 +428,16 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   top: calc(100% + 8px);
   right: 0;
   left: 0;
-  z-index: 20;
+  z-index: 100;
   display: grid;
   gap: 4px;
   max-height: 260px;
   padding: 7px;
   overflow-y: auto;
-  border: 1px solid #ddd3e7;
-  border-radius: 15px;
+  border: 2px solid #342843;
+  border-radius: 12px;
   background: #ffffff;
-  box-shadow: 0 15px 34px rgba(54, 39, 76, 0.18);
+  box-shadow: 5px 5px 0 #c8b7e5;
 }
 
 .group-dropdown__menu button {
@@ -635,6 +636,18 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   }
 }
 
+.group-section {
+  position: relative;
+  z-index: 40;
+  overflow: visible !important;
+}
+
+.history-section {
+  position: relative;
+  z-index: 1;
+}
+
+
 @media (max-width: 420px) {
   .settlement-card__body {
     grid-template-columns: 1fr;
@@ -736,5 +749,60 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   .settlement-page {
     padding-inline: 16px;
   }
+}
+
+.settlement-back-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 4px;
+}
+
+.settlement-stepped-panel {
+  --settlement-panel-fill: #ffffff;
+  position: relative;
+  isolation: isolate;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: drop-shadow(5px 5px 0 #c8b7e5);
+}
+
+.settlement-stepped-panel::before,
+.settlement-stepped-panel::after {
+  content: '';
+  position: absolute;
+  clip-path: polygon(11px 0, calc(100% - 11px) 0, calc(100% - 11px) 3px, calc(100% - 7px) 3px, calc(100% - 7px) 6px, calc(100% - 3px) 6px, calc(100% - 3px) 11px, 100% 11px, 100% calc(100% - 11px), calc(100% - 3px) calc(100% - 11px), calc(100% - 3px) calc(100% - 6px), calc(100% - 7px) calc(100% - 6px), calc(100% - 7px) calc(100% - 3px), calc(100% - 11px) calc(100% - 3px), calc(100% - 11px) 100%, 11px 100%, 11px calc(100% - 3px), 7px calc(100% - 3px), 7px calc(100% - 6px), 3px calc(100% - 6px), 3px calc(100% - 11px), 0 calc(100% - 11px), 0 11px, 3px 11px, 3px 6px, 7px 6px, 7px 3px, 11px 3px);
+  pointer-events: none;
+}
+
+.settlement-stepped-panel::before {
+  inset: 0;
+  z-index: 0;
+  background: #ac99d2;
+}
+
+.settlement-stepped-panel::after {
+  inset: 2px;
+  z-index: 1;
+  background: var(--settlement-panel-fill);
+}
+
+.settlement-stepped-panel > * {
+  position: relative;
+  z-index: 2;
+}
+
+.summary-card.settlement-stepped-panel {
+  --settlement-panel-fill: #7658b5;
+  color: #ffffff;
+}
+
+.settlement-stepped-panel--small {
+  filter: drop-shadow(3px 3px 0 #ded3ed);
+}
+
+.group-section.settlement-stepped-panel {
+  z-index: 40;
+  overflow: visible;
 }
 </style>

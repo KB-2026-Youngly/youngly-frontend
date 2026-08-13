@@ -1,12 +1,12 @@
 <template>
   <div class="password-page">
     <header class="password-header">
-      <button type="button" aria-label="마이페이지로 돌아가기" @click="goBack">
-        <ArrowLeft :size="18" aria-hidden="true" />
-      </button>
+      <div class="password-back-shadow mypage-back-shadow yl-stepped-card-shadow"><button class="mypage-back-button pixel-step-button pixel-step-solid" type="button" aria-label="마이페이지로 돌아가기" @click="goBack">
+        <span class="mypage-back-surface pixel-step-surface"><ArrowLeft :size="18" aria-hidden="true" /></span>
+      </button></div>
     </header>
 
-    <form class="password-form" novalidate @submit.prevent="handleSubmit">
+    <div class="password-form-shadow yl-stepped-card-shadow"><form class="password-form yl-mypage-card" novalidate @submit.prevent="handleSubmit">
       <div class="password-form__intro">
         <span aria-hidden="true"><LockKeyhole :size="21" /></span>
         <p>현재 비밀번호를 확인한 후 새로운 비밀번호로 변경합니다.</p>
@@ -99,7 +99,7 @@
         <template #loading>변경 중...</template>
         {{ isSuccess ? '변경 완료' : '비밀번호 변경' }}
       </BaseButton>
-    </form>
+    </form></div>
   </div>
 </template>
 
@@ -222,6 +222,16 @@ onBeforeUnmount(() => window.clearTimeout(redirectTimer))
   border-radius: 20px;
   background: #ffffff;
   box-shadow: 0 14px 34px rgba(66, 43, 99, 0.09);
+}
+
+.password-back-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 4px;
+}
+
+.password-form-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 6px;
 }
 
 .password-form__intro {
@@ -353,10 +363,11 @@ onBeforeUnmount(() => window.clearTimeout(redirectTimer))
 }
 
 .password-header button {
-  border: 2px solid var(--mypage-ink);
-  border-radius: 11px;
+  border: 0;
+  border-radius: 0;
   background: #ffffff;
-  box-shadow: 4px 4px 0 var(--mypage-shadow);
+  box-shadow: none;
+  filter: none;
 }
 
 .password-header button:hover {
@@ -365,8 +376,9 @@ onBeforeUnmount(() => window.clearTimeout(redirectTimer))
 }
 
 .password-form {
-  border: 2px solid var(--mypage-ink);
-  box-shadow: 7px 7px 0 var(--mypage-shadow);
+  border: 0;
+  box-shadow: none;
+  filter: none !important;
 }
 
 .password-form__intro > span {

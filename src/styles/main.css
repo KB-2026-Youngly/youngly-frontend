@@ -20,6 +20,8 @@
   --yl-muted: #746d7c;
   --yl-pixel-border: 3px solid var(--yl-ink);
   --yl-pixel-shadow: 5px 5px 0 var(--yl-ink);
+  --yl-card-outline-width: 2px;
+  --yl-card-shadow: 5px 5px 0 var(--yl-purple-dark);
 }
 
 html,
@@ -87,7 +89,7 @@ body,
   isolation: isolate;
   border: 0 !important;
   border-radius: 0 !important;
-  background: var(--yl-ink) !important;
+  background: var(--pixel-outline-color, var(--yl-ink)) !important;
   box-shadow: none !important;
 }
 
@@ -113,6 +115,149 @@ body,
 
 .youngly-service .pixel-step-card {
   filter: drop-shadow(5px 5px 0 var(--yl-purple-dark));
+}
+
+/* 홈 그룹 카드를 기준으로 페이지 전반에서 공유하는 카드 외곽선 */
+.youngly-service .yl-card-frame.pixel-step-card {
+  --pixel-outline-width: var(--yl-card-outline-width);
+  filter: drop-shadow(var(--yl-card-shadow));
+}
+
+/* 계단식 카드와 동일한 실루엣을 유지하는 공통 외부 그림자 */
+.youngly-service .yl-stepped-card-shadow {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  background: transparent;
+}
+
+.youngly-service .yl-stepped-card-shadow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--yl-stepped-shadow-color, #c8b7e5);
+  clip-path: polygon(
+    11px 0, calc(100% - 11px) 0,
+    calc(100% - 11px) 3px, calc(100% - 7px) 3px,
+    calc(100% - 7px) 6px, calc(100% - 3px) 6px,
+    calc(100% - 3px) 11px, 100% 11px,
+    100% calc(100% - 11px), calc(100% - 3px) calc(100% - 11px),
+    calc(100% - 3px) calc(100% - 6px), calc(100% - 7px) calc(100% - 6px),
+    calc(100% - 7px) calc(100% - 3px), calc(100% - 11px) calc(100% - 3px),
+    calc(100% - 11px) 100%, 11px 100%,
+    11px calc(100% - 3px), 7px calc(100% - 3px),
+    7px calc(100% - 6px), 3px calc(100% - 6px),
+    3px calc(100% - 11px), 0 calc(100% - 11px),
+    0 11px, 3px 11px, 3px 6px, 7px 6px,
+    7px 3px, 11px 3px
+  );
+  transform: translate(var(--yl-stepped-shadow-offset, 7px), var(--yl-stepped-shadow-offset, 7px));
+}
+
+.youngly-service .yl-stepped-card-shape {
+  clip-path: polygon(
+    11px 0, calc(100% - 11px) 0,
+    calc(100% - 11px) 3px, calc(100% - 7px) 3px,
+    calc(100% - 7px) 6px, calc(100% - 3px) 6px,
+    calc(100% - 3px) 11px, 100% 11px,
+    100% calc(100% - 11px), calc(100% - 3px) calc(100% - 11px),
+    calc(100% - 3px) calc(100% - 6px), calc(100% - 7px) calc(100% - 6px),
+    calc(100% - 7px) calc(100% - 3px), calc(100% - 11px) calc(100% - 3px),
+    calc(100% - 11px) 100%, 11px 100%,
+    11px calc(100% - 3px), 7px calc(100% - 3px),
+    7px calc(100% - 6px), 3px calc(100% - 6px),
+    3px calc(100% - 11px), 0 calc(100% - 11px),
+    0 11px, 3px 11px, 3px 6px, 7px 6px,
+    7px 3px, 11px 3px
+  );
+}
+
+/* 마이페이지 전 화면에서 공유하는 계단식 카드 외곽선 */
+.mypage-layout .yl-mypage-card {
+  --mypage-card-fill: #ffffff;
+  position: relative;
+  isolation: isolate;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #ac99d2 !important;
+  box-shadow: none !important;
+  filter: drop-shadow(5px 5px 0 #c8b7e5) !important;
+  clip-path: polygon(
+    11px 0, calc(100% - 11px) 0,
+    calc(100% - 11px) 3px, calc(100% - 7px) 3px,
+    calc(100% - 7px) 6px, calc(100% - 3px) 6px,
+    calc(100% - 3px) 11px, 100% 11px,
+    100% calc(100% - 11px), calc(100% - 3px) calc(100% - 11px),
+    calc(100% - 3px) calc(100% - 6px), calc(100% - 7px) calc(100% - 6px),
+    calc(100% - 7px) calc(100% - 3px), calc(100% - 11px) calc(100% - 3px),
+    calc(100% - 11px) 100%, 11px 100%,
+    11px calc(100% - 3px), 7px calc(100% - 3px),
+    7px calc(100% - 6px), 3px calc(100% - 6px),
+    3px calc(100% - 11px), 0 calc(100% - 11px),
+    0 11px, 3px 11px, 3px 6px, 7px 6px,
+    7px 3px, 11px 3px
+  ) !important;
+}
+
+.mypage-layout .yl-mypage-card::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: 2px !important;
+  z-index: 0 !important;
+  display: block !important;
+  clip-path: inherit !important;
+  background: var(--mypage-card-fill) !important;
+  pointer-events: none;
+}
+
+.mypage-layout .yl-mypage-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.mypage-layout,
+.mypage-layout button,
+.mypage-layout input,
+.mypage-layout textarea,
+.mypage-layout select {
+  font-family: 'DungGeunMo', monospace;
+}
+
+.mypage-layout :is(
+  .account-card__balance,
+  .activity-summary__value--point,
+  .summary-card__value,
+  .settlement-amount strong
+) {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif !important;
+}
+
+/* 마이페이지 하위 화면에서 공통으로 사용하는 뒤로가기 버튼 */
+.mypage-layout .mypage-back-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 4px;
+  width: 40px !important;
+  height: 40px;
+}
+
+.mypage-layout .mypage-back-button {
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: #ffffff;
+  width: 40px !important;
+  height: 40px !important;
+  padding: 2px !important;
+  border: 0 !important;
+  filter: none !important;
+}
+
+.mypage-layout .mypage-back-surface {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: #5e4499;
+  background: #ffffff;
 }
 
 .youngly-service .pixel-step-button,
@@ -182,7 +327,7 @@ body,
   display: block;
   padding: var(--pixel-outline-width, 2px) !important;
   box-sizing: border-box;
-  background: var(--yl-ink) !important;
+  background: var(--pixel-outline-color, var(--yl-ink)) !important;
 }
 
 .youngly-service .pixel-step-solid::before {

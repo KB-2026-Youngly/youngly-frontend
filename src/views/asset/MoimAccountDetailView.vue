@@ -1,11 +1,13 @@
 <template>
   <section class="detail-page">
-    <button class="back-button" type="button" @click="router.push('/asset')">← 자산으로</button>
+    <button class="back-button" type="button" @click="router.push({ path: '/asset', query: { tab: 'group' } })">← 자산으로</button>
 
     <div v-if="loading" class="detail-state">모임통장 정보를 불러오고 있어요.</div>
     <div v-else-if="error" class="detail-state error">{{ error }}</div>
     <template v-else-if="account">
-      <article class="account-summary">
+      <div class="detail-card-shadow yl-stepped-card-shadow">
+      <article class="account-summary yl-card-frame pixel-step-card pixel-step-solid">
+        <div class="account-summary-surface pixel-step-surface">
         <div class="summary-main-row">
           <img class="kb-icon" :src="kbIcon" alt="KB국민은행" />
           <div class="account-heading">
@@ -14,9 +16,13 @@
           </div>
         </div>
         <strong class="account-balance">{{ formatCurrency(account.balance) }}원</strong>
+        </div>
       </article>
+      </div>
 
-      <section v-if="group" class="deposit-status-section">
+      <div v-if="group" class="detail-card-shadow yl-stepped-card-shadow">
+      <section class="deposit-status-section yl-card-frame pixel-step-card pixel-step-solid">
+        <div class="deposit-status-surface pixel-step-surface">
         <div class="section-heading">
           <div><small>{{ group.groupName }}</small><h2>예치금 현황</h2></div>
           <strong>{{ members.length }}명 참여</strong>
@@ -83,9 +89,13 @@
             <button class="primary-action" type="button" @click="openDepositModal">예치금 채우기</button>
           </div>
         </template>
+        </div>
       </section>
+      </div>
 
-      <TransactionHistory account-type="MOIM" :account-id="account.moimAccountId" :initial-limit="6" />
+      <div class="detail-card-shadow yl-stepped-card-shadow">
+        <TransactionHistory account-type="MOIM" :account-id="account.moimAccountId" :initial-limit="6" />
+      </div>
     </template>
 
     <BaseModal v-model="depositModalOpen" title="예치금 채우기" size="medium">
@@ -320,19 +330,22 @@ function formatCurrency(value) {
 </script>
 
 <style scoped>
-.detail-page { width: calc(100% + 40px); min-height: calc(100vh - 80px); margin: -20px; padding: 28px 40px 70px; background: #e6dcf6; box-sizing: border-box; }
+.detail-page { width: calc(100% + 40px); min-height: calc(100vh - 80px); margin: -20px; padding: 12px 20px 70px; background: #e6dcf6; box-sizing: border-box; }
 .detail-page * { box-sizing: border-box; }
-.detail-page > * { width: min(920px, 100%); margin-left: auto; margin-right: auto; }
+.detail-page > * { width: 100%; margin-left: auto; margin-right: auto; }
 .back-button { display: block; margin-bottom: 16px; padding: 0; border: 0; background: transparent; color: #594775; font-weight: 800; text-align: left; cursor: pointer; }
 .account-summary, .deposit-status-section { border: 1px solid rgba(105,82,159,.14); border-radius: 20px; background: #fff; box-shadow: 0 10px 28px rgba(49,37,72,.07); }
-.account-summary { padding: 24px 28px; }
+.detail-card-shadow { --yl-stepped-shadow-color: #c8b7e5; --yl-stepped-shadow-offset: 5px; margin-bottom: 20px; }
+.account-summary.pixel-step-solid,.deposit-status-section.pixel-step-solid { width: 100%; margin: 0; --pixel-outline-width: 2px; --pixel-outline-color: #ac99d2; filter: none !important; }
+.account-summary-surface { padding: 22px 26px; }
 .summary-main-row { display: flex; align-items: center; gap: 13px; }
 .kb-icon { width: 48px; height: 48px; flex: 0 0 48px; object-fit: contain; }
 .account-heading { min-width: 0; }
 .account-heading h1 { margin: 0; overflow: hidden; color: #30293a; font-size: 21px; text-overflow: ellipsis; white-space: nowrap; }
 .account-heading p { margin: 6px 0 0; color: #8b8195; font-size: 13px; }
 .account-balance { display: block; margin-top: 25px; color: #30293a; font-size: 30px; letter-spacing: -.7px; }
-.deposit-status-section { margin-top: 18px; padding: 24px 28px; }
+.deposit-status-section { margin-top: 0; padding: 0; }
+.deposit-status-surface { padding: 22px 26px; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .section-heading small { color: #8b8195; }
 .section-heading h2 { margin: 3px 0 0; color: #30293a; font-size: 19px; }
@@ -398,16 +411,27 @@ function formatCurrency(value) {
 .confirm-icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #69529f; font-size: 22px; }
 .confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 10px; }
 .confirm-actions button:first-child { border: 1px solid #ddd4e7; background: #fff; color: #6c6175; }
+.account-balance,
+.my-deposit-summary strong,
+.member-deposit strong,
+.member-deposit span,
+.transfer-account-card b,
+.deposit-guide b,
+.amount-field input,
+.amount-field em,
+.confirm-copy strong {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+}
 .toast { position: fixed; left: 50%; bottom: 30px; z-index: 20; width: auto; padding: 13px 20px; border-radius: 10px; color: #fff; background: rgba(35,32,40,.94); text-align: center; transform: translateX(-50%); }
 .toast-enter-active,.toast-leave-active { transition: .2s; }.toast-enter-from,.toast-leave-to { opacity: 0; transform: translate(-50%,8px); }
 @media (max-width: 767px) {
-  .detail-page { width: 100%; min-height: calc(100dvh - 68px); margin: 0; padding: 22px 20px 110px; }
-  .account-summary { padding: 20px 18px; border-radius: 16px; }
+  .detail-page { width: 100%; min-height: calc(100dvh - 68px); margin: 0; padding: 8px 14px 110px; }
+  .account-summary-surface { padding: 18px 16px; }
   .kb-icon { width: 44px; height: 44px; flex-basis: 44px; }
   .account-heading h1 { font-size: 17px; }
   .account-heading p { font-size: 12px; }
   .account-balance { margin-top: 22px; font-size: 27px; }
-  .deposit-status-section { padding: 20px 16px; border-radius: 16px; }
+  .deposit-status-surface { padding: 18px 14px; }
   .deposit-overview { grid-template-columns: 1fr; }
   .member-list li { gap: 10px; }
   .member-deposit strong,.member-deposit span { display: block; }

@@ -62,7 +62,7 @@ export default {
   },
   computed: {
     activeTab() {
-      return this.$route.path
+      return this.$route.path.startsWith('/groups') ? '/home' : this.$route.path
     },
   },
   methods: {
