@@ -31,9 +31,7 @@
           </dl>
 
           <div class="gacha-modal__actions">
-            <button type="button" class="gacha-modal__secondary" @click="requestClose">
-              취소
-            </button>
+            <button type="button" class="gacha-modal__secondary" @click="requestClose">취소</button>
             <button type="button" class="gacha-modal__primary" @click="emit('confirm')">
               100P로 뽑기
             </button>
@@ -60,9 +58,7 @@
           </p>
 
           <div class="gacha-modal__actions">
-            <button type="button" class="gacha-modal__secondary" @click="requestClose">
-              닫기
-            </button>
+            <button type="button" class="gacha-modal__secondary" @click="requestClose">닫기</button>
             <button type="button" class="gacha-modal__primary" @click="emit('confirm')">
               다시 시도
             </button>
@@ -72,7 +68,10 @@
         <template v-else-if="mode === 'result'">
           <span class="gacha-modal__eyebrow">NEW FRIEND!</span>
           <h2 :id="titleId">새 캐릭터 획득!</h2>
-          <div class="gacha-modal__result">
+          <div
+            class="gacha-modal__result"
+            :class="{ 'gacha-modal__result--cover': usesCoverImage }"
+          >
             <CharacterPreview :character="character" size="hero" />
           </div>
           <strong class="gacha-modal__name">{{ character?.name }}</strong>
@@ -109,6 +108,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import CharacterPreview from '@/components/collectible/CharacterPreview.vue'
 import gachaDrawAnimation from '@/assets/images/gacha-draw-animation.gif'
+import { isCoverCharacterImage } from '@/constants/characterImages'
 
 defineOptions({ name: 'GachaModal' })
 
@@ -151,20 +151,18 @@ const formattedExpectedBalance = computed(() =>
   new Intl.NumberFormat('ko-KR').format(Math.max(0, props.balance - 100)),
 )
 const animationSrc = computed(() => `${gachaDrawAnimation}?attempt=${props.animationKey}`)
+const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
 
 const requestClose = () => {
   if (!props.loading && !props.equipping) emit('close')
 }
 
-watch(
-  [() => props.open, () => props.mode],
-  async ([open]) => {
-    if (!open) return
-    await nextTick()
-    const focusTarget = modalRef.value?.querySelector('button:not([disabled])') || modalRef.value
-    focusTarget?.focus()
-  },
-)
+watch([() => props.open, () => props.mode], async ([open]) => {
+  if (!open) return
+  await nextTick()
+  const focusTarget = modalRef.value?.querySelector('button:not([disabled])') || modalRef.value
+  focusTarget?.focus()
+})
 </script>
 
 <style scoped>
@@ -260,6 +258,17 @@ watch(
   border-radius: 50%;
   background: #f6f1fb;
   box-sizing: border-box;
+}
+
+.gacha-modal__result--cover {
+  width: min(280px, 100%);
+  height: auto;
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .gacha-modal__animation {
@@ -422,6 +431,11 @@ watch(
   .gacha-modal__result {
     width: 170px;
     height: 170px;
+  }
+
+  .gacha-modal__result--cover {
+    width: min(240px, 78vw);
+    height: auto;
   }
 
   .gacha-modal__animation {

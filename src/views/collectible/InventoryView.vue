@@ -22,17 +22,23 @@
     </section>
 
     <template v-else>
-      <section class="equipped-stage" aria-label="현재 장착 중인 캐릭터">
+      <section
+        class="equipped-stage"
+        :class="{ 'equipped-stage--cover': equippedUsesCoverImage }"
+        aria-label="현재 장착 중인 캐릭터"
+      >
         <div class="equipped-stage__spotlight">
           <CharacterPreview :character="equippedCharacter" size="hero" />
         </div>
-        <strong>{{ equippedCharacter?.name || '장착된 캐릭터 없음' }}</strong>
-        <span v-if="equippedCharacter" class="equipped-stage__status">
-          <Check :size="14" /> 장착 중
-        </span>
-        <span v-else class="equipped-stage__status equipped-stage__status--empty">
-          캐릭터를 선택해 장착해 주세요
-        </span>
+        <div v-if="!equippedUsesCoverImage" class="equipped-stage__info">
+          <strong>{{ equippedCharacter?.name || '장착된 캐릭터 없음' }}</strong>
+          <span v-if="equippedCharacter" class="equipped-stage__status">
+            <Check :size="14" /> 장착 중
+          </span>
+          <span v-else class="equipped-stage__status equipped-stage__status--empty">
+            캐릭터를 선택해 장착해 주세요
+          </span>
+        </div>
       </section>
 
       <section class="draw-panel" aria-labelledby="character-draw-title">
@@ -137,7 +143,7 @@ import CharacterPreview from '@/components/collectible/CharacterPreview.vue'
 import EquipButton from '@/components/collectible/EquipButton.vue'
 import GachaModal from '@/components/collectible/GachaModal.vue'
 import InventoryGrid from '@/components/collectible/InventoryGrid.vue'
-import { KNOWN_CHARACTER_COUNT } from '@/constants/characterImages'
+import { isCoverCharacterImage, KNOWN_CHARACTER_COUNT } from '@/constants/characterImages'
 import { CHARACTER_DRAW_COST, useCollectibleStore } from '@/stores/collectible'
 import { usePointStore } from '@/stores/point'
 
@@ -175,6 +181,7 @@ const isDrawAttemptActive = ref(false)
 const drawAnimationKey = ref(0)
 const MIN_DRAW_ANIMATION_MS = 1800
 const allCharactersOwned = computed(() => characters.value.length >= KNOWN_CHARACTER_COUNT)
+const equippedUsesCoverImage = computed(() => isCoverCharacterImage(equippedCharacter.value))
 const formattedBalance = computed(() => new Intl.NumberFormat('ko-KR').format(balance.value))
 const drawDisabled = computed(
   () =>
@@ -367,7 +374,12 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-.equipped-stage > strong {
+.equipped-stage__info {
+  display: grid;
+  justify-items: center;
+}
+
+.equipped-stage__info > strong {
   margin-top: 16px;
   font-size: 20px;
 }
@@ -388,6 +400,21 @@ onMounted(() => {
 .equipped-stage__status--empty {
   color: #7d7486;
   background: #f2eff5;
+}
+
+.equipped-stage--cover {
+  display: block;
+  min-height: clamp(300px, 56vw, 520px);
+  padding: 0;
+  background: #ffffff;
+}
+
+.equipped-stage--cover .equipped-stage__spotlight {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 .draw-panel {

@@ -322,11 +322,12 @@ onMounted(() => {
   display: grid;
   width: 82px;
   height: 82px;
-  padding: 8px;
+  padding: 0;
   place-items: center;
-  border: 1px solid #e4d9f1;
-  border-radius: 22px;
-  background: rgba(246, 241, 251, 0.9);
+  overflow: hidden;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
   box-sizing: border-box;
 }
 

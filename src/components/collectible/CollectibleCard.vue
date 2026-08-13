@@ -4,6 +4,7 @@
     :class="{
       'character-card--selected': selected,
       'character-card--equipped': equipped,
+      'character-card--cover': usesCoverImage,
     }"
     type="button"
     :aria-pressed="selected"
@@ -23,10 +24,12 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { Check } from 'lucide-vue-next'
+import { isCoverCharacterImage } from '@/constants/characterImages'
 import CharacterPreview from './CharacterPreview.vue'
 
-defineProps({
+const props = defineProps({
   character: {
     type: Object,
     required: true,
@@ -42,6 +45,7 @@ defineProps({
 })
 
 const emit = defineEmits(['select'])
+const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
 </script>
 
 <style scoped>
@@ -101,6 +105,41 @@ const emit = defineEmits(['select'])
     #faf8fd;
 }
 
+.character-card--cover {
+  min-height: 210px;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+.character-card--cover .character-card__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.character-card--cover > strong {
+  position: absolute;
+  z-index: 1;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 36px 12px 12px;
+  color: #ffffff;
+  background: linear-gradient(180deg, transparent, rgba(12, 30, 74, 0.9));
+  box-sizing: border-box;
+  font-weight: 900;
+  line-height: 1.3;
+  text-align: center;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+}
+
 .character-card strong {
   overflow: hidden;
   font-size: 14px;
@@ -142,5 +181,19 @@ const emit = defineEmits(['select'])
 
 .character-card--equipped .character-card__check {
   display: none;
+}
+
+.character-card--cover.character-card--selected:not(.character-card--equipped)
+  .character-card__check {
+  z-index: 2;
+  top: 8px;
+  right: 8px;
+  bottom: auto;
+}
+
+@media (max-width: 560px) {
+  .character-card--cover {
+    min-height: 190px;
+  }
 }
 </style>
