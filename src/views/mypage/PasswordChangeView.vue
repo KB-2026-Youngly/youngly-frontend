@@ -4,7 +4,6 @@
       <button type="button" aria-label="마이페이지로 돌아가기" @click="goBack">
         <ArrowLeft :size="18" aria-hidden="true" />
       </button>
-      <h1>비밀번호 변경</h1>
     </header>
 
     <form class="password-form" novalidate @submit.prevent="handleSubmit">
@@ -180,6 +179,7 @@ onBeforeUnmount(() => window.clearTimeout(redirectTimer))
   --color-primary-hover: #6448a3;
 
   display: grid;
+  align-content: start;
   gap: 20px;
   min-height: calc(100vh - 69px);
   margin: -20px;
@@ -190,16 +190,8 @@ onBeforeUnmount(() => window.clearTimeout(redirectTimer))
 }
 
 .password-header {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) 40px;
+  display: flex;
   align-items: center;
-}
-
-.password-header h1 {
-  margin: 0;
-  font-size: 21px;
-  letter-spacing: -0.03em;
-  text-align: center;
 }
 
 .password-header button {
@@ -345,10 +337,6 @@ onBeforeUnmount(() => window.clearTimeout(redirectTimer))
     padding: 16px 16px 40px;
   }
 
-  .password-header h1 {
-    font-size: 19px;
-  }
-
   .password-form {
     gap: 17px;
     padding: 20px 18px;
@@ -374,11 +362,6 @@ onBeforeUnmount(() => window.clearTimeout(redirectTimer))
 .password-header button:hover {
   box-shadow: 2px 2px 0 var(--mypage-shadow);
   transform: translate(2px, 2px);
-}
-
-.password-header h1 {
-  color: var(--mypage-ink);
-  font-size: 27px;
 }
 
 .password-form {
