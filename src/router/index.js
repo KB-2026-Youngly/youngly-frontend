@@ -50,7 +50,7 @@ const routes = [
   {
     path: '/mypage',
     component: DefaultLayout,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, mypageSurface: true },
     children: [
       {
         path: '',
@@ -61,6 +61,21 @@ const routes = [
         path: 'profile',
         name: 'ProfileEdit',
         component: () => import('@/views/mypage/ProfileEditView.vue'),
+      },
+      {
+        path: 'accounts',
+        name: 'AccountSettings',
+        component: () => import('@/views/mypage/AccountSettingsView.vue'),
+      },
+      {
+        path: 'settlements',
+        name: 'SettlementHistory',
+        component: () => import('@/views/mypage/SettlementHistoryView.vue'),
+      },
+      {
+        path: 'password',
+        name: 'PasswordChange',
+        component: () => import('@/views/mypage/PasswordChangeView.vue'),
       },
     ],
   },
@@ -131,9 +146,9 @@ const routes = [
       {
         path: '',
         name: 'GroupList',
-        component: () => import('@/views/group/GroupListView.vue')
-      }
-    ]
+        component: () => import('@/views/group/GroupListView.vue'),
+      },
+    ],
   },
   {
     path: '/groups/:id',
@@ -143,16 +158,16 @@ const routes = [
       {
         path: '',
         name: 'GroupDetail',
-        component: () => import('@/views/group/GroupDetailView.vue')
-      }
-    ]
+        component: () => import('@/views/group/GroupDetailView.vue'),
+      },
+    ],
   },
   // --- develop 브랜치에서 추가한 라우트들 ---
   {
     path: '/point',
     alias: '/points',
     component: DefaultLayout,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, mypageSurface: true },
     children: [
       {
         path: '',
@@ -164,7 +179,7 @@ const routes = [
   {
     path: '/characters',
     component: DefaultLayout,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, mypageSurface: true },
     children: [
       {
         path: '',

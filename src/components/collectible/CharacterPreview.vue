@@ -1,9 +1,13 @@
 <template>
-  <div class="character-preview" :class="`character-preview--${size}`">
+  <div
+    class="character-preview"
+    :class="[`character-preview--${size}`, { 'character-preview--cover': usesCoverImage }]"
+  >
     <img
       v-if="resolvedImageUrl && !imageFailed"
       :src="resolvedImageUrl"
       :alt="`${character.name || '캐릭터'} 이미지`"
+      :style="coverImageStyle"
       @error="imageFailed = true"
     />
     <div v-else class="character-preview__fallback" role="img" :aria-label="fallbackLabel">
@@ -16,7 +20,10 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { ImageOff } from 'lucide-vue-next'
-import { resolveCharacterImage } from '@/constants/characterImages'
+import {
+  resolveCharacterImage,
+  resolveCoverCharacterImageConfig,
+} from '@/constants/characterImages'
 
 const props = defineProps({
   character: {
@@ -33,13 +40,19 @@ const props = defineProps({
 const imageFailed = ref(false)
 const fallbackLabel = computed(() => `${props.character?.name || '캐릭터'} 이미지 없음`)
 const resolvedImageUrl = computed(() => resolveCharacterImage(props.character))
-
-watch(
-  resolvedImageUrl,
-  () => {
-    imageFailed.value = false
-  },
+const coverImageConfig = computed(() => resolveCoverCharacterImageConfig(props.character))
+const usesCoverImage = computed(() => Boolean(coverImageConfig.value))
+const coverImageStyle = computed(() =>
+  coverImageConfig.value
+    ? {
+        objectPosition: coverImageConfig.value.objectPosition,
+      }
+    : undefined,
 )
+
+watch(resolvedImageUrl, () => {
+  imageFailed.value = false
+})
 </script>
 
 <style scoped>
@@ -58,6 +71,11 @@ watch(
   object-fit: contain;
 }
 
+.character-preview--cover img {
+  object-fit: cover;
+  object-position: center center;
+}
+
 .character-preview__fallback {
   display: grid;
   gap: 10px;
@@ -70,5 +88,4 @@ watch(
   font-weight: 900;
   letter-spacing: 1px;
 }
-
 </style>

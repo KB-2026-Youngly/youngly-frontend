@@ -1,10 +1,8 @@
 <template>
   <div class="character-page">
-    <header class="page-heading">
-      <span>MY CHARACTER</span>
-      <h1>내 캐릭터</h1>
-      <p>보유한 캐릭터 중 마음에 드는 친구를 선택해 장착해 보세요.</p>
-    </header>
+    <button class="back-button" type="button" aria-label="마이페이지로 돌아가기" @click="goBack">
+      <ArrowLeft :size="18" aria-hidden="true" />
+    </button>
 
     <section v-if="isLoading" class="state-panel">
       <BaseSpinner size="large" label="캐릭터를 불러오는 중..." centered />
@@ -24,19 +22,23 @@
     </section>
 
     <template v-else>
-      <section class="equipped-stage" aria-labelledby="equipped-character-title">
-        <div class="equipped-stage__label">NOW EQUIPPED</div>
-        <h2 id="equipped-character-title">현재 장착 중인 캐릭터</h2>
+      <section
+        class="equipped-stage"
+        :class="{ 'equipped-stage--cover': equippedUsesCoverImage }"
+        aria-label="현재 장착 중인 캐릭터"
+      >
         <div class="equipped-stage__spotlight">
           <CharacterPreview :character="equippedCharacter" size="hero" />
         </div>
-        <strong>{{ equippedCharacter?.name || '장착된 캐릭터 없음' }}</strong>
-        <span v-if="equippedCharacter" class="equipped-stage__status">
-          <Check :size="14" /> 장착 중
-        </span>
-        <span v-else class="equipped-stage__status equipped-stage__status--empty">
-          캐릭터를 선택해 장착해 주세요
-        </span>
+        <div v-if="!equippedUsesCoverImage" class="equipped-stage__info">
+          <strong>{{ equippedCharacter?.name || '장착된 캐릭터 없음' }}</strong>
+          <span v-if="equippedCharacter" class="equipped-stage__status">
+            <Check :size="14" /> 장착 중
+          </span>
+          <span v-else class="equipped-stage__status equipped-stage__status--empty">
+            캐릭터를 선택해 장착해 주세요
+          </span>
+        </div>
       </section>
 
       <section class="draw-panel" aria-labelledby="character-draw-title">
@@ -55,10 +57,10 @@
           <button
             type="button"
             :disabled="drawDisabled"
-            :aria-busy="isDrawing"
+            :aria-busy="isDrawAttemptActive"
             @click="openDrawModal"
           >
-            <span v-if="isDrawing" class="draw-panel__spinner" aria-hidden="true"></span>
+            <span v-if="isDrawAttemptActive" class="draw-panel__spinner" aria-hidden="true"></span>
             <Sparkles v-else :size="18" aria-hidden="true" />
             {{ drawButtonLabel }}
           </button>
@@ -118,7 +120,8 @@
       :mode="drawModalMode"
       :balance="balance"
       :character="drawnCharacter"
-      :loading="isDrawing"
+      :loading="isDrawAttemptActive"
+      :animation-key="drawAnimationKey"
       :equipping="equippingCharacterId != null"
       :error="drawError"
       :equip-error="equipError"
@@ -132,19 +135,21 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { AlertTriangle, Check, Sparkles } from 'lucide-vue-next'
+import { AlertTriangle, ArrowLeft, Check, Sparkles } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
 import BaseEmptyState from '@/components/base/BaseEmptyState.vue'
 import BaseSpinner from '@/components/base/BaseSpinner.vue'
 import CharacterPreview from '@/components/collectible/CharacterPreview.vue'
 import EquipButton from '@/components/collectible/EquipButton.vue'
 import GachaModal from '@/components/collectible/GachaModal.vue'
 import InventoryGrid from '@/components/collectible/InventoryGrid.vue'
-import { KNOWN_CHARACTER_COUNT } from '@/constants/characterImages'
+import { isCoverCharacterImage, KNOWN_CHARACTER_COUNT } from '@/constants/characterImages'
 import { CHARACTER_DRAW_COST, useCollectibleStore } from '@/stores/collectible'
 import { usePointStore } from '@/stores/point'
 
 const collectibleStore = useCollectibleStore()
 const pointStore = usePointStore()
+const router = useRouter()
 const { balance, isLoading: isPointLoading, error: pointError } = storeToRefs(pointStore)
 const {
   characters,
@@ -172,18 +177,23 @@ const {
 
 const isDrawModalOpen = ref(false)
 const drawModalMode = ref('confirm')
+const isDrawAttemptActive = ref(false)
+const drawAnimationKey = ref(0)
+const MIN_DRAW_ANIMATION_MS = 1800
 const allCharactersOwned = computed(() => characters.value.length >= KNOWN_CHARACTER_COUNT)
+const equippedUsesCoverImage = computed(() => isCoverCharacterImage(equippedCharacter.value))
 const formattedBalance = computed(() => new Intl.NumberFormat('ko-KR').format(balance.value))
 const drawDisabled = computed(
   () =>
     isDrawing.value ||
+    isDrawAttemptActive.value ||
     isPointLoading.value ||
     Boolean(pointError.value) ||
     balance.value < CHARACTER_DRAW_COST ||
     allCharactersOwned.value,
 )
 const drawButtonLabel = computed(() => {
-  if (isDrawing.value) return '캐릭터를 뽑는 중...'
+  if (isDrawAttemptActive.value) return '캐릭터를 뽑는 중...'
   if (isPointLoading.value) return '포인트 확인 중...'
   if (allCharactersOwned.value) return '모든 캐릭터 수집 완료'
   if (pointError.value) return '포인트 확인 필요'
@@ -200,6 +210,7 @@ const drawStatusMessage = computed(() => {
 })
 const drawNotice = computed(() => drawError.value || (pointError.value ? pointError.value : ''))
 const drawNoticeIsError = computed(() => Boolean(drawError.value || pointError.value))
+const goBack = () => router.push('/mypage')
 
 const selectedIsEquipped = computed(
   () =>
@@ -215,30 +226,56 @@ const openDrawModal = () => {
 }
 
 const closeDrawModal = () => {
-  if (isDrawing.value || equippingCharacterId.value != null) return
+  if (isDrawAttemptActive.value || isDrawing.value || equippingCharacterId.value != null) return
   isDrawModalOpen.value = false
   clearDrawResult()
 }
 
 const confirmDraw = async () => {
-  if (isDrawing.value) return
+  if (isDrawAttemptActive.value || isDrawing.value) return
 
   if (balance.value < CHARACTER_DRAW_COST) {
     setDrawError('포인트가 부족합니다. 캐릭터 뽑기에는 100P가 필요해요.')
+    drawModalMode.value = 'error'
     return
   }
 
-  const result = await drawNewCharacter(balance.value)
-  if (!result) return
-
-  const balanceUpdated = pointStore.setBalance(result.remainingPoint)
-  if (!balanceUpdated) {
-    setDrawError('남은 포인트를 반영하지 못했어요. 화면을 새로고침해 주세요.')
+  if (allCharactersOwned.value) {
+    setDrawError('모든 캐릭터를 모았어요.')
+    drawModalMode.value = 'error'
     return
   }
 
-  drawModalMode.value = 'result'
-  await fetchOwnedCharacters()
+  clearDrawResult()
+  isDrawAttemptActive.value = true
+  drawAnimationKey.value += 1
+  drawModalMode.value = 'drawing'
+
+  try {
+    const [result] = await Promise.all([
+      drawNewCharacter(balance.value),
+      new Promise((resolve) => window.setTimeout(resolve, MIN_DRAW_ANIMATION_MS)),
+    ])
+
+    if (!result) {
+      if (!drawError.value) setDrawError('캐릭터를 뽑지 못했어요. 다시 시도해 주세요.')
+      drawModalMode.value = 'error'
+      return
+    }
+
+    const balanceUpdated = pointStore.setBalance(result.remainingPoint)
+    if (!balanceUpdated) {
+      setDrawError('남은 포인트를 반영하지 못했어요. 화면을 새로고침해 주세요.')
+      drawModalMode.value = 'error'
+      return
+    }
+
+    isDrawAttemptActive.value = false
+    drawModalMode.value = 'result'
+    await fetchOwnedCharacters()
+  } finally {
+    isDrawAttemptActive.value = false
+  }
 }
 
 const equipDrawnCharacter = async () => {
@@ -258,21 +295,41 @@ onMounted(() => {
 .character-page {
   --color-primary: #7156ad;
   --color-primary-hover: #62479e;
-  --color-primary-soft: #eee7f8;
+  --color-primary-soft: #f0eafd;
 
   display: grid;
-  gap: 28px;
+  gap: 22px;
   min-height: calc(100vh - 69px);
   margin: -20px;
-  padding: 42px max(24px, calc((100% - 980px) / 2)) 80px;
+  padding: 24px max(24px, calc((100% - 920px) / 2)) 80px;
   color: #342e3c;
-  background-color: #e6dcf6;
-  background-image: radial-gradient(rgba(113, 86, 173, 0.1) 1px, transparent 1px);
-  background-size: 16px 16px;
+  background: #e6dcf6;
   box-sizing: border-box;
 }
 
-.page-heading > span,
+.back-button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid rgba(113, 86, 173, 0.12);
+  border-radius: 50%;
+  color: #5e4499;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 5px 14px rgba(66, 43, 99, 0.07);
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background: #ffffff;
+}
+
+.back-button:focus-visible {
+  outline: 3px solid rgba(113, 86, 173, 0.25);
+  outline-offset: 2px;
+}
+
 .inventory-panel__heading span {
   color: #7156ad;
   font-size: 10px;
@@ -280,26 +337,14 @@ onMounted(() => {
   letter-spacing: 2px;
 }
 
-.page-heading h1 {
-  margin: 6px 0 8px;
-  font-size: clamp(28px, 5vw, 38px);
-  line-height: 1.15;
-}
-
-.page-heading p {
-  margin: 0;
-  color: #6e6677;
-  font-size: 14px;
-}
-
 .state-panel,
 .equipped-stage,
 .draw-panel,
 .inventory-panel {
-  border: 3px solid #322a43;
-  border-radius: 6px;
+  border: 1px solid rgba(113, 86, 173, 0.1);
+  border-radius: 22px;
   background: #ffffff;
-  box-shadow: 7px 7px 0 #7156ad;
+  box-shadow: 0 14px 34px rgba(66, 43, 99, 0.09);
 }
 
 .state-panel {
@@ -313,55 +358,28 @@ onMounted(() => {
   display: grid;
   justify-items: center;
   overflow: hidden;
-  padding: 26px 24px 28px;
+  padding: 30px 24px;
   text-align: center;
-  background: linear-gradient(transparent 74%, rgba(113, 86, 173, 0.09) 74%), #ffffff;
-}
-
-.equipped-stage::before,
-.equipped-stage::after {
-  position: absolute;
-  top: 55px;
-  color: #d9cbea;
-  font-size: 30px;
-  content: '✦';
-}
-
-.equipped-stage::before {
-  left: 12%;
-}
-
-.equipped-stage::after {
-  right: 12%;
-}
-
-.equipped-stage__label {
-  padding: 5px 9px;
-  border: 2px solid #7156ad;
-  color: #7156ad;
-  background: #eee7f8;
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 1.6px;
-}
-
-.equipped-stage h2 {
-  margin: 11px 0 18px;
-  font-size: 18px;
+  background:
+    radial-gradient(circle at 50% 62%, rgba(218, 202, 240, 0.62), transparent 31%),
+    linear-gradient(180deg, #ffffff 0%, #faf7fd 100%);
 }
 
 .equipped-stage__spotlight {
-  width: min(250px, 70vw);
-  height: 250px;
-  padding: 14px;
-  border: 3px solid #d5c7e7;
-  border-radius: 50%;
-  background: #f6f1fb;
-  box-shadow: inset 0 -22px 0 rgba(113, 86, 173, 0.08);
+  width: min(240px, 70vw);
+  height: 240px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   box-sizing: border-box;
 }
 
-.equipped-stage > strong {
+.equipped-stage__info {
+  display: grid;
+  justify-items: center;
+}
+
+.equipped-stage__info > strong {
   margin-top: 16px;
   font-size: 20px;
 }
@@ -370,14 +388,33 @@ onMounted(() => {
   display: inline-flex;
   gap: 5px;
   align-items: center;
-  margin-top: 7px;
+  margin-top: 8px;
+  padding: 5px 10px;
+  border-radius: 999px;
   color: #3f7965;
+  background: #eaf5f0;
   font-size: 12px;
   font-weight: 800;
 }
 
 .equipped-stage__status--empty {
   color: #7d7486;
+  background: #f2eff5;
+}
+
+.equipped-stage--cover {
+  display: block;
+  min-height: clamp(300px, 56vw, 520px);
+  padding: 0;
+  background: #ffffff;
+}
+
+.equipped-stage--cover .equipped-stage__spotlight {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 .draw-panel {
@@ -385,8 +422,10 @@ onMounted(() => {
   grid-template-columns: minmax(0, 1fr) minmax(240px, 330px);
   gap: 22px;
   align-items: center;
-  padding: 22px 24px;
-  background: linear-gradient(135deg, #ffffff, #f4effa);
+  padding: 24px 26px;
+  background:
+    radial-gradient(circle at 92% 15%, rgba(255, 255, 255, 0.76), transparent 24%),
+    linear-gradient(135deg, #ffffff, #f0e8fa);
 }
 
 .draw-panel__copy > span {
@@ -420,7 +459,8 @@ onMounted(() => {
 
 .draw-panel__points span {
   padding: 6px 9px;
-  border: 2px solid #d4c5e7;
+  border: 1px solid #ded2eb;
+  border-radius: 999px;
   color: #6e6677;
   background: #ffffff;
   font-size: 11px;
@@ -437,13 +477,13 @@ onMounted(() => {
   min-height: 48px;
   gap: 8px;
   padding: 11px 16px;
-  border: 3px solid #322a43;
-  border-radius: 4px;
+  border: 0;
+  border-radius: 12px;
   align-items: center;
   justify-content: center;
   color: #ffffff;
   background: #7156ad;
-  box-shadow: 4px 4px 0 #322a43;
+  box-shadow: 0 9px 20px rgba(113, 86, 173, 0.23);
   font: inherit;
   font-size: 13px;
   font-weight: 900;
@@ -452,7 +492,7 @@ onMounted(() => {
 
 .draw-panel__action button:hover:not(:disabled) {
   background: #62479e;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .draw-panel__action button:focus-visible {
@@ -461,7 +501,6 @@ onMounted(() => {
 }
 
 .draw-panel__action button:disabled {
-  border-color: #8d8696;
   color: #f4f2f6;
   background: #aaa3b2;
   box-shadow: none;
@@ -496,17 +535,18 @@ onMounted(() => {
 }
 
 .inventory-panel {
-  padding: 0 22px 24px;
+  padding: 0 24px 26px;
+  overflow: hidden;
 }
 
 .inventory-panel__heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0 -22px 22px;
-  padding: 20px 22px 17px;
-  border-bottom: 3px solid #322a43;
-  background: #fbf9fd;
+  margin: 0 -24px 24px;
+  padding: 21px 24px 18px;
+  border-bottom: 1px solid #eee8f3;
+  background: linear-gradient(180deg, #fdfcfe, #faf8fc);
 }
 
 .inventory-panel__heading h2 {
@@ -515,8 +555,9 @@ onMounted(() => {
 }
 
 .inventory-panel__heading > strong {
-  padding: 5px 9px;
-  border: 2px solid #d4c5e7;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 999px;
   color: #7156ad;
   background: #eee7f8;
   font-size: 12px;
@@ -528,9 +569,10 @@ onMounted(() => {
   gap: 18px;
   align-items: center;
   margin-top: 26px;
-  padding: 18px;
-  border: 3px dashed #c9b9de;
-  background: #f8f4fc;
+  padding: 18px 20px;
+  border: 1px solid #ded3ea;
+  border-radius: 16px;
+  background: #f8f5fb;
 }
 
 .equip-panel__copy {
@@ -561,13 +603,14 @@ onMounted(() => {
 @media (max-width: 767px) {
   .character-page {
     gap: 22px;
-    min-height: calc(100vh - 144px);
-    padding: 28px 20px 54px;
+    min-height: calc(100dvh - 68px - 76px);
+    margin: 0;
+    padding: 16px 20px 54px;
   }
 
   .equipped-stage__spotlight {
-    width: 210px;
-    height: 210px;
+    width: 205px;
+    height: 205px;
   }
 
   .draw-panel {
@@ -592,11 +635,11 @@ onMounted(() => {
 
 @media (max-width: 560px) {
   .inventory-panel {
-    padding: 0 14px 18px;
+    padding: 0 16px 20px;
   }
 
   .inventory-panel__heading {
-    margin: 0 -14px 18px;
+    margin: 0 -16px 18px;
     padding: 17px 16px 15px;
   }
 
@@ -618,6 +661,73 @@ onMounted(() => {
 @media (prefers-reduced-motion: reduce) {
   .draw-panel__spinner {
     animation: none;
+  }
+}
+</style>
+
+<style scoped>
+.character-page {
+  --mypage-ink: #342843;
+  --mypage-shadow: #c8b7e5;
+  --color-primary: #7658b5;
+  padding-inline: max(24px, calc((100% - 960px) / 2));
+}
+
+.back-button {
+  border: 2px solid var(--mypage-ink);
+  border-radius: 11px;
+  background: #ffffff;
+  box-shadow: 4px 4px 0 var(--mypage-shadow);
+}
+
+.back-button:hover {
+  box-shadow: 2px 2px 0 var(--mypage-shadow);
+  transform: translate(2px, 2px);
+}
+
+.character-page :is(.state-panel, .equipped-stage, .draw-panel, .inventory-panel) {
+  border: 2px solid var(--mypage-ink);
+  box-shadow: 8px 8px 0 var(--mypage-shadow);
+}
+
+.equipped-stage:not(.equipped-stage--cover) {
+  background: #ffffff;
+}
+
+.draw-panel {
+  background: #f6f1fb;
+}
+
+.draw-panel__points span {
+  border: 2px solid #d8ccea;
+  border-radius: 8px;
+}
+
+.draw-panel__action button {
+  border: 2px solid var(--mypage-ink);
+  border-radius: 10px;
+  background: #7658b5;
+  box-shadow: 4px 4px 0 #b8a2da;
+}
+
+.draw-panel__action button:hover:not(:disabled) {
+  box-shadow: 2px 2px 0 #b8a2da;
+  transform: translate(2px, 2px);
+}
+
+.inventory-panel__heading {
+  background: #f6f1fb;
+}
+
+.equip-panel {
+  border: 2px solid #d8ccea;
+  border-radius: 12px;
+  background: #faf7fd;
+}
+
+@media (max-width: 767px) {
+  .character-page {
+    padding-inline: 16px;
   }
 }
 </style>

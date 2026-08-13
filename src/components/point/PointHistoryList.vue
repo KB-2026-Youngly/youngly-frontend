@@ -42,7 +42,8 @@ const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
 
 const getType = (history) => (history.pointType === 'EARN' ? 'earn' : 'use')
 const getTypeLabel = (history) => (getType(history) === 'earn' ? '포인트 적립' : '포인트 사용')
-const formatAmount = (amount) => new Intl.NumberFormat('ko-KR').format(Math.abs(Number(amount) || 0))
+const formatAmount = (amount) =>
+  new Intl.NumberFormat('ko-KR').format(Math.abs(Number(amount) || 0))
 const formatDate = (date) => {
   const parsedDate = new Date(date)
   return Number.isNaN(parsedDate.getTime()) ? '날짜 정보 없음' : dateFormatter.format(parsedDate)
@@ -63,8 +64,8 @@ const formatDate = (date) => {
   gap: 14px;
   align-items: center;
   min-height: 78px;
-  padding: 14px 20px;
-  border-bottom: 2px dashed #e0d8ea;
+  padding: 15px 20px;
+  border-bottom: 1px solid #ece6f0;
   box-sizing: border-box;
 }
 
@@ -77,18 +78,18 @@ const formatDate = (date) => {
   width: 38px;
   height: 38px;
   place-items: center;
-  border: 2px solid currentColor;
-  border-radius: 4px;
+  border: 0;
+  border-radius: 12px;
 }
 
 .point-history__type-icon--earn {
   color: #2d8363;
-  background: #e4f6ef;
+  background: #e7f5ef;
 }
 
 .point-history__type-icon--use {
   color: #c25467;
-  background: #fff0f2;
+  background: #fff0f3;
 }
 
 .point-history__details {
@@ -111,7 +112,8 @@ const formatDate = (date) => {
 }
 
 .point-history__amount {
-  font-size: 16px;
+  font-size: 15px;
+  letter-spacing: -0.02em;
   white-space: nowrap;
 }
 
@@ -134,10 +136,37 @@ const formatDate = (date) => {
   .point-history__type-icon {
     width: 32px;
     height: 32px;
+    border-radius: 10px;
   }
 
   .point-history__amount {
     font-size: 14px;
   }
+}
+
+@media (max-width: 380px) {
+  .point-history__item {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+
+  .point-history__amount {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+</style>
+
+<style scoped>
+.point-history__item {
+  transition: background-color 0.16s ease;
+}
+
+.point-history__item:hover {
+  background: #faf7fd;
+}
+
+.point-history__type-icon {
+  border: 1px solid currentColor;
+  border-radius: 10px;
 }
 </style>

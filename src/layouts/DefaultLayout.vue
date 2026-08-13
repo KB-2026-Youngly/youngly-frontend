@@ -6,6 +6,7 @@
       'home-layout': isHomeRoute,
       'feed-write-layout': isFeedWriteRoute,
       'group-detail-layout': isGroupDetailRoute,
+      'mypage-layout': isMyPageRoute,
     }"
   >
     <!-- 사이드바 (데스크톱 전용 왼쪽 세로 영역 & 모바일 하단바) -->
@@ -18,6 +19,7 @@
         'home-main-wrapper': isHomeRoute,
         'feed-write-main-wrapper': isFeedWriteRoute,
         'group-detail-main-wrapper': isGroupDetailRoute,
+        'mypage-main-wrapper': isMyPageRoute,
       }"
     >
       <!-- 헤더 (사이드바 우측 상단) -->
@@ -31,6 +33,7 @@
           'home-content-area': isHomeRoute,
           'feed-write-content-area': isFeedWriteRoute,
           'group-detail-content-area': isGroupDetailRoute,
+          'mypage-content-area': isMyPageRoute,
         }"
       >
         <router-view />
@@ -64,6 +67,9 @@ export default {
     },
     isGroupDetailRoute() {
       return this.$route.name === 'GroupDetail'
+    },
+    isMyPageRoute() {
+      return Boolean(this.$route.meta.mypageSurface)
     },
   },
   mounted() {
@@ -116,6 +122,12 @@ export default {
   background: #e6dcf6;
 }
 
+.mypage-layout,
+.mypage-main-wrapper,
+.content-area.mypage-content-area {
+  background: #e6dcf6;
+}
+
 @media (max-width: 767px) {
   .layout-container {
     flex-direction: column;
@@ -147,6 +159,13 @@ export default {
     padding: 0;
     width: 100%;
     min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .content-area.mypage-content-area {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
     overflow-x: hidden;
   }
 }

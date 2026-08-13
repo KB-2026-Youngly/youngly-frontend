@@ -6,7 +6,10 @@
       :key="item.label"
       :to="item.to || undefined"
       class="activity-summary__item"
-      :class="{ 'activity-summary__item--link': item.to }"
+      :class="{
+        'activity-summary__item--link': item.to,
+        'activity-summary__item--point': item.isPoint,
+      }"
       role="listitem"
       :aria-label="item.to ? `${item.label} ${item.value}, 포인트 내역 보기` : undefined"
     >
@@ -33,54 +36,59 @@ defineProps({
 .activity-summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  margin: 20px 0 0;
-  padding-top: 18px;
-  border-top: 1px solid var(--color-border, #ddd9e8);
+  gap: 7px;
+  overflow: hidden;
+  margin: 24px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
 }
 
 .activity-summary__item {
   position: relative;
   display: grid;
-  gap: 6px;
+  gap: 5px;
   align-content: center;
   min-width: 0;
   margin: 0;
-  padding: 10px 18px;
-  border: 1px solid transparent;
-  border-right: 1px solid var(--color-border, #ddd9e8);
-  border-radius: 6px;
+  min-height: 76px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 12px;
   color: inherit;
   text-align: center;
   text-decoration: none;
   box-sizing: border-box;
-}
-
-.activity-summary__item:first-child {
-  padding-left: 0;
+  background: rgba(255, 255, 255, 0.11);
 }
 
 .activity-summary__item:last-child {
-  padding-right: 0;
-  border-right: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.24);
 }
 
 .activity-summary__label {
-  color: var(--color-text-muted, #77717f);
-  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .activity-summary__item > strong {
-  color: var(--color-text, #33313d);
-  font-size: 22px;
+  color: #ffffff;
+  font-size: 21px;
   font-weight: 800;
 }
 
 .activity-summary .activity-summary__value--point {
-  color: var(--color-primary-dark, #7156ad);
+  color: #ffffff;
+}
+
+.activity-summary__item--point {
+  background: transparent;
 }
 
 .activity-summary__item--link {
-  padding-right: 30px;
+  padding-right: 26px;
   cursor: pointer;
   transition:
     border-color 0.18s ease,
@@ -89,13 +97,12 @@ defineProps({
 }
 
 .activity-summary__item--link:last-child {
-  padding-right: 30px;
-  border-right: 1px solid transparent;
+  padding-right: 26px;
 }
 
 .activity-summary__item--link:hover {
-  border-color: var(--color-primary, #7156ad);
-  background: var(--color-primary-soft, #e6dcf6);
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
 }
 
 .activity-summary__item--link:focus-visible {
@@ -107,7 +114,7 @@ defineProps({
   position: absolute;
   top: 50%;
   right: 8px;
-  color: var(--color-primary-dark, #7156ad);
+  color: #ffffff;
   transform: translateY(-50%);
   transition: transform 0.18s ease;
 }
@@ -118,12 +125,15 @@ defineProps({
 
 @media (max-width: 480px) {
   .activity-summary {
-    margin-top: 16px;
-    padding-top: 14px;
+    gap: 5px;
+    margin-top: 18px;
+    padding: 0;
+    border-radius: 12px;
   }
 
   .activity-summary__item {
-    padding: 0 8px;
+    min-height: 68px;
+    padding: 8px 5px;
   }
 
   .activity-summary__label {
@@ -131,19 +141,19 @@ defineProps({
   }
 
   .activity-summary__item > strong {
-    font-size: 18px;
+    font-size: clamp(16px, 5vw, 18px);
   }
 
   .activity-summary__item--link {
-    padding-right: 24px;
+    padding-right: 18px;
   }
 
   .activity-summary__item--link:last-child {
-    padding-right: 24px;
+    padding-right: 18px;
   }
 
   .activity-summary__arrow {
-    right: 4px;
+    right: 2px;
   }
 }
 </style>

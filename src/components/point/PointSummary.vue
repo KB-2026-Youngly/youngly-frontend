@@ -32,12 +32,16 @@ const formattedBalance = computed(() => new Intl.NumberFormat('ko-KR').format(pr
   grid-template-columns: 64px 1fr auto;
   gap: 18px;
   align-items: center;
-  min-height: 136px;
-  padding: 26px 30px;
-  border: 3px solid #322a43;
-  border-radius: 6px;
-  background: #ffffff;
-  box-shadow: 8px 8px 0 #7156ad;
+  min-height: 142px;
+  padding: 28px 30px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 22px;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 88% 14%, rgba(255, 255, 255, 0.18), transparent 27%),
+    linear-gradient(135deg, #7156ad 0%, #8d6fc5 100%);
+  box-shadow: 0 16px 36px rgba(83, 57, 128, 0.22);
   box-sizing: border-box;
 }
 
@@ -46,21 +50,22 @@ const formattedBalance = computed(() => new Intl.NumberFormat('ko-KR').format(pr
   width: 58px;
   height: 58px;
   place-items: center;
-  border: 3px solid #322a43;
-  background: #f8d86a;
-  color: #564016;
-  box-shadow: 4px 4px 0 #cab350;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff1b2;
+  box-shadow: none;
 }
 
 .point-summary p {
   margin: 0 0 5px;
-  color: #6d6578;
+  color: rgba(255, 255, 255, 0.76);
   font-size: 14px;
   font-weight: 700;
 }
 
 .point-summary strong {
-  color: #30283d;
+  color: #ffffff;
   font-size: clamp(30px, 5vw, 42px);
   line-height: 1;
   letter-spacing: -1px;
@@ -68,16 +73,17 @@ const formattedBalance = computed(() => new Intl.NumberFormat('ko-KR').format(pr
 
 .point-summary strong span {
   margin-left: 5px;
-  color: #7156ad;
+  color: #fff0af;
   font-size: 0.55em;
 }
 
 .point-summary__badge {
   align-self: start;
   padding: 6px 9px;
-  border: 2px solid #7156ad;
-  color: #7156ad;
-  background: #f4effc;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 1px;
@@ -87,13 +93,14 @@ const formattedBalance = computed(() => new Intl.NumberFormat('ko-KR').format(pr
   .point-summary {
     grid-template-columns: 52px 1fr;
     min-height: 116px;
-    padding: 22px 20px;
-    box-shadow: 6px 6px 0 #7156ad;
+    padding: 22px 18px;
+    border-radius: 19px;
   }
 
   .point-summary__icon {
     width: 46px;
     height: 46px;
+    border-radius: 14px;
   }
 
   .point-summary__badge {
@@ -101,5 +108,36 @@ const formattedBalance = computed(() => new Intl.NumberFormat('ko-KR').format(pr
     top: 12px;
     right: 12px;
   }
+}
+</style>
+
+<style scoped>
+.point-summary {
+  border: 2px solid #342843;
+  background: #7658b5;
+  box-shadow: 8px 8px 0 #b8a2da;
+}
+
+.point-summary::after {
+  position: absolute;
+  right: 28px;
+  bottom: 18px;
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow:
+    14px 0 0 rgba(255, 255, 255, 0.12),
+    28px 0 0 rgba(255, 255, 255, 0.08);
+  content: '';
+}
+
+.point-summary__icon {
+  border: 2px solid rgba(255, 255, 255, 0.72);
+  border-radius: 12px;
+}
+
+.point-summary__badge {
+  border-width: 2px;
+  border-radius: 8px;
 }
 </style>
