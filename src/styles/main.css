@@ -1,0 +1,214 @@
+@font-face {
+  font-family: 'DungGeunMo';
+  src: url('../assets/fonts/DungGeunMo.eot');
+  src:
+    url('../assets/fonts/DungGeunMo.eot?#iefix') format('embedded-opentype'),
+    url('../assets/fonts/DungGeunMo.woff2') format('woff2'),
+    url('../assets/fonts/DungGeunMo.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --yl-purple: #7156ad;
+  --yl-purple-dark: #513b7d;
+  --yl-purple-light: #e6dcf6;
+  --yl-yellow: #fdb913;
+  --yl-ink: #222222;
+  --yl-paper: #ffffff;
+  --yl-muted: #746d7c;
+  --yl-pixel-border: 3px solid var(--yl-ink);
+  --yl-pixel-shadow: 5px 5px 0 var(--yl-ink);
+}
+
+html,
+body,
+#app {
+  background-color: #ffffff;
+}
+
+.youngly-service {
+  --app-background: var(--yl-purple-light);
+  min-height: 100vh;
+  background: var(--app-background);
+  font-family: 'DungGeunMo', monospace;
+}
+
+.youngly-service * {
+  font-family: inherit;
+}
+
+.youngly-service button,
+.youngly-service input,
+.youngly-service textarea,
+.youngly-service select,
+.youngly-modal {
+  font-family: 'DungGeunMo', monospace;
+}
+
+/* 페이지들이 순차적으로 공유할 픽셀 UI 기본 단위 */
+.pixel-panel {
+  border: var(--yl-pixel-border);
+  border-radius: 0;
+  background: var(--yl-paper);
+  box-shadow: var(--yl-pixel-shadow);
+}
+
+.pixel-button {
+  min-height: 44px;
+  border: var(--yl-pixel-border);
+  border-radius: 0;
+  background: var(--yl-yellow);
+  color: var(--yl-ink);
+  box-shadow: 4px 4px 0 var(--yl-ink);
+  cursor: pointer;
+}
+
+.pixel-button:active {
+  box-shadow: 1px 1px 0 var(--yl-ink);
+  transform: translate(3px, 3px);
+}
+
+.pixel-field {
+  border: var(--yl-pixel-border);
+  border-radius: 0;
+  background: var(--yl-paper);
+  box-shadow: 3px 3px 0 var(--yl-purple);
+}
+
+/* 공통 계단형 픽셀 외곽선: 바깥 실루엣과 안쪽 면을 분리해 테두리가 끊기지 않게 합니다. */
+.youngly-service .pixel-step-card,
+.youngly-service .pixel-step-button,
+.youngly-service .pixel-step-circle,
+.youngly-modal .pixel-step-button,
+.youngly-modal .pixel-step-circle {
+  position: relative;
+  isolation: isolate;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--yl-ink) !important;
+  box-shadow: none !important;
+}
+
+.youngly-service .pixel-step-card,
+.youngly-service .pixel-step-button,
+.youngly-modal .pixel-step-button {
+  clip-path: polygon(
+    11px 0, calc(100% - 11px) 0,
+    calc(100% - 11px) 3px, calc(100% - 7px) 3px,
+    calc(100% - 7px) 6px, calc(100% - 3px) 6px,
+    calc(100% - 3px) 11px, 100% 11px,
+    100% calc(100% - 11px), calc(100% - 3px) calc(100% - 11px),
+    calc(100% - 3px) calc(100% - 6px), calc(100% - 7px) calc(100% - 6px),
+    calc(100% - 7px) calc(100% - 3px), calc(100% - 11px) calc(100% - 3px),
+    calc(100% - 11px) 100%, 11px 100%,
+    11px calc(100% - 3px), 7px calc(100% - 3px),
+    7px calc(100% - 6px), 3px calc(100% - 6px),
+    3px calc(100% - 11px), 0 calc(100% - 11px),
+    0 11px, 3px 11px, 3px 6px, 7px 6px,
+    7px 3px, 11px 3px
+  ) !important;
+}
+
+.youngly-service .pixel-step-card {
+  filter: drop-shadow(5px 5px 0 var(--yl-purple-dark));
+}
+
+.youngly-service .pixel-step-button,
+.youngly-modal .pixel-step-button {
+  filter: drop-shadow(4px 4px 0 var(--yl-ink));
+}
+
+.youngly-service .pixel-step-card::before,
+.youngly-service .pixel-step-button::before,
+.youngly-service .pixel-step-circle::before,
+.youngly-modal .pixel-step-button::before,
+.youngly-modal .pixel-step-circle::before {
+  content: '' !important;
+  display: block !important;
+  position: absolute;
+  inset: var(--pixel-outline-width, 3px);
+  z-index: -1;
+  clip-path: inherit;
+  background: var(--pixel-fill, var(--yl-paper)) !important;
+}
+
+.youngly-service .pixel-step-card::before {
+  z-index: 0;
+  background: var(--pixel-fill, var(--card-fill, var(--yl-paper))) !important;
+}
+
+.youngly-service .pixel-step-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.youngly-service .pixel-step-button::before,
+.youngly-modal .pixel-step-button::before {
+  background: var(--pixel-fill, var(--yl-paper)) !important;
+}
+
+.youngly-service .pixel-step-circle::before,
+.youngly-modal .pixel-step-circle::before {
+  inset: var(--pixel-outline-width, 2px);
+  background: var(--pixel-fill, var(--profile-fill, var(--yl-paper))) !important;
+}
+
+.youngly-service .pixel-step-button:active,
+.youngly-modal .pixel-step-button:active {
+  filter: drop-shadow(1px 1px 0 var(--yl-ink));
+  transform: translate(3px, 3px);
+}
+
+.youngly-service .pixel-step-circle,
+.youngly-modal .pixel-step-circle {
+  clip-path: polygon(
+    37.5% 0, 62.5% 0, 62.5% 6.25%, 75% 6.25%,
+    75% 12.5%, 87.5% 12.5%, 87.5% 25%, 93.75% 25%,
+    93.75% 37.5%, 100% 37.5%, 100% 62.5%, 93.75% 62.5%,
+    93.75% 75%, 87.5% 75%, 87.5% 87.5%, 75% 87.5%,
+    75% 93.75%, 62.5% 93.75%, 62.5% 100%, 37.5% 100%,
+    37.5% 93.75%, 25% 93.75%, 25% 87.5%, 12.5% 87.5%,
+    12.5% 75%, 6.25% 75%, 6.25% 62.5%, 0 62.5%,
+    0 37.5%, 6.25% 37.5%, 6.25% 25%, 12.5% 25%,
+    12.5% 12.5%, 25% 12.5%, 25% 6.25%, 37.5% 6.25%
+  ) !important;
+  filter: none;
+}
+
+/* 선이 반드시 이어져야 하는 카드용 구조: 바깥 프레임 안에 pixel-step-surface를 둡니다. */
+.youngly-service .pixel-step-solid {
+  display: block;
+  padding: var(--pixel-outline-width, 2px) !important;
+  box-sizing: border-box;
+  background: var(--yl-ink) !important;
+}
+
+.youngly-service .pixel-step-solid::before {
+  content: none !important;
+  display: none !important;
+}
+
+.youngly-service .pixel-step-solid > .pixel-step-surface {
+  width: 100%;
+  box-sizing: border-box;
+  clip-path: inherit;
+  background: var(--pixel-fill, var(--card-fill, var(--yl-paper)));
+}
+
+/* 높이가 낮은 버튼은 계단 범위를 줄여 과하게 둥글어 보이지 않게 합니다. */
+.youngly-service .pixel-step-button--compact,
+.youngly-modal .pixel-step-button--compact {
+  clip-path: polygon(
+    7px 0, calc(100% - 7px) 0,
+    calc(100% - 7px) 2px, calc(100% - 3px) 2px,
+    calc(100% - 3px) 7px, 100% 7px,
+    100% calc(100% - 7px), calc(100% - 3px) calc(100% - 7px),
+    calc(100% - 3px) calc(100% - 2px), calc(100% - 7px) calc(100% - 2px),
+    calc(100% - 7px) 100%, 7px 100%,
+    7px calc(100% - 2px), 3px calc(100% - 2px),
+    3px calc(100% - 7px), 0 calc(100% - 7px),
+    0 7px, 3px 7px, 3px 2px, 7px 2px
+  ) !important;
+}

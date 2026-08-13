@@ -144,7 +144,7 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 1000;
   padding: 12px 24px;
-  background-color: #e6dcf6;
+  background-color: var(--app-background, #e6dcf6);
 }
 
 .header-container {
@@ -403,8 +403,8 @@ onBeforeUnmount(() => {
     left: 0;
     z-index: 1000;
     padding: 8px 16px 9px;
-    background: #fff;
-    border-bottom: 3px solid #222;
+    background: var(--app-background, #e6dcf6);
+    border-bottom: 0;
     transform: translateZ(0);
     backface-visibility: hidden;
   }

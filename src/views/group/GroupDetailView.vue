@@ -6,42 +6,46 @@
         뒤로
       </button>
 
-      <section class="challenge-summary" aria-label="챌린지 안내">
-        <div class="summary-copy">
-          <p class="status-message">
-            <span aria-hidden="true">{{ challengeStarted ? '🚩' : '🚩' }}</span>
-            {{ challengeStarted ? `${challengeDay}/${challengeDuration}일` : '아직 시작 전입니다!' }}
-          </p>
-          <p class="goal-message"><span aria-hidden="true">🎯</span> {{ groupInfo.goal }}</p>
+      <section class="challenge-summary pixel-step-card pixel-step-solid" aria-label="챌린지 안내">
+        <div class="challenge-summary-surface pixel-step-surface">
+          <div class="summary-copy">
+            <p class="status-message">
+              <span aria-hidden="true">{{ challengeStarted ? '🚩' : '🚩' }}</span>
+              {{ challengeStarted ? `${challengeDay}/${challengeDuration}일` : '아직 시작 전입니다!' }}
+            </p>
+            <p class="goal-message"><span aria-hidden="true">🎯</span> {{ groupInfo.goal }}</p>
+          </div>
+          <button class="pixel-button pixel-step-button account-button" type="button" @click="router.push('/asset')">
+            <span class="account-icon" aria-hidden="true">♧</span>
+            통장
+          </button>
         </div>
-        <button class="pixel-button account-button" type="button" @click="router.push('/asset')">
-          <span class="account-icon" aria-hidden="true">♧</span>
-          통장
-        </button>
       </section>
 
-      <section class="ranking-panel pixel-frame" aria-label="현재 랭킹">
-        <div class="ranking-heading">
-          <span>랭킹</span>
-          <button class="expand-button" type="button" aria-label="랭킹 크게 보기" @click="rankingModalOpen = true">↗</button>
-        </div>
-        <div class="ranking-track-wrap">
-          <div class="ranking-track" aria-label="진행률 0%">
-            <span v-for="segment in rankingSegments" :key="segment" class="track-segment"></span>
+      <section class="ranking-panel pixel-frame pixel-step-card pixel-step-solid" aria-label="현재 랭킹">
+        <div class="ranking-panel-surface pixel-step-surface">
+          <div class="ranking-heading">
+            <span>랭킹</span>
+            <button class="expand-button" type="button" aria-label="랭킹 크게 보기" @click="rankingModalOpen = true">↗</button>
           </div>
-          <div
-            v-for="member in members"
-            :key="`${member.name}-rank`"
-            class="rank-marker"
-            :class="{ 'is-me': member.isMe }"
-            :style="{ left: `${member.progress}%` }"
-            :aria-label="`${member.name} 진행률 ${member.progress}%`"
-          >
-            {{ member.initial }}
+          <div class="ranking-track-wrap">
+            <div class="ranking-track" aria-label="진행률 0%">
+              <span v-for="segment in rankingSegments" :key="segment" class="track-segment"></span>
+            </div>
+            <div
+              v-for="member in members"
+              :key="`${member.name}-rank`"
+              class="rank-marker pixel-step-circle"
+              :class="{ 'is-me': member.isMe }"
+              :style="{ left: `${member.progress}%` }"
+              :aria-label="`${member.name} 진행률 ${member.progress}%`"
+            >
+              {{ member.initial }}
+            </div>
+            <span class="goal-flag" aria-hidden="true">⚑</span>
           </div>
-          <span class="goal-flag" aria-hidden="true">⚑</span>
+          <span class="ranking-percent">내 진행률 {{ myProgress }}%</span>
         </div>
-        <span class="ranking-percent">내 진행률 {{ myProgress }}%</span>
       </section>
 
       <div class="day-selector" aria-label="인증 날짜 선택">
@@ -55,7 +59,7 @@
           v-for="member in displayedMembers"
           :key="member.name"
           :data-feed-member="member.name"
-          class="feed-card pixel-frame my-feed-card"
+          class="feed-card pixel-frame pixel-step-card pixel-step-solid my-feed-card"
           :class="{ 'is-started': challengeStarted, 'has-verification': challengeStarted && member.isVerified, 'is-reordering': draggingFeedName === member.name }"
           draggable="true"
           @click="handleFeedCardClick(member)"
@@ -64,60 +68,60 @@
           @drop="handleFeedDesktopDrop(member.name)"
           @dragend="finishFeedDrag"
         >
-          <div class="feed-owner">
-            <span class="avatar">{{ member.initial }}</span>
-            <span>{{ member.name }}</span>
-            <span v-if="member.isMe" class="me-label">나</span>
-          </div>
-          <template v-if="challengeStarted">
-            <div v-if="member.isVerified" class="verification-content">
-              <img :src="member.image" :alt="`${member.name} 인증 사진`" class="verification-image" />
-              <div class="verification-shade"></div>
-              <p class="verification-message">{{ member.message }}</p>
-              <div v-if="!member.isMe && !member.reviewStatus" class="review-actions">
-                <button type="button" class="approve-button" @click.stop="reviewVerification(member, 'approved')">
-                  승인
-                </button>
-                <button type="button" class="reject-button" @click.stop="openRejectModal(member)">
-                  반려
-                </button>
-              </div>
-              <div v-if="member.reviewStatus" class="post-engagement" aria-label="게시글 반응">
-                <span>◯ {{ member.commentCount }}</span>
-                <span>♧ {{ member.likeCount }}</span>
-                <span>♢ {{ member.dislikeCount }}</span>
-              </div>
-              <p v-if="member.reviewStatus" class="latest-comment">{{ member.latestComment }}</p>
-              <span v-if="member.reviewStatus && member.reviewStatus !== 'pending-rejection'" class="review-status" :class="member.reviewStatus">
-                {{ member.reviewStatus === 'approved' ? '승인 완료' : '반려 처리' }}
-              </span>
+          <div class="feed-card-surface pixel-step-surface">
+            <div class="feed-owner">
+              <span class="avatar pixel-step-circle">{{ member.initial }}</span>
+              <span>{{ member.name }}</span>
+              <span v-if="member.isMe" class="me-label">나</span>
             </div>
-            <button v-else type="button" class="pending-verification" @click="handlePendingCard(member)">
-              <strong>{{ member.isMe ? '눌러서 인증하러 가기 📷 ›' : '눌러서 깨우기 ⏰ ›' }}</strong>
-              <span :class="{ 'deadline-text': member.isMe }">{{ member.isMe ? '23:14:32' : 'ZZZ...' }}</span>
-            </button>
-          </template>
-          <p v-else class="sleep-message">ZZZ...</p>
-          <span
-            class="feed-drag-handle"
-            role="button"
-            aria-label="우하단을 길게 눌러 피드 순서 변경"
-            @pointerdown.stop="handleFeedPointerDown(member.name, $event)"
-            @click.stop
-            @contextmenu.prevent
-          ></span>
+            <template v-if="challengeStarted">
+              <div v-if="member.isVerified" class="verification-content">
+                <img :src="member.image" :alt="`${member.name} 인증 사진`" class="verification-image" />
+                <div class="verification-shade"></div>
+                <p class="verification-message">{{ member.message }}</p>
+                <div v-if="!member.isMe && !member.reviewStatus" class="review-actions">
+                  <button type="button" class="approve-button pixel-step-button pixel-step-button--compact" @click.stop="reviewVerification(member, 'approved')">승인</button>
+                  <button type="button" class="reject-button pixel-step-button pixel-step-button--compact" @click.stop="openRejectModal(member)">반려</button>
+                </div>
+                <div v-if="member.reviewStatus" class="post-engagement" aria-label="게시글 반응">
+                  <span>◯ {{ member.commentCount }}</span>
+                  <span>♧ {{ member.likeCount }}</span>
+                  <span>♢ {{ member.dislikeCount }}</span>
+                </div>
+                <p v-if="member.reviewStatus" class="latest-comment">{{ member.latestComment }}</p>
+                <span v-if="member.reviewStatus && member.reviewStatus !== 'pending-rejection'" class="review-status" :class="member.reviewStatus">
+                  {{ member.reviewStatus === 'approved' ? '승인 완료' : '반려 처리' }}
+                </span>
+              </div>
+              <button v-else type="button" class="pending-verification" @click="handlePendingCard(member)">
+                <strong>{{ member.isMe ? '눌러서 인증하러 가기 📷 ›' : '눌러서 깨우기 ⏰ ›' }}</strong>
+                <span :class="{ 'deadline-text': member.isMe }">{{ member.isMe ? '23:14:32' : 'ZZZ...' }}</span>
+              </button>
+            </template>
+            <p v-else class="sleep-message">ZZZ...</p>
+            <span
+              class="feed-drag-handle"
+              role="button"
+              aria-label="우하단을 길게 눌러 피드 순서 변경"
+              @pointerdown.stop="handleFeedPointerDown(member.name, $event)"
+              @click.stop
+              @contextmenu.prevent
+            ></span>
+          </div>
         </article>
 
         <template v-if="!allMembersJoined">
           <button
             v-for="slot in inviteSlots"
             :key="`invite-${slot}`"
-            class="feed-card pixel-frame invite-card"
+            class="feed-card pixel-frame pixel-step-card pixel-step-solid invite-card"
             type="button"
             @click="handleInvite"
           >
-            <span class="plus" aria-hidden="true">＋</span>
-            <span>친구 초대하기</span>
+            <span class="invite-card-surface pixel-step-surface">
+              <span class="plus pixel-step-circle" aria-hidden="true">＋</span>
+              <span>친구 초대하기</span>
+            </span>
           </button>
         </template>
       </section>
@@ -125,7 +129,7 @@
 
     <BaseModal
       v-model="inviteModalOpen"
-      modal-class="group-invite-modal"
+      modal-class="youngly-modal group-invite-modal"
       title="코드를 누르시면 복사가 됩니다!"
       size="medium"
       @close="copyComplete = false"
@@ -144,7 +148,7 @@
     <BaseModal
       v-if="isOwner && allMembersJoined"
       v-model="startDateModalOpen"
-      modal-class="group-start-date-modal"
+      modal-class="youngly-modal group-start-date-modal"
       title="모든 친구가 입장하였습니다!"
       size="medium"
       :show-close-button="false"
@@ -161,7 +165,7 @@
 
     <BaseModal
       v-model="rankingModalOpen"
-      modal-class="group-ranking-modal"
+      modal-class="youngly-modal group-ranking-modal"
       title="랭킹"
       size="medium"
     >
@@ -181,7 +185,7 @@
         <ol class="ranking-list">
           <li v-for="(member, index) in rankedMembers" :key="`ranking-${member.name}`" :class="{ 'is-me': member.isMe }">
             <strong class="ranking-position">{{ index + 1 }}등</strong>
-            <span class="ranking-avatar" :class="{ 'is-me': member.isMe, 'is-first': index === 0 }">
+            <span class="ranking-avatar pixel-step-circle" :class="{ 'is-me': member.isMe, 'is-first': index === 0 }">
               <span v-if="index === 0" class="ranking-crown" aria-hidden="true">♛</span>
               {{ member.initial }}
             </span>
@@ -196,7 +200,7 @@
 
     <BaseModal
       v-model="groupEditOpen"
-      modal-class="group-edit-modal"
+      modal-class="youngly-modal group-edit-modal"
       title="그룹 정보 수정"
       size="large"
       :show-close-button="false"
@@ -206,6 +210,7 @@
         <div
           class="group-edit-sheet-header"
           @pointerdown="startGroupEditSwipe"
+          @pointermove="moveGroupEditSwipe"
           @pointerup="endGroupEditSwipe"
           @pointercancel="cancelGroupEditSwipe"
         >
@@ -216,9 +221,6 @@
       <form
         class="group-edit-form"
         @submit.prevent="saveGroupEdit"
-        @pointerdown="startGroupEditSwipe"
-        @pointerup="endGroupEditSwipe"
-        @pointercancel="cancelGroupEditSwipe"
       >
         <label class="group-edit-field">
           <span>방 이름</span>
@@ -244,7 +246,7 @@
           <h3>모집 인원</h3>
           <ul>
             <li v-for="member in editMembers" :key="`edit-${member.name}`">
-              <span class="member-editor-avatar">{{ member.initial }}</span>
+              <span class="member-editor-avatar pixel-step-circle">{{ member.initial }}</span>
               <strong>{{ member.isMe ? 'Yuna Park' : member.name }}</strong>
               <button type="button" @click="removeMember(member.name)">내보내기</button>
             </li>
@@ -293,7 +295,7 @@
 
     <BaseModal
       v-model="postDetailOpen"
-      modal-class="group-post-detail-modal"
+      modal-class="youngly-modal group-post-detail-modal"
       title="인증 게시글"
       size="medium"
       @close="selectedPost = null"
@@ -317,7 +319,7 @@
         <div class="post-detail-image-wrap">
           <img :src="selectedPost.image" :alt="`${selectedPost.name} 인증 사진`" />
           <div></div>
-          <p><span>{{ selectedPost.initial }}</span><b>{{ selectedPost.name }}</b></p>
+          <p><span class="pixel-step-circle">{{ selectedPost.initial }}</span><b>{{ selectedPost.name }}</b></p>
           <strong>{{ selectedPost.message }}</strong>
         </div>
         <div class="post-reaction-info">
@@ -332,7 +334,7 @@
           </ul>
           <form @submit.prevent="addPostComment">
             <input v-model.trim="newPostComment" maxlength="100" placeholder="댓글을 입력하세요" />
-            <button type="submit" :disabled="!newPostComment">등록</button>
+            <button class="pixel-step-button" type="submit" :disabled="!newPostComment">등록</button>
           </form>
         </section>
       </article>
@@ -340,7 +342,7 @@
 
     <BaseModal
       v-model="rejectModalOpen"
-      modal-class="group-reject-modal"
+      modal-class="youngly-modal group-reject-modal"
       title="반려 사유 입력"
       size="small"
       @close="resetRejectModal"
@@ -413,7 +415,8 @@ let feedLongPressTimer = null
 let mobileFeedDragActive = false
 let mobileFeedPointerId = null
 let preventNextFeedClick = false
-let groupEditSwipeStartY = null
+let groupEditSwipeState = null
+let groupEditCloseTimer = null
 const groupCategories = ['운동', '독서', '절약', '습관', '기타']
 const groupEditForm = reactive({
   title: '30일 매일 운동 챌린지',
@@ -683,26 +686,94 @@ const closeGroupEdit = () => {
   }
 }
 
+const resetGroupEditSheetStyles = (sheet, overlay) => {
+  if (sheet) {
+    sheet.style.removeProperty('transform')
+    sheet.style.removeProperty('transition')
+    sheet.style.removeProperty('will-change')
+  }
+  if (overlay) {
+    overlay.style.removeProperty('background-color')
+    overlay.style.removeProperty('transition')
+  }
+}
+
 const startGroupEditSwipe = (event) => {
-  if (!event.isPrimary) return
+  if (!event.isPrimary || !window.matchMedia('(max-width: 767px)').matches) return
   const sheet = event.currentTarget.closest('.group-edit-modal')
   if (sheet?.scrollTop > 0) return
-  groupEditSwipeStartY = event.clientY
+  const now = performance.now()
+  groupEditSwipeState = {
+    pointerId: event.pointerId,
+    startY: event.clientY,
+    startTime: now,
+    lastY: event.clientY,
+    lastTime: now,
+    velocity: 0,
+    distance: 0,
+    sheet,
+    overlay: sheet?.closest('.base-modal__overlay'),
+  }
+  sheet.style.transition = 'none'
+  sheet.style.willChange = 'transform'
   event.currentTarget.setPointerCapture?.(event.pointerId)
 }
 
-const endGroupEditSwipe = (event) => {
-  if (groupEditSwipeStartY === null) return
-  const swipeDistance = event.clientY - groupEditSwipeStartY
-  groupEditSwipeStartY = null
-  if (swipeDistance < 90) return
+const moveGroupEditSwipe = (event) => {
+  const state = groupEditSwipeState
+  if (!state || event.pointerId !== state.pointerId) return
+  const distance = Math.max(0, event.clientY - state.startY)
+  const now = performance.now()
+  const elapsed = Math.max(1, now - state.lastTime)
+  state.velocity = (event.clientY - state.lastY) / elapsed
+  state.lastY = event.clientY
+  state.lastTime = now
+  state.distance = distance
 
-  groupEditOpen.value = false
-  closeGroupEdit()
+  if (distance > 0) event.preventDefault()
+  state.sheet.style.transform = `translate3d(0, ${distance}px, 0)`
+  const progress = Math.min(distance / Math.max(state.sheet.offsetHeight * 0.72, 1), 1)
+  state.overlay?.style.setProperty('background-color', `rgba(24, 20, 36, ${0.5 * (1 - progress)})`)
+}
+
+const endGroupEditSwipe = (event) => {
+  const state = groupEditSwipeState
+  if (!state || event.pointerId !== state.pointerId) return
+  groupEditSwipeState = null
+  const elapsed = Math.max(1, performance.now() - state.startTime)
+  const averageVelocity = state.distance / elapsed
+  const closeDistance = Math.min(240, state.sheet.offsetHeight * 0.36)
+  const isIntentionalFlick = state.distance >= 100 && averageVelocity > 1.1 && state.velocity > 0.7
+  const shouldClose = state.distance >= closeDistance || isIntentionalFlick
+
+  state.sheet.style.transition = 'transform 380ms cubic-bezier(0.22, 1, 0.36, 1)'
+  state.overlay?.style.setProperty('transition', 'background-color 380ms ease')
+
+  if (shouldClose) {
+    state.sheet.style.transform = `translate3d(0, ${state.sheet.offsetHeight + 32}px, 0)`
+    state.overlay?.style.setProperty('background-color', 'rgba(24, 20, 36, 0)')
+    clearTimeout(groupEditCloseTimer)
+    groupEditCloseTimer = window.setTimeout(() => {
+      groupEditOpen.value = false
+      closeGroupEdit()
+      groupEditCloseTimer = null
+    }, 370)
+    return
+  }
+
+  state.sheet.style.transform = 'translate3d(0, 0, 0)'
+  state.overlay?.style.setProperty('background-color', 'rgba(24, 20, 36, 0.5)')
+  window.setTimeout(() => resetGroupEditSheetStyles(state.sheet, state.overlay), 390)
 }
 
 const cancelGroupEditSwipe = () => {
-  groupEditSwipeStartY = null
+  const state = groupEditSwipeState
+  if (!state) return
+  groupEditSwipeState = null
+  state.sheet.style.transition = 'transform 340ms cubic-bezier(0.22, 1, 0.36, 1)'
+  state.sheet.style.transform = 'translate3d(0, 0, 0)'
+  state.overlay?.style.setProperty('background-color', 'rgba(24, 20, 36, 0.5)')
+  window.setTimeout(() => resetGroupEditSheetStyles(state.sheet, state.overlay), 350)
 }
 
 watch(
@@ -745,6 +816,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   clearTimeout(feedLongPressTimer)
+  clearTimeout(groupEditCloseTimer)
   removeMobileFeedDragListeners()
 })
 </script>
@@ -754,7 +826,7 @@ onBeforeUnmount(() => {
   min-height: 100%;
   background: #e6dcf6;
   color: #111;
-  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
+  font-family: inherit;
 }
 
 .group-detail-content {
@@ -1086,7 +1158,8 @@ button { font: inherit; }
   :global(.group-edit-modal .base-modal__title) { display: block; width: 100%; font-size: 20px; }
   .group-edit-category > div { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
-  .group-edit-sheet-header { display: grid; gap: 8px; width: 100%; color: #222; font-size: 20px; font-weight: 800; text-align: center; touch-action: pan-x; user-select: none; }
+  .group-edit-sheet-header { display: grid; gap: 8px; width: 100%; color: #222; font-size: 20px; font-weight: 800; text-align: center; touch-action: none; user-select: none; cursor: grab; }
+  .group-edit-sheet-header:active { cursor: grabbing; }
   .group-edit-sheet-handle { display: block; width: 42px; height: 5px; margin: 0 auto; border-radius: 999px; background: #b4adbd; }
 
   :global(.group-post-detail-modal) { width: calc(100% - 32px); max-height: calc(100dvh - 142px); }
@@ -1096,5 +1169,238 @@ button { font: inherit; }
 @media (min-width: 768px) {
   .group-detail-page { margin: -20px; min-height: calc(100% + 40px); }
   .group-detail-content { padding-top: 28px; }
+}
+
+/* Youngly pixel design */
+.group-detail-page,
+.group-detail-page * {
+  font-family: inherit;
+}
+
+.challenge-summary,
+.pixel-frame {
+  border: var(--yl-pixel-border);
+  border-radius: 0;
+  box-shadow: var(--yl-pixel-shadow);
+  clip-path: polygon(
+    8px 0, calc(100% - 8px) 0,
+    calc(100% - 8px) 3px, calc(100% - 3px) 3px,
+    calc(100% - 3px) 8px, 100% 8px,
+    100% calc(100% - 8px), calc(100% - 3px) calc(100% - 8px),
+    calc(100% - 3px) calc(100% - 3px), calc(100% - 8px) calc(100% - 3px),
+    calc(100% - 8px) 100%, 8px 100%,
+    8px calc(100% - 3px), 3px calc(100% - 3px),
+    3px calc(100% - 8px), 0 calc(100% - 8px),
+    0 8px, 3px 8px, 3px 3px, 8px 3px
+  );
+}
+
+.pixel-button,
+.review-actions button,
+.group-edit-category button,
+.group-member-editor li button,
+.group-edit-submit,
+.start-date-submit,
+.post-comments button,
+.reject-form button {
+  border: var(--yl-pixel-border);
+  border-radius: 0;
+  box-shadow: 4px 4px 0 var(--yl-ink);
+  clip-path: polygon(
+    5px 0, calc(100% - 5px) 0,
+    calc(100% - 5px) 2px, calc(100% - 2px) 2px,
+    calc(100% - 2px) 5px, 100% 5px,
+    100% calc(100% - 5px), calc(100% - 2px) calc(100% - 5px),
+    calc(100% - 2px) calc(100% - 2px), calc(100% - 5px) calc(100% - 2px),
+    calc(100% - 5px) 100%, 5px 100%,
+    5px calc(100% - 2px), 2px calc(100% - 2px),
+    2px calc(100% - 5px), 0 calc(100% - 5px),
+    0 5px, 2px 5px, 2px 2px, 5px 2px
+  );
+}
+
+.pixel-button:active,
+.review-actions button:active,
+.group-edit-submit:active,
+.start-date-submit:active,
+.post-comments button:active,
+.reject-form button:active {
+  box-shadow: 1px 1px 0 var(--yl-ink);
+  transform: translate(3px, 3px);
+}
+
+.account-button,
+.approve-button,
+.group-edit-submit,
+.start-date-submit,
+.post-comments button,
+.reject-form button {
+  background: var(--yl-purple);
+  color: #fff;
+}
+
+.account-button,
+.approve-button { --pixel-fill: var(--yl-purple); }
+.reject-button { --pixel-fill: #5d5664; background: #5d5664; }
+.feed-card.is-started { --pixel-fill: #000; }
+.avatar { --pixel-fill: #d1c4e9; }
+.feed-card.is-started .avatar { --pixel-fill: #65529d; }
+.rank-marker.is-me,
+.ranking-avatar.is-me { --pixel-fill: var(--yl-purple); }
+.plus { --pixel-fill: var(--yl-purple-light); }
+
+.ranking-track,
+.ranking-modal-track {
+  height: 10px;
+  border: 2px solid var(--yl-ink);
+  border-radius: 0;
+  background: var(--yl-paper);
+}
+
+.track-segment { border-right: 2px solid var(--yl-ink); }
+
+.rank-marker,
+.avatar,
+.ranking-avatar,
+.member-editor-avatar,
+.post-detail-image-wrap p span,
+.plus {
+  border-radius: 0;
+  clip-path: polygon(
+    33% 0, 67% 0, 67% 7%, 80% 7%, 80% 13%,
+    93% 13%, 93% 33%, 100% 33%, 100% 67%,
+    93% 67%, 93% 87%, 80% 87%, 80% 93%,
+    67% 93%, 67% 100%, 33% 100%, 33% 93%,
+    20% 93%, 20% 87%, 7% 87%, 7% 67%, 0 67%,
+    0 33%, 7% 33%, 7% 13%, 20% 13%, 20% 7%, 33% 7%
+  );
+}
+
+.rank-marker,
+.avatar,
+.ranking-avatar,
+.member-editor-avatar {
+  border: 2px solid var(--yl-ink);
+  box-shadow: 2px 2px 0 var(--yl-ink);
+}
+
+.day-selector button,
+.expand-button,
+.post-delete-button {
+  border: 2px solid var(--yl-ink);
+  border-radius: 0;
+  background: var(--yl-paper);
+  box-shadow: 3px 3px 0 var(--yl-ink);
+}
+
+.day-selector button { width: 34px; height: 34px; font-size: 20px; }
+.expand-button { width: 30px; height: 30px; }
+
+.me-label,
+.review-status,
+.latest-comment::before,
+.copy-complete-message,
+.start-date-complete,
+.group-edit-complete {
+  border-radius: 0;
+  border: 2px solid var(--yl-ink);
+}
+
+.invite-code-button,
+.start-date-input,
+.group-edit-field input,
+.group-edit-field select,
+.group-edit-field textarea,
+.post-comments input,
+.reject-form textarea {
+  border: var(--yl-pixel-border);
+  border-radius: 0;
+  background: var(--yl-paper);
+  box-shadow: 3px 3px 0 var(--yl-purple);
+}
+
+:global(.youngly-modal),
+:global(.youngly-modal *) {
+  font-family: 'DungGeunMo', monospace !important;
+}
+
+:global(.group-invite-modal),
+:global(.group-start-date-modal),
+:global(.group-ranking-modal),
+:global(.group-edit-modal),
+:global(.group-post-detail-modal),
+:global(.group-reject-modal) {
+  border: var(--yl-pixel-border);
+  border-radius: 0;
+  box-shadow: 8px 8px 0 var(--yl-ink);
+}
+
+:global(.youngly-modal .base-modal__header) {
+  border-bottom: 3px solid var(--yl-ink);
+  background: var(--yl-yellow);
+}
+
+:global(.youngly-modal .base-modal__close) {
+  border: 2px solid var(--yl-ink);
+  border-radius: 0;
+  background: var(--yl-paper);
+  box-shadow: 2px 2px 0 var(--yl-ink);
+}
+
+/* 홈 카드와 동일한 2px 연결형 공통 프레임 */
+.challenge-summary.pixel-step-solid,
+.ranking-panel.pixel-step-solid,
+.feed-card.pixel-step-solid {
+  --pixel-outline-width: 3px;
+  display: block;
+  box-sizing: border-box;
+}
+
+.challenge-summary-surface {
+  display: flex;
+  min-height: 76px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+}
+
+.ranking-panel-surface {
+  padding: 16px 18px 14px;
+}
+
+.feed-card-surface {
+  position: relative;
+  display: flex;
+  min-height: 192px;
+  flex-direction: column;
+  padding: 14px 18px;
+  color: inherit;
+}
+
+.feed-card.is-started .feed-card-surface {
+  min-height: 336px;
+}
+
+.invite-card-surface {
+  display: flex;
+  min-height: 192px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .group-detail-content { padding-inline: 16px; }
+  .challenge-summary-surface { align-items: flex-start; padding: 14px; }
+  .day-selector { gap: 24px; }
+
+  :global(.group-edit-modal) {
+    border: var(--yl-pixel-border);
+    border-bottom: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
 }
 </style>

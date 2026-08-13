@@ -1,6 +1,6 @@
 <template>
   <div
-    class="layout-container"
+    class="layout-container youngly-service"
     :class="{
       'asset-layout': isAssetRoute,
       'home-layout': isHomeRoute,
