@@ -5,23 +5,25 @@
       <span v-if="required" class="base-field__required" aria-hidden="true">*</span>
     </label>
 
-    <input
-      v-bind="$attrs"
-      :id="inputId"
-      class="base-field__control"
-      :class="{ 'base-field__control--error': error }"
-      :type="type"
-      :value="modelValue"
-      :placeholder="placeholder"
-      :disabled="disabled"
-      :readonly="readonly"
-      :required="required"
-      :aria-invalid="Boolean(error)"
-      :aria-describedby="describedBy"
-      @input="handleInput"
-      @focus="emit('focus', $event)"
-      @blur="emit('blur', $event)"
-    />
+    <span class="base-field__control-shell" :class="{ 'base-field__control-shell--pixel': pixel }">
+      <input
+        v-bind="$attrs"
+        :id="inputId"
+        class="base-field__control"
+        :class="{ 'base-field__control--error': error }"
+        :type="type"
+        :value="modelValue"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        :readonly="readonly"
+        :required="required"
+        :aria-invalid="Boolean(error)"
+        :aria-describedby="describedBy"
+        @input="handleInput"
+        @focus="emit('focus', $event)"
+        @blur="emit('blur', $event)"
+      />
+    </span>
 
     <p v-if="error" :id="errorId" class="base-field__message base-field__message--error">
       {{ error }}
@@ -77,6 +79,10 @@ const props = defineProps({
     default: false,
   },
   required: {
+    type: Boolean,
+    default: false,
+  },
+  pixel: {
     type: Boolean,
     default: false,
   },
@@ -138,6 +144,34 @@ const handleInput = (event) => {
   transition:
     border-color 0.18s ease,
     box-shadow 0.18s ease;
+}
+
+.base-field__control-shell {
+  display: contents;
+}
+
+.base-field__control-shell--pixel {
+  display: block;
+  width: 100%;
+  padding: 2px;
+  background: #ac99d2;
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, calc(100% - 8px) 3px, calc(100% - 3px) 3px, calc(100% - 3px) 8px, 100% 8px, 100% calc(100% - 8px), calc(100% - 3px) calc(100% - 8px), calc(100% - 3px) calc(100% - 3px), calc(100% - 8px) calc(100% - 3px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 8px), 0 calc(100% - 8px), 0 8px, 3px 8px, 3px 3px, 8px 3px);
+  filter: drop-shadow(5px 5px 0 #c8b7e5);
+  box-sizing: border-box;
+}
+
+.base-field__control-shell--pixel .base-field__control {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  clip-path: inherit;
+  filter: none;
+  box-sizing: border-box;
+}
+
+.base-field__control-shell--pixel:focus-within {
+  background: #ac99d2;
 }
 
 .base-field__control::placeholder {

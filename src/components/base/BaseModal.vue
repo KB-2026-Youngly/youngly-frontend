@@ -80,6 +80,10 @@ const props = defineProps({
     type: [String, Array, Object],
     default: '',
   },
+  autoFocus: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'close'])
@@ -153,7 +157,7 @@ const lockPage = async () => {
   await nextTick()
 
   const focusableElements = getFocusableElements()
-  const firstTarget = focusableElements[0] || modalElement.value
+  const firstTarget = props.autoFocus ? (focusableElements[0] || modalElement.value) : modalElement.value
   firstTarget?.focus()
 }
 

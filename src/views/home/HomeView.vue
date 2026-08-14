@@ -2,17 +2,21 @@
   <div class="home-container">
     <!-- 최상단 인증 알림 카드 -->
     <section class="alert-section">
-      <div class="alert-card">
-        <div class="alert-content">
-          <div class="alert-icon-wrap">
-            <span class="alert-icon">!</span>
-          </div>
-          <div class="alert-text">
-            <h3>오늘 인증이 {{ unverifiedCount }}개 남았어요!</h3>
-            <p>마감 전 인증을 완료하세요</p>
+      <div class="alert-card-shadow yl-stepped-card-shadow">
+        <div class="alert-card yl-card-frame pixel-step-card pixel-step-solid">
+          <div class="alert-card-surface pixel-step-surface">
+            <div class="alert-content">
+              <div class="alert-icon-wrap">
+                <span class="alert-icon">!</span>
+              </div>
+              <div class="alert-text">
+                <h3>오늘 인증이 {{ unverifiedCount }}개 남았어요!</h3>
+                <p>마감 전 인증을 완료하세요</p>
+              </div>
+            </div>
+            <button class="action-btn">인증하기 ➔</button>
           </div>
         </div>
-        <button class="action-btn">인증하기 ➔</button>
       </div>
     </section>
 
@@ -21,47 +25,49 @@
       <h3 class="section-title">그룹</h3>
 
       <div class="group-list">
-        <div
-          class="group-card"
-          v-for="group in groups"
-          :key="group.id"
-          :class="{ 'is-completed': group.isCompleted, 'is-pending': group.isPending }"
-          @click="goToGroupDetail(group.id)"
-        >
-          <!-- 좌측: 크기를 1/3로 줄인 오버랩 프로필 -->
-          <div class="profiles-wrap">
-            <div
-              class="profile-circle"
-              v-for="(profile, index) in group.profiles.slice(0, 2)"
-              :key="index"
-              :style="{ backgroundColor: getProfileColor(index) }"
-            >
-              {{ profile }}
+        <div v-for="group in groups" :key="group.id" class="group-card-shadow yl-stepped-card-shadow">
+          <div
+            class="group-card yl-card-frame pixel-step-card pixel-step-solid"
+            :class="{ 'is-completed': group.isCompleted, 'is-pending': group.isPending }"
+            @click="goToGroupDetail(group.id)"
+          >
+            <div class="group-card-surface pixel-step-surface">
+            <!-- 좌측: 크기를 1/3로 줄인 오버랩 프로필 -->
+            <div class="profiles-wrap">
+              <div
+                class="profile-circle pixel-step-circle"
+                v-for="(profile, index) in group.profiles.slice(0, 2)"
+                :key="index"
+                :style="{ '--profile-fill': getProfileColor(index) }"
+              >
+                {{ profile }}
+              </div>
+              <div v-if="group.profiles.length > 2" class="profile-circle profile-circle--more pixel-step-circle">+{{ group.profiles.length - 2 }}</div>
+              <div v-if="group.status === '팀원 모집중' && group.vacancyCount" class="profile-circle profile-circle--empty pixel-step-circle">+{{ group.vacancyCount }}</div>
             </div>
-            <div v-if="group.profiles.length > 2" class="profile-circle profile-circle--more">+{{ group.profiles.length - 2 }}</div>
-            <div v-if="group.status === '팀원 모집중' && group.vacancyCount" class="profile-circle profile-circle--empty">+{{ group.vacancyCount }}</div>
-          </div>
 
-          <!-- 중앙: 텍스트 정보 -->
-          <div class="group-info">
-            <div class="tags">
-              <span class="tag category-tag">{{ group.category }}</span>
-              <span class="tag status-tag" :class="{ 'completed': group.isCompleted }">
-                {{ group.status }}
-              </span>
+            <!-- 중앙: 텍스트 정보 -->
+            <div class="group-info">
+              <div class="tags">
+                <span class="tag category-tag">{{ group.category }}</span>
+                <span class="tag status-tag" :class="{ 'completed': group.isCompleted }">
+                  {{ group.status }}
+                </span>
+              </div>
+              <h4 class="group-title">{{ group.title }}</h4>
+              <p class="group-subtitle" :class="{ 'highlight': !group.isCompleted }">
+                {{ group.subtitle }}
+              </p>
             </div>
-            <h4 class="group-title">{{ group.title }}</h4>
-            <p class="group-subtitle" :class="{ 'highlight': !group.isCompleted }">
-              {{ group.subtitle }}
-            </p>
-          </div>
 
-          <!-- 우측: 화살표 -->
-          <div class="group-arrow">
-            <span v-if="group.isPending" class="pending-label">승인 대기</span>
-            <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 18L15 12L9 6" stroke="#999999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <!-- 우측: 화살표 -->
+            <div class="group-arrow">
+              <span v-if="group.isPending" class="pending-label">승인 대기</span>
+              <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 18L15 12L9 6" stroke="#999999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            </div>
           </div>
         </div>
       </div>
@@ -69,7 +75,7 @@
 
     <div class="floating-add">
       <button
-        class="floating-add-button"
+        class="floating-add-button pixel-step-circle"
         type="button"
         aria-label="그룹 메뉴 열기"
         @click="groupActionModalOpen = true"
@@ -80,16 +86,16 @@
 
     <BaseModal
       v-model="groupActionModalOpen"
-      modal-class="home-group-action-modal"
+      modal-class="youngly-modal home-group-action-modal"
       title="그룹 참여하기"
       size="small"
     >
       <p class="group-action-description">새로운 챌린지를 만들거나 초대 코드로 기존 그룹에 참여하세요.</p>
       <div class="group-action-buttons">
-        <button type="button" class="group-action-button group-action-button--primary" @click="openCreateModal">
+        <button type="button" class="group-action-button group-action-button--primary pixel-step-button" @click="openCreateModal">
           <span aria-hidden="true">＋</span> 방 생성하기
         </button>
-        <button type="button" class="group-action-button" @click="openJoinModal">
+        <button type="button" class="group-action-button pixel-step-button" @click="openJoinModal">
           <span aria-hidden="true">⌘</span> 코드로 입장하기
         </button>
       </div>
@@ -97,7 +103,7 @@
 
     <BaseModal
       v-model="groupModalOpen"
-      modal-class="home-group-modal"
+      modal-class="youngly-modal home-group-modal"
       :title="`새로운 방 만들기`"
       size="large"
       @close="resetCreateStep"
@@ -151,6 +157,7 @@
         <label class="form-field form-field--full">
           <span>1인당 최소 예치금</span>
           <input
+            class="yl-money"
             :value="formatDeposit(newGroup.deposit)"
             type="text"
             inputmode="numeric"
@@ -186,7 +193,7 @@
 
     <BaseModal
       v-model="accountConnectModalOpen"
-      modal-class="home-account-connect-modal"
+      modal-class="youngly-modal home-account-connect-modal"
       title="모임통장 연결하기"
       size="small"
       @close="resetAccountSelection"
@@ -200,7 +207,8 @@
             <span class="account-option__bank">{{ account.bank }}</span>
             <span class="account-option__info">
               <strong>{{ account.name }}</strong>
-              <small>{{ account.isConnected ? '다른 방에 이미 연결됨' : `${account.number} · ${account.balance}` }}</small>
+              <small v-if="account.isConnected">다른 방에 이미 연결됨</small>
+              <small v-else>{{ account.number }} · <span class="yl-money">{{ account.balance }}</span></small>
             </span>
             <span class="account-option__check" aria-hidden="true">✓</span>
           </label>
@@ -211,7 +219,7 @@
 
     <BaseModal
       v-model="groupCreatedModalOpen"
-      modal-class="home-group-created-modal"
+      modal-class="youngly-modal home-group-created-modal"
       title="초대 코드"
       size="small"
     >
@@ -229,7 +237,7 @@
 
     <BaseModal
       v-model="shareFallbackModalOpen"
-      modal-class="home-share-fallback-modal"
+      modal-class="youngly-modal home-share-fallback-modal"
       title="공유 링크"
       size="small"
     >
@@ -244,7 +252,7 @@
 
     <BaseModal
       v-model="joinGroupModalOpen"
-      modal-class="home-join-group-modal"
+      modal-class="youngly-modal home-join-group-modal"
       title="코드로 입장하기"
       size="small"
     >
@@ -531,11 +539,11 @@ const updateDeposit = (event) => {
 /* 배경 설정 */
 .home-container {
   margin: -20px;
-  padding: 24px 20px 100px;
+  padding: 12px 20px 100px;
   min-height: 100vh;
   background-color: #E6DCF6;
   box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", sans-serif;
+  font-family: inherit;
 }
 
 /* 최상단 알림 카드 */
@@ -1039,7 +1047,7 @@ const updateDeposit = (event) => {
 .group-create-form {
   display: grid;
   gap: 18px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
+  font-family: inherit;
 }
 
 .form-field,
@@ -1166,7 +1174,7 @@ const updateDeposit = (event) => {
 
 :global(.home-group-modal) {
   border-radius: 24px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
+  font-family: inherit;
 }
 
 :global(.home-group-action-modal),
@@ -1175,7 +1183,7 @@ const updateDeposit = (event) => {
 :global(.home-group-created-modal),
 :global(.home-share-fallback-modal) {
   border-radius: 22px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
+  font-family: inherit;
 }
 
 :global(.home-group-action-modal .base-modal__body),
@@ -1188,7 +1196,7 @@ const updateDeposit = (event) => {
 
 :global(.home-group-modal .base-modal__title) {
   color: #222;
-  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
+  font-family: inherit;
   font-size: 22px;
   font-weight: 700;
 }
@@ -1225,5 +1233,626 @@ const updateDeposit = (event) => {
   }
 
   :global(.home-group-modal .base-modal__title) { font-size: 19px; }
+}
+/* /home pixel design — 공통 값은 src/styles/main.css의 --yl-* 토큰 사용 */
+.home-container {
+  color: var(--yl-ink);
+  background: var(--yl-purple-light);
+}
+
+.alert-card {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  --pixel-outline-width: 2px;
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: var(--yl-purple);
+  filter: none !important;
+  box-shadow: none;
+}
+
+.alert-card-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px 18px;
+  background: var(--yl-purple);
+}
+
+.alert-card-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 5px;
+}
+
+.alert-icon-wrap {
+  border: 2px solid var(--yl-ink);
+  border-radius: 0;
+  background: var(--yl-yellow);
+  box-shadow: 2px 2px 0 var(--yl-ink);
+}
+
+.alert-icon {
+  color: var(--yl-ink);
+}
+
+.action-btn {
+  padding: 8px 12px;
+  border: 2px solid var(--yl-ink);
+  border-radius: 0;
+  background: var(--yl-yellow);
+  color: var(--yl-ink);
+  box-shadow: 3px 3px 0 var(--yl-ink);
+}
+
+.action-btn:active,
+.group-action-button:active,
+.create-group-button:active,
+.back-step-button:active,
+.share-invite-button:active,
+.paste-code-button:active,
+.floating-add-button:active {
+  box-shadow: 1px 1px 0 var(--yl-ink);
+  transform: translate(2px, 2px);
+}
+
+.section-title {
+  display: inline-block;
+  margin: 0 0 18px;
+  padding: 6px 10px;
+  border: 3px solid #ac99d2;
+  background: var(--yl-yellow);
+  box-shadow: 4px 4px 0 #c8b7e5;
+  font-size: 17px;
+}
+
+.group-list {
+  gap: 16px;
+}
+
+.group-card,
+.group-card.is-completed,
+.group-card.is-pending {
+  min-height: 96px;
+  padding: 16px 18px;
+  border: var(--yl-pixel-border);
+  border-radius: 0;
+  background: var(--yl-paper);
+  box-shadow: 5px 5px 0 var(--yl-purple);
+  transition: none;
+}
+
+.group-card:hover:not(.is-pending) {
+  background: #faf7ff;
+  box-shadow: 7px 7px 0 var(--yl-purple-dark);
+  transform: translate(-2px, -2px);
+}
+
+.group-card:active:not(.is-pending) {
+  box-shadow: 2px 2px 0 var(--yl-purple-dark);
+  transform: translate(3px, 3px);
+}
+
+.group-card.is-completed {
+  background: #fff8d9;
+  box-shadow: 5px 5px 0 var(--yl-yellow);
+}
+
+.group-card.is-pending {
+  border-style: dashed;
+  box-shadow: 5px 5px 0 #9b8abf;
+}
+
+.profile-circle,
+.profile-circle--more,
+.profile-circle--empty {
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--yl-ink);
+  border-radius: 0;
+  color: var(--yl-ink);
+  box-shadow: 2px 2px 0 var(--yl-ink);
+}
+
+.profile-circle--more {
+  color: #fff;
+}
+
+.tag,
+.pending-label {
+  padding: 3px 6px;
+  border: 2px solid var(--yl-ink);
+  border-radius: 0;
+  background: #fff;
+  color: var(--yl-ink);
+}
+
+.status-tag {
+  background: #eee8fa;
+}
+
+.status-tag.completed {
+  background: #dff2d7;
+  color: #254f21;
+}
+
+.group-subtitle.highlight {
+  color: var(--yl-purple-dark);
+}
+
+.group-arrow svg path {
+  stroke: var(--yl-ink);
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+.floating-add-button {
+  border: var(--yl-pixel-border);
+  border-radius: 0;
+  background: var(--yl-yellow);
+  color: var(--yl-ink);
+  box-shadow: 5px 5px 0 var(--yl-ink);
+  transition: none;
+}
+
+.floating-add-button:hover {
+  box-shadow: 7px 7px 0 var(--yl-purple-dark);
+  transform: translate(-2px, -2px);
+}
+
+.group-action-button,
+.create-group-button,
+.back-step-button,
+.share-invite-button,
+.paste-code-button {
+  border: var(--yl-pixel-border);
+  border-radius: 0;
+  box-shadow: 4px 4px 0 var(--yl-ink);
+}
+
+.group-action-button,
+.back-step-button {
+  background: var(--yl-paper);
+  color: var(--yl-ink);
+}
+
+.group-action-button--primary,
+.create-group-button,
+.share-invite-button {
+  border-color: var(--yl-ink);
+  background: var(--yl-purple);
+  color: #fff;
+}
+
+.create-group-button:hover {
+  background: var(--yl-purple-dark);
+}
+
+.paste-code-button {
+  background: var(--yl-yellow);
+  color: var(--yl-ink);
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea,
+.category-options button,
+.account-option,
+.created-invite-code,
+.join-request-message {
+  border: var(--yl-pixel-border);
+  border-radius: 0;
+  background: var(--yl-paper);
+  box-shadow: 3px 3px 0 var(--yl-purple);
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: var(--yl-ink);
+  outline: 3px solid var(--yl-yellow);
+  outline-offset: 2px;
+}
+
+.category-options button.active,
+.account-option.active {
+  border-color: var(--yl-ink);
+  background: var(--yl-purple);
+  color: #fff;
+  box-shadow: 3px 3px 0 var(--yl-yellow);
+}
+
+.account-option__bank,
+.account-option__check {
+  border: 2px solid var(--yl-ink);
+  border-radius: 0;
+}
+
+.created-invite-code,
+.join-request-message {
+  background: #f3edff;
+  color: var(--yl-purple-dark) !important;
+}
+
+:global(.youngly-modal) {
+  border: var(--yl-pixel-border);
+  border-radius: 0 !important;
+  background: var(--yl-paper);
+  box-shadow: 8px 8px 0 var(--yl-ink) !important;
+}
+
+:global(.youngly-modal .base-modal__header) {
+  border-bottom: 3px solid var(--yl-ink);
+  background: var(--yl-yellow);
+}
+
+:global(.youngly-modal .base-modal__title) {
+  font-family: 'YounglyNeoPixel', monospace !important;
+}
+
+:global(.youngly-modal .base-modal__close) {
+  border: 2px solid var(--yl-ink);
+  border-radius: 0;
+  background: #fff;
+  color: var(--yl-ink);
+  box-shadow: 2px 2px 0 var(--yl-ink);
+}
+
+@media (max-width: 767px) {
+  .home-container {
+    padding: 8px 14px 112px;
+  }
+
+  .alert-card {
+    margin-bottom: 27px;
+    box-shadow: 5px 5px 0 var(--yl-ink);
+  }
+
+  .group-card,
+  .group-card.is-completed,
+  .group-card.is-pending {
+    min-height: 90px;
+    padding: 14px 12px;
+    gap: 11px;
+  }
+
+  .profiles-wrap {
+    padding-left: 2px;
+  }
+
+  .profile-circle,
+  .profile-circle--more,
+  .profile-circle--empty {
+    width: 30px;
+    height: 30px;
+  }
+
+  .group-title {
+    font-size: 13px;
+  }
+
+  :global(.youngly-modal) {
+    border-radius: 0 !important;
+    box-shadow: 6px 6px 0 var(--yl-ink) !important;
+  }
+}
+/* Stepped pixel silhouettes */
+.group-card,
+.group-card.is-completed,
+.group-card.is-pending {
+  --card-shadow-color: var(--yl-purple);
+  border-radius: 0;
+  clip-path: polygon(
+    8px 0,
+    calc(100% - 8px) 0,
+    calc(100% - 8px) 3px,
+    calc(100% - 3px) 3px,
+    calc(100% - 3px) 8px,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 3px) calc(100% - 8px),
+    calc(100% - 3px) calc(100% - 3px),
+    calc(100% - 8px) calc(100% - 3px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    8px calc(100% - 3px),
+    3px calc(100% - 3px),
+    3px calc(100% - 8px),
+    0 calc(100% - 8px),
+    0 8px,
+    3px 8px,
+    3px 3px,
+    8px 3px
+  );
+  box-shadow: none;
+  filter: drop-shadow(5px 5px 0 var(--card-shadow-color));
+}
+
+.group-card.is-completed {
+  --card-shadow-color: var(--yl-yellow);
+}
+
+.group-card.is-pending {
+  --card-shadow-color: #9b8abf;
+}
+
+.group-card:hover:not(.is-pending) {
+  box-shadow: none;
+  filter: drop-shadow(7px 7px 0 var(--yl-purple-dark));
+}
+
+.group-card:active:not(.is-pending) {
+  box-shadow: none;
+  filter: drop-shadow(2px 2px 0 var(--yl-purple-dark));
+}
+
+.profile-circle,
+.profile-circle--more,
+.profile-circle--empty,
+.floating-add-button {
+  clip-path: polygon(
+    37.5% 0,
+    62.5% 0,
+    62.5% 6.25%,
+    75% 6.25%,
+    75% 12.5%,
+    87.5% 12.5%,
+    87.5% 25%,
+    93.75% 25%,
+    93.75% 37.5%,
+    100% 37.5%,
+    100% 62.5%,
+    93.75% 62.5%,
+    93.75% 75%,
+    87.5% 75%,
+    87.5% 87.5%,
+    75% 87.5%,
+    75% 93.75%,
+    62.5% 93.75%,
+    62.5% 100%,
+    37.5% 100%,
+    37.5% 93.75%,
+    25% 93.75%,
+    25% 87.5%,
+    12.5% 87.5%,
+    12.5% 75%,
+    6.25% 75%,
+    6.25% 62.5%,
+    0 62.5%,
+    0 37.5%,
+    6.25% 37.5%,
+    6.25% 25%,
+    12.5% 25%,
+    12.5% 12.5%,
+    25% 12.5%,
+    25% 6.25%,
+    37.5% 6.25%
+  );
+  border-radius: 0;
+}
+
+.profile-circle,
+.profile-circle--more,
+.profile-circle--empty {
+  box-shadow: none;
+  filter: drop-shadow(2px 2px 0 var(--yl-ink));
+}
+
+.floating-add-button {
+  box-shadow: none;
+  filter: drop-shadow(5px 5px 0 var(--yl-ink));
+}
+
+.floating-add-button:hover {
+  box-shadow: none;
+  filter: drop-shadow(7px 7px 0 var(--yl-purple-dark));
+}
+
+.floating-add-button:active {
+  box-shadow: none;
+  filter: drop-shadow(1px 1px 0 var(--yl-ink));
+}
+/* Solid stepped borders: black outer silhouette + inset fill */
+.group-card,
+.group-card.is-completed,
+.group-card.is-pending {
+  --card-fill: var(--yl-paper);
+  position: relative;
+  isolation: isolate;
+  border: 0;
+  background: var(--yl-ink);
+}
+
+.group-card.is-completed {
+  --card-fill: #fff8d9;
+}
+
+.group-card.is-pending {
+  --card-fill: #f6f2fb;
+}
+
+.group-card::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  z-index: 0;
+  clip-path: polygon(
+    5px 0,
+    calc(100% - 5px) 0,
+    calc(100% - 5px) 2px,
+    calc(100% - 2px) 2px,
+    calc(100% - 2px) 5px,
+    100% 5px,
+    100% calc(100% - 5px),
+    calc(100% - 2px) calc(100% - 5px),
+    calc(100% - 2px) calc(100% - 2px),
+    calc(100% - 5px) calc(100% - 2px),
+    calc(100% - 5px) 100%,
+    5px 100%,
+    5px calc(100% - 2px),
+    2px calc(100% - 2px),
+    2px calc(100% - 5px),
+    0 calc(100% - 5px),
+    0 5px,
+    2px 5px,
+    2px 2px,
+    5px 2px
+  );
+  background: var(--card-fill);
+}
+
+.group-card:hover:not(.is-pending)::before {
+  background: #faf7ff;
+}
+
+.profile-circle,
+.profile-circle--more,
+.profile-circle--empty {
+  --profile-fill: #fff;
+  position: relative;
+  isolation: isolate;
+  border: 0;
+  background: var(--yl-ink) !important;
+}
+
+.profile-circle::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  z-index: -1;
+  clip-path: inherit;
+  background: var(--profile-fill);
+}
+
+.profile-circle--more {
+  --profile-fill: var(--yl-purple);
+  --pixel-fill: var(--yl-purple);
+  color: #fff;
+}
+
+.profile-circle--empty {
+  --profile-fill: var(--yl-purple-light);
+  --pixel-fill: var(--yl-purple-light);
+  color: var(--yl-purple-dark);
+}
+
+.floating-add-button {
+  position: relative;
+  isolation: isolate;
+  border: 0;
+  background: var(--yl-ink);
+  color: #fff;
+}
+
+.floating-add-button::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  z-index: -1;
+  clip-path: inherit;
+  background: #69529f;
+}
+
+.group-action-button {
+  position: relative;
+  isolation: isolate;
+  border: 0;
+  border-radius: 0;
+  background: var(--yl-ink);
+  box-shadow: none;
+  filter: drop-shadow(4px 4px 0 var(--yl-ink));
+  clip-path: polygon(
+    7px 0, calc(100% - 7px) 0,
+    calc(100% - 7px) 3px, calc(100% - 3px) 3px,
+    calc(100% - 3px) 7px, 100% 7px,
+    100% calc(100% - 7px), calc(100% - 3px) calc(100% - 7px),
+    calc(100% - 3px) calc(100% - 3px), calc(100% - 7px) calc(100% - 3px),
+    calc(100% - 7px) 100%, 7px 100%,
+    7px calc(100% - 3px), 3px calc(100% - 3px),
+    3px calc(100% - 7px), 0 calc(100% - 7px),
+    0 7px, 3px 7px, 3px 3px, 7px 3px
+  );
+}
+
+.group-action-button::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  z-index: -1;
+  clip-path: inherit;
+  background: var(--yl-paper);
+}
+
+.group-action-button--primary::before {
+  background: var(--yl-purple);
+}
+
+.group-action-button--primary {
+  --pixel-fill: var(--yl-purple);
+}
+
+.floating-add-button {
+  --pixel-fill: #69529f;
+  --pixel-outline-color: #69529f;
+  --pixel-outline-width: 0px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  clip-path: polygon(
+    8px 0, calc(100% - 8px) 0,
+    calc(100% - 8px) 3px, calc(100% - 3px) 3px,
+    calc(100% - 3px) 8px, 100% 8px,
+    100% calc(100% - 8px), calc(100% - 3px) calc(100% - 8px),
+    calc(100% - 3px) calc(100% - 3px), calc(100% - 8px) calc(100% - 3px),
+    calc(100% - 8px) 100%, 8px 100%,
+    8px calc(100% - 3px), 3px calc(100% - 3px),
+    3px calc(100% - 8px), 0 calc(100% - 8px),
+    0 8px, 3px 8px, 3px 3px, 8px 3px
+  ) !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.floating-add-button:hover,
+.floating-add-button:active {
+  box-shadow: none !important;
+  filter: none !important;
+  transform: none;
+}
+
+.group-action-button:active {
+  filter: drop-shadow(1px 1px 0 var(--yl-ink));
+  transform: translate(3px, 3px);
+}
+
+/* 홈 그룹 카드는 외곽과 내부 면을 실제 요소로 분리해 선이 끊기지 않게 유지합니다. */
+.group-card.pixel-step-solid {
+  display: block;
+  min-height: 96px;
+  --pixel-outline-width: 2px;
+  --pixel-outline-color: #ac99d2;
+  width: 100%;
+  filter: none !important;
+  box-sizing: border-box;
+}
+
+.group-card-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 5px;
+}
+
+.group-card-surface {
+  display: flex;
+  min-height: 92px;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 15px;
+}
+
+.group-card:hover:not(.is-pending) .group-card-surface {
+  background: #faf7ff;
+}
+
+.profile-circle.pixel-step-circle {
+  --pixel-outline-width: 2px;
+  background: var(--yl-ink) !important;
 }
 </style>

@@ -1,6 +1,9 @@
 <template>
-  <form class="profile-form" @submit.prevent="handleSubmit">
+  <div class="profile-form-shadow yl-stepped-card-shadow">
+  <form class="profile-form yl-mypage-card" @submit.prevent="handleSubmit">
     <BaseInput
+      class="profile-pixel-field"
+      pixel
       id="profile-nickname"
       v-model="nickname"
       label="이름"
@@ -10,6 +13,8 @@
     />
 
     <BaseInput
+      class="profile-pixel-field"
+      pixel
       id="profile-email"
       v-model="email"
       label="이메일"
@@ -28,11 +33,18 @@
       {{ successMessage }}
     </p>
 
-    <BaseButton type="submit" size="large" block :loading="loading">
+    <BaseButton
+      class="profile-save-button pixel-step-button"
+      type="submit"
+      size="large"
+      block
+      :loading="loading"
+    >
       <Check :size="18" aria-hidden="true" />
       변경사항 저장
     </BaseButton>
   </form>
+  </div>
 </template>
 
 <script setup>
@@ -91,6 +103,11 @@ const handleSubmit = () => {
   box-sizing: border-box;
 }
 
+.profile-form-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 7px;
+}
+
 .profile-form :deep(.base-field) {
   gap: 8px;
 }
@@ -103,22 +120,32 @@ const handleSubmit = () => {
 
 .profile-form :deep(.base-field__control) {
   min-height: 48px;
-  border-color: #ded7e8;
-  border-radius: 11px;
+  border: 0;
+  border-radius: 0;
+  background: #ffffff;
+  clip-path: inherit;
+  filter: none;
+}
+
+.profile-form :deep(.base-field__control:focus) {
+  box-shadow: none;
 }
 
 .profile-form :deep(.base-field__control[readonly]) {
   color: var(--color-text-muted, #77717f);
-  border-color: #ebe6ef;
+  border-color: transparent;
   background: #f7f5f9;
   cursor: default;
 }
 
 .profile-form :deep(.base-button) {
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: var(--color-primary, #7156ad);
   min-height: 50px;
   margin-top: 4px;
-  border-radius: 12px;
-  box-shadow: 0 8px 18px rgba(113, 86, 173, 0.2);
+  border-radius: 0;
+  box-shadow: none;
+  filter: drop-shadow(5px 5px 0 #c8b7e5);
 }
 
 .profile-form__message {
@@ -149,17 +176,18 @@ const handleSubmit = () => {
 <style scoped>
 .profile-form {
   border: 2px solid #342843;
-  box-shadow: 7px 7px 0 #c8b7e5;
+  box-shadow: none;
+  filter: none !important;
 }
 
 .profile-form :deep(.base-field__control) {
   border-width: 2px;
-  border-radius: 10px;
+  border-radius: 0;
 }
 
 .profile-form :deep(.base-button) {
-  border: 2px solid #342843;
-  border-radius: 10px;
-  box-shadow: 4px 4px 0 #c8b7e5;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 </style>

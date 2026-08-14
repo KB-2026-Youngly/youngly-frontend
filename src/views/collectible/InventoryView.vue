@@ -1,14 +1,16 @@
 <template>
   <div class="character-page">
-    <button class="back-button" type="button" aria-label="마이페이지로 돌아가기" @click="goBack">
-      <ArrowLeft :size="18" aria-hidden="true" />
-    </button>
+    <div class="character-back-shadow yl-stepped-card-shadow">
+      <button class="back-button pixel-step-button pixel-step-solid" type="button" aria-label="마이페이지로 돌아가기" @click="goBack">
+        <span class="character-back-surface pixel-step-surface"><ArrowLeft :size="18" aria-hidden="true" /></span>
+      </button>
+    </div>
 
-    <section v-if="isLoading" class="state-panel">
+    <section v-if="isLoading" class="state-panel collectible-step-card">
       <BaseSpinner size="large" label="캐릭터를 불러오는 중..." centered />
     </section>
 
-    <section v-else-if="error" class="state-panel" role="alert">
+    <section v-else-if="error" class="state-panel collectible-step-card" role="alert">
       <BaseEmptyState
         title="캐릭터를 불러오지 못했어요"
         :description="error"
@@ -22,8 +24,8 @@
     </section>
 
     <template v-else>
-      <section
-        class="equipped-stage"
+      <div class="collectible-card-shadow yl-stepped-card-shadow"><section
+        class="equipped-stage collectible-step-card"
         :class="{ 'equipped-stage--cover': equippedUsesCoverImage }"
         aria-label="현재 장착 중인 캐릭터"
       >
@@ -39,9 +41,9 @@
             캐릭터를 선택해 장착해 주세요
           </span>
         </div>
-      </section>
+      </section></div>
 
-      <section class="draw-panel" aria-labelledby="character-draw-title">
+      <div class="collectible-card-shadow yl-stepped-card-shadow"><section class="draw-panel collectible-step-card" aria-labelledby="character-draw-title">
         <div class="draw-panel__copy">
           <span>LUCKY DRAW · 100P</span>
           <h2 id="character-draw-title">새 캐릭터 뽑기</h2>
@@ -49,12 +51,10 @@
         </div>
         <div class="draw-panel__action">
           <div class="draw-panel__points" aria-label="캐릭터 뽑기 포인트 정보">
-            <span
-              >보유 포인트 <strong>{{ formattedBalance }}P</strong></span
-            >
-            <span>뽑기 비용 <strong>100P</strong></span>
+            <span class="point-chip"><span>보유 포인트 <strong>{{ formattedBalance }}P</strong></span></span>
+            <span class="point-chip"><span>뽑기 비용 <strong>100P</strong></span></span>
           </div>
-          <button
+          <button class="draw-action-button"
             type="button"
             :disabled="drawDisabled"
             :aria-busy="isDrawAttemptActive"
@@ -74,9 +74,9 @@
             {{ drawNotice }}
           </p>
         </div>
-      </section>
+      </section></div>
 
-      <section class="inventory-panel" aria-labelledby="owned-character-title">
+      <div class="collectible-card-shadow yl-stepped-card-shadow"><section class="inventory-panel collectible-step-card" aria-labelledby="owned-character-title">
         <div class="inventory-panel__heading">
           <div>
             <span>COLLECTION</span>
@@ -93,7 +93,7 @@
             @select="selectCharacter"
           />
 
-          <div class="equip-panel">
+          <div class="equip-panel collectible-step-card">
             <div class="equip-panel__copy">
               <small>선택한 캐릭터</small>
               <strong>{{ selectedCharacter?.name || '캐릭터를 선택해 주세요' }}</strong>
@@ -112,7 +112,7 @@
           title="아직 보유한 캐릭터가 없어요"
           description="위의 뽑기 버튼으로 첫 캐릭터를 만나 보세요."
         />
-      </section>
+      </section></div>
     </template>
 
     <GachaModal
@@ -307,7 +307,48 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
+.collectible-step-card {
+  --collectible-card-fill: #ffffff;
+  position: relative;
+  isolation: isolate;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #ac99d2 !important;
+  box-shadow: none !important;
+  filter: none;
+  clip-path: polygon(11px 0, calc(100% - 11px) 0, calc(100% - 11px) 3px, calc(100% - 7px) 3px, calc(100% - 7px) 6px, calc(100% - 3px) 6px, calc(100% - 3px) 11px, 100% 11px, 100% calc(100% - 11px), calc(100% - 3px) calc(100% - 11px), calc(100% - 3px) calc(100% - 6px), calc(100% - 7px) calc(100% - 6px), calc(100% - 7px) calc(100% - 3px), calc(100% - 11px) calc(100% - 3px), calc(100% - 11px) 100%, 11px 100%, 11px calc(100% - 3px), 7px calc(100% - 3px), 7px calc(100% - 6px), 3px calc(100% - 6px), 3px calc(100% - 11px), 0 calc(100% - 11px), 0 11px, 3px 11px, 3px 6px, 7px 6px, 7px 3px, 11px 3px);
+}
+
+.collectible-card-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 7px;
+}
+
+.collectible-step-card::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  z-index: 0;
+  clip-path: inherit;
+  background: var(--collectible-card-fill);
+  pointer-events: none;
+}
+
+.collectible-step-card > * { position: relative; z-index: 1; }
+.draw-panel.collectible-step-card { --collectible-card-fill: #f6f1fb; }
+.inventory-panel.collectible-step-card { --collectible-card-fill: #ffffff; }
+.equip-panel.collectible-step-card { --collectible-card-fill: #faf7fd; }
+.equipped-stage.collectible-step-card { --collectible-card-fill: #ffffff; }
+
+.back-button.collectible-step-card {
+  width: 42px;
+  height: 42px;
+  filter: drop-shadow(4px 4px 0 #c8b7e5);
+}
+
 .back-button {
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: #ffffff;
   display: grid;
   width: 38px;
   height: 38px;
@@ -319,6 +360,21 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.78);
   box-shadow: 0 5px 14px rgba(66, 43, 99, 0.07);
   cursor: pointer;
+}
+
+.character-back-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 2px;
+  width: 42px !important;
+}
+
+.character-back-surface {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: #5e4499;
+  background: #ffffff;
 }
 
 .back-button:hover {
@@ -466,6 +522,24 @@ onMounted(() => {
   font-size: 11px;
 }
 
+.draw-panel__points > .point-chip {
+  padding: 2px;
+  border: 0;
+  border-radius: 0;
+  background: #ac99d2;
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, calc(100% - 6px) 2px, calc(100% - 2px) 2px, calc(100% - 2px) 6px, 100% 6px, 100% calc(100% - 6px), calc(100% - 2px) calc(100% - 6px), calc(100% - 2px) calc(100% - 2px), calc(100% - 6px) calc(100% - 2px), calc(100% - 6px) 100%, 6px 100%, 6px calc(100% - 2px), 2px calc(100% - 2px), 2px calc(100% - 6px), 0 calc(100% - 6px), 0 6px, 2px 6px, 2px 2px, 6px 2px);
+  filter: drop-shadow(3px 3px 0 #c8b7e5);
+}
+
+.draw-panel__points > .point-chip > span {
+  display: block;
+  padding: 6px 9px;
+  border: 0;
+  border-radius: 0;
+  background: #ffffff;
+  clip-path: inherit;
+}
+
 .draw-panel__points strong {
   margin-left: 3px;
   color: #7156ad;
@@ -526,6 +600,12 @@ onMounted(() => {
 
 .draw-panel__notice--error {
   color: #b33f54;
+  padding: 8px 10px;
+  background: #fff1f3;
+  border: 2px solid #ac99d2;
+  border-radius: 0;
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, calc(100% - 6px) 2px, calc(100% - 2px) 2px, calc(100% - 2px) 6px, 100% 6px, 100% calc(100% - 6px), calc(100% - 2px) calc(100% - 6px), calc(100% - 2px) calc(100% - 2px), calc(100% - 6px) calc(100% - 2px), calc(100% - 6px) 100%, 6px 100%, 6px calc(100% - 2px), 2px calc(100% - 2px), 2px calc(100% - 6px), 0 calc(100% - 6px), 0 6px, 2px 6px, 2px 2px, 6px 2px);
+  filter: drop-shadow(3px 3px 0 #c8b7e5);
 }
 
 @keyframes draw-spin {
@@ -674,10 +754,11 @@ onMounted(() => {
 }
 
 .back-button {
-  border: 2px solid var(--mypage-ink);
-  border-radius: 11px;
+  border: 0;
+  border-radius: 0;
   background: #ffffff;
-  box-shadow: 4px 4px 0 var(--mypage-shadow);
+  box-shadow: none;
+  filter: none;
 }
 
 .back-button:hover {
@@ -704,11 +785,15 @@ onMounted(() => {
 }
 
 .draw-panel__action button {
-  border: 2px solid var(--mypage-ink);
-  border-radius: 10px;
+  border: 2px solid #ac99d2;
+  border-radius: 0;
   background: #7658b5;
-  box-shadow: 4px 4px 0 #b8a2da;
+  box-shadow: none;
+  filter: drop-shadow(4px 4px 0 #c8b7e5);
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, calc(100% - 8px) 3px, calc(100% - 3px) 3px, calc(100% - 3px) 8px, 100% 8px, 100% calc(100% - 8px), calc(100% - 3px) calc(100% - 8px), calc(100% - 3px) calc(100% - 3px), calc(100% - 8px) calc(100% - 3px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 8px), 0 calc(100% - 8px), 0 8px, 3px 8px, 3px 3px, 8px 3px);
 }
+
+.draw-panel__action button:disabled { filter: drop-shadow(4px 4px 0 #c8b7e5); }
 
 .draw-panel__action button:hover:not(:disabled) {
   box-shadow: 2px 2px 0 #b8a2da;

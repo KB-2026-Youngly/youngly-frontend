@@ -3,7 +3,18 @@
     <div class="header-container">
       <!-- 1. 기본 헤더 (홈 등 일반 페이지) - develop 브랜치의 드롭다운 메뉴 적용 -->
       <div v-if="!isGroupDetail" class="default-header-content">
-        <div class="logo-text">CHALLENGE PIXEL</div>
+        <div class="header-brand">
+          <button
+            v-if="isMoimAccountDetail"
+            class="header-back-button"
+            type="button"
+            aria-label="자산으로 돌아가기"
+            @click="goBackToAssets"
+          >
+            <span aria-hidden="true">&lt;</span>
+          </button>
+          <div class="logo-text">CHALLENGE PIXEL</div>
+        </div>
 
         <div class="header-right">
           <span class="user-name">{{ nickname }}님</span>
@@ -19,7 +30,7 @@
           <!-- 프로필 드롭다운 메뉴 -->
           <div ref="profileMenu" class="profile-menu">
             <button
-              class="profile-button"
+              class="profile-button pixel-step-circle"
               type="button"
               aria-label="프로필 메뉴 열기"
               aria-haspopup="menu"
@@ -43,20 +54,36 @@
       <!-- 2. 그룹 상세 전용 커스텀 헤더 - feature 브랜치의 픽셀 UI 적용 -->
       <div v-else class="group-detail-header-content">
         <div class="group-meta-row">
-          <div class="group-badges">
-            <span class="group-badge">운동</span>
-            <span class="group-badge">초대 중</span>
-            <span class="member-count">♟&nbsp; 1 / 6명</span>
+          <div class="group-header-copy">
+            <div class="group-badges">
+              <span class="group-badge">운동</span>
+              <span class="group-badge">초대 중</span>
+              <span class="member-count">♟&nbsp; 1 / 6명</span>
+            </div>
+            <div class="group-title-row">
+              <button
+                class="group-back-button"
+                type="button"
+                aria-label="그룹 목록으로 돌아가기"
+                @click="goBackToHome"
+              >
+                <span aria-hidden="true">&lt;</span>
+              </button>
+              <button v-if="isGroupOwner" class="group-title" type="button" @click="openGroupEdit">
+                {{ groupTitle }} <span aria-hidden="true">›</span>
+              </button>
+              <h1 v-else class="group-title">{{ groupTitle }}</h1>
+            </div>
           </div>
           <div v-if="isGroupOwner" class="group-actions">
-            <button class="settings-button" type="button" aria-label="그룹 설정">⚙</button>
-            <button class="group-profile" type="button" aria-label="내 프로필">김</button>
+            <button class="group-profile pixel-step-circle" type="button" aria-label="내 프로필">
+              <UserProfileAvatar
+                class="group-profile__avatar"
+                :image-url="user?.profileImageUrl"
+              />
+            </button>
           </div>
         </div>
-        <button v-if="isGroupOwner" class="group-title" type="button" @click="openGroupEdit">
-          {{ groupTitle }} <span aria-hidden="true">›</span>
-        </button>
-        <h1 v-else class="group-title">{{ groupTitle }}</h1>
       </div>
     </div>
   </header>
@@ -85,11 +112,20 @@ const nickname = computed(() => user.value?.nickname || user.value?.loginId || '
 
 // 현재 경로가 그룹 상세 페이지인지 판별 (Composition API 방식)
 const isGroupDetail = computed(() => route.name === 'GroupDetail')
+const isMoimAccountDetail = computed(() => route.name === 'MoimAccountDetail')
 // mock 권한: 실제 API 연결 전에는 owner=false 쿼리로 비방장 상태를 확인할 수 있습니다.
 const isGroupOwner = computed(() => route.query.owner !== 'false')
 
 const closeMenu = () => {
   isMenuOpen.value = false
+}
+
+const goBackToAssets = () => {
+  router.push({ path: '/asset', query: { tab: 'group' } })
+}
+
+const goBackToHome = () => {
+  router.push('/home')
 }
 
 const handleOutsideClick = (event) => {
@@ -144,7 +180,7 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 1000;
   padding: 12px 24px;
-  background-color: #e6dcf6;
+  background-color: var(--app-background, #e6dcf6);
 }
 
 .header-container {
@@ -157,6 +193,37 @@ onBeforeUnmount(() => {
   width: 100%;
   align-items: center;
   justify-content: space-between;
+}
+
+.header-brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-back-button {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  padding: 0;
+  border: 0;
+  place-items: center;
+  flex: 0 0 30px;
+  background: transparent;
+  color: #2d1f4f;
+  cursor: pointer;
+}
+
+.header-back-button span {
+  transform: translate(-1px, -1px);
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.header-back-button:active {
+  transform: translateX(-2px);
 }
 
 .logo-text {
@@ -181,12 +248,21 @@ onBeforeUnmount(() => {
 
 .icon-btn,
 .profile-button {
+  --pixel-outline-width: 2px;
+  --pixel-outline-color: #222222;
+  --profile-fill: #ffffff;
   display: grid;
   padding: 0;
   border: 0;
   place-items: center;
   background: transparent;
   cursor: pointer;
+}
+
+.profile-button.pixel-step-circle::before,
+.group-profile.pixel-step-circle::before {
+  content: none !important;
+  display: none !important;
 }
 
 .icon-btn {
@@ -236,8 +312,9 @@ onBeforeUnmount(() => {
 .profile-button {
   width: 44px;
   height: 44px;
-  border: 2px solid #2d1f4f;
-  border-radius: 50%;
+  border: 0;
+  border-radius: 0;
+  filter: drop-shadow(2px 2px 0 #222222) !important;
   transition:
     transform 0.15s ease,
     border-color 0.15s ease;
@@ -251,6 +328,8 @@ onBeforeUnmount(() => {
 .profile-button__avatar {
   width: 40px;
   height: 40px;
+  border-radius: 0;
+  clip-path: polygon(37.5% 0, 62.5% 0, 62.5% 6.25%, 75% 6.25%, 75% 12.5%, 87.5% 12.5%, 87.5% 25%, 93.75% 25%, 93.75% 37.5%, 100% 37.5%, 100% 62.5%, 93.75% 62.5%, 93.75% 75%, 87.5% 75%, 87.5% 87.5%, 75% 87.5%, 75% 93.75%, 62.5% 93.75%, 62.5% 100%, 37.5% 100%, 37.5% 93.75%, 25% 93.75%, 25% 87.5%, 12.5% 87.5%, 12.5% 75%, 6.25% 75%, 6.25% 62.5%, 0 62.5%, 0 37.5%, 6.25% 37.5%, 6.25% 25%, 12.5% 25%, 12.5% 12.5%, 25% 12.5%, 25% 6.25%, 37.5% 6.25%);
 }
 
 .profile-dropdown {
@@ -302,11 +381,35 @@ onBeforeUnmount(() => {
 }
 
 .group-meta-row {
+  position: relative;
   justify-content: space-between;
+  gap: 12px;
+}
+
+.group-header-copy {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: 3px;
 }
 
 .group-badges {
+  gap: 3px;
+  justify-content: center;
+  padding: 0 52px;
+}
+
+.group-title-row {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  min-height: 22px;
+  align-items: center;
   gap: 6px;
+}
+
+.group-title-row::after {
+  content: '';
+  display: block;
 }
 
 .group-badge {
@@ -321,75 +424,80 @@ onBeforeUnmount(() => {
 }
 
 .member-count {
+  flex: 0 0 auto;
   color: #27272a;
   font-size: 10px;
   font-weight: 700;
 }
 
-.group-actions {
-  gap: 13px;
-}
-
-.settings-button {
-  width: 29px;
-  height: 29px;
+.group-back-button {
+  width: 30px;
+  height: 30px;
+  display: grid;
   padding: 0;
   border: 0;
+  place-items: center;
   background: transparent;
-  color: #222;
-  font-size: 22px;
-  line-height: 1;
+  color: #2d1f4f;
   cursor: pointer;
+}
+
+.group-back-button span {
+  transform: translate(-1px, -1px);
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.group-back-button:active {
+  transform: translateX(-2px);
+}
+
+.group-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  gap: 0;
 }
 
 .group-profile {
-  width: 31px;
-  height: 31px;
+  --pixel-outline-width: 2px;
+  --pixel-outline-color: #222222;
+  --profile-fill: #ffffff;
+  display: grid;
+  width: 44px;
+  height: 44px;
   padding: 0;
-  border: 2px solid #222;
-  background: #65529d;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
+  border: 0;
+  border-radius: 0;
+  place-items: center;
+  background: transparent;
+  filter: drop-shadow(2px 2px 0 #222222) !important;
   cursor: pointer;
-  clip-path: polygon(
-    7px 0,
-    calc(100% - 7px) 0,
-    calc(100% - 7px) 3px,
-    calc(100% - 3px) 3px,
-    calc(100% - 3px) 7px,
-    100% 7px,
-    100% calc(100% - 7px),
-    calc(100% - 3px) calc(100% - 7px),
-    calc(100% - 3px) calc(100% - 3px),
-    calc(100% - 7px) calc(100% - 3px),
-    calc(100% - 7px) 100%,
-    7px 100%,
-    7px calc(100% - 3px),
-    3px calc(100% - 3px),
-    3px calc(100% - 7px),
-    0 calc(100% - 7px),
-    0 7px,
-    3px 7px,
-    3px 3px,
-    7px 3px
-  );
+}
+
+.group-profile__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 0;
+  clip-path: polygon(37.5% 0, 62.5% 0, 62.5% 6.25%, 75% 6.25%, 75% 12.5%, 87.5% 12.5%, 87.5% 25%, 93.75% 25%, 93.75% 37.5%, 100% 37.5%, 100% 62.5%, 93.75% 62.5%, 93.75% 75%, 87.5% 75%, 87.5% 87.5%, 75% 87.5%, 75% 93.75%, 62.5% 93.75%, 62.5% 100%, 37.5% 100%, 37.5% 93.75%, 25% 93.75%, 25% 87.5%, 12.5% 87.5%, 12.5% 75%, 6.25% 75%, 6.25% 62.5%, 0 62.5%, 0 37.5%, 6.25% 37.5%, 6.25% 25%, 12.5% 25%, 12.5% 12.5%, 25% 12.5%, 25% 6.25%, 37.5% 6.25%);
 }
 
 .group-title {
+  min-width: 0;
   padding: 0;
   border: 0;
   background: transparent;
   margin: 0;
   color: #222;
-  font-size: 15px;
+  font-size: clamp(19px, 2.2vw, 24px);
   font-weight: 800;
   line-height: 1.15;
+  text-align: center;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.settings-button:focus-visible,
 .group-profile:focus-visible {
   outline: 3px solid #7156ad;
   outline-offset: 2px;
@@ -403,14 +511,24 @@ onBeforeUnmount(() => {
     left: 0;
     z-index: 1000;
     padding: 8px 16px 9px;
-    background: #fff;
-    border-bottom: 3px solid #222;
+    background: var(--app-background, #e6dcf6);
+    border-bottom: 0;
     transform: translateZ(0);
     backface-visibility: hidden;
   }
 
   .logo-text {
     font-size: 16px;
+  }
+
+  .header-brand {
+    gap: 9px;
+  }
+
+  .header-back-button {
+    width: 27px;
+    height: 27px;
+    flex-basis: 27px;
   }
 
   .user-name {

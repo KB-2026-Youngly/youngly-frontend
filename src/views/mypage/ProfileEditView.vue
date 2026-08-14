@@ -1,15 +1,21 @@
 <template>
   <div class="profile-edit-page">
-    <router-link class="back-link" to="/mypage" aria-label="마이페이지로 돌아가기">
-      <ArrowLeft :size="16" aria-hidden="true" />
-      <span>마이페이지</span>
-    </router-link>
+    <div class="back-link-shadow yl-stepped-card-shadow"><router-link
+      class="back-link pixel-step-button pixel-step-solid"
+      to="/mypage"
+      aria-label="마이페이지로 돌아가기"
+    >
+      <span class="back-link__surface pixel-step-surface">
+        <ArrowLeft :size="16" aria-hidden="true" />
+        <span>마이페이지</span>
+      </span>
+    </router-link></div>
 
-    <section v-if="isLoading" class="state-panel">
+    <section v-if="isLoading" class="state-panel yl-mypage-card">
       <BaseSpinner size="large" label="사용자 정보를 불러오는 중..." centered />
     </section>
 
-    <section v-else-if="error" class="state-panel" role="alert">
+    <section v-else-if="error" class="state-panel yl-mypage-card" role="alert">
       <BaseEmptyState
         title="사용자 정보를 불러오지 못했어요"
         :description="error"
@@ -27,7 +33,7 @@
       @submit="handleProfileSubmit"
     />
 
-    <nav class="account-menu" aria-label="계정 관리">
+    <div class="account-menu-shadow yl-stepped-card-shadow"><nav class="account-menu yl-mypage-card" aria-label="계정 관리">
       <p class="account-menu__title">계정 관리</p>
       <button class="account-menu__item" type="button">
         <span class="account-menu__icon" aria-hidden="true">
@@ -48,7 +54,7 @@
         </span>
         <ChevronRight :size="18" aria-hidden="true" />
       </button>
-    </nav>
+    </nav></div>
   </div>
 </template>
 
@@ -95,29 +101,49 @@ onMounted(() => {
 }
 
 .back-link {
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: #ffffff;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 36px;
-  padding: 0 13px;
-  border: 1px solid rgba(113, 86, 173, 0.12);
-  border-radius: 999px;
+  padding: 2px;
+  border: 0;
+  border-radius: 0;
   color: var(--color-primary-dark, #5e4499);
   background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 4px 14px rgba(75, 50, 113, 0.06);
+  box-shadow: none;
+  filter: drop-shadow(5px 5px 0 var(--mypage-shadow)) !important;
+  filter: drop-shadow(5px 5px 0 #c8b7e5) !important;
   backdrop-filter: blur(8px);
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
 }
 
-.back-link + .state-panel,
-.back-link + .profile-form {
+.back-link__surface {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 13px;
+  color: var(--color-primary-dark, #5e4499);
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.back-link-shadow + .state-panel,
+.back-link-shadow + .profile-form-shadow {
   margin-top: 20px;
 }
 
+.back-link-shadow { --yl-stepped-shadow-color: #c8b7e5; --yl-stepped-shadow-offset: 5px; width: fit-content !important; }
+.account-menu-shadow { --yl-stepped-shadow-color: #c8b7e5; --yl-stepped-shadow-offset: 7px; margin-top: 18px; }
+
 .back-link:hover {
   background: var(--color-surface-hover, #f4f2f8);
+  filter: drop-shadow(3px 3px 0 #c8b7e5) !important;
+  transform: translate(2px, 2px);
 }
 
 .back-link:focus-visible,
@@ -128,7 +154,7 @@ onMounted(() => {
 
 .account-menu {
   display: grid;
-  margin-top: 18px;
+  margin-top: 0;
   padding: 20px 22px 4px;
   border: 1px solid rgba(113, 86, 173, 0.09);
   border-radius: 20px;
@@ -221,8 +247,8 @@ onMounted(() => {
     border-radius: 18px;
   }
 
-  .back-link + .state-panel,
-  .back-link + .profile-form {
+  .back-link-shadow + .state-panel,
+  .back-link-shadow + .profile-form-shadow {
     margin-top: 16px;
   }
 
@@ -243,15 +269,15 @@ onMounted(() => {
 .back-link {
   min-height: 40px;
   padding-inline: 14px;
-  border: 2px solid var(--mypage-ink);
+  border: 0;
   border-radius: 11px;
   background: #ffffff;
-  box-shadow: 4px 4px 0 var(--mypage-shadow);
+  box-shadow: none;
   backdrop-filter: none;
 }
 
 .back-link:hover {
-  box-shadow: 2px 2px 0 var(--mypage-shadow);
+  box-shadow: none;
   transform: translate(2px, 2px);
 }
 
@@ -259,7 +285,8 @@ onMounted(() => {
   border: 2px solid var(--mypage-ink);
   border-radius: 20px;
   background: #ffffff;
-  box-shadow: 6px 6px 0 var(--mypage-shadow);
+  box-shadow: none;
+  filter: none !important;
 }
 
 .account-menu__icon {

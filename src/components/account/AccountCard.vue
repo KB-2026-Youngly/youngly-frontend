@@ -1,6 +1,6 @@
 <template>
   <button
-    class="account-card"
+    class="account-card yl-mypage-card"
     :class="{
       'account-card--primary': isPrimary,
       'account-card--selected': isSelected,
@@ -15,7 +15,7 @@
       <span class="account-card__type">{{ accountTypeLabel }}</span>
     </span>
 
-    <strong class="account-card__balance">{{ formattedBalance }}원</strong>
+    <strong class="account-card__balance yl-money">{{ formattedBalance }}원</strong>
     <span class="account-card__number">{{ maskedAccountNumber }}</span>
     <span class="account-card__footer">
       <span v-if="isPrimary" class="account-card__status">

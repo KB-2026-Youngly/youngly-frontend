@@ -1,24 +1,29 @@
 <template>
   <section class="asset-page">
     <div class="tabs" role="tablist" aria-label="자산 종류">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        type="button"
-        role="tab"
-        :aria-selected="activeTab === tab.id"
-        :class="{ active: activeTab === tab.id }"
-        @click="activeTab = tab.id"
-      >
-        <span class="tab-icon">{{ tab.icon }}</span>
-        <span
-          ><b>{{ tab.label }}</b
-          ><small>{{ tab.caption }}</small></span
+      <div v-for="tab in tabs" :key="tab.id" class="asset-tab-shadow yl-stepped-card-shadow">
+        <button
+          class="yl-card-frame pixel-step-card pixel-step-solid"
+          type="button"
+          role="tab"
+          :aria-selected="activeTab === tab.id"
+          :class="{ active: activeTab === tab.id }"
+          @click="activeTab = tab.id"
         >
-      </button>
+          <span class="asset-tab-surface pixel-step-surface">
+            <span class="tab-icon">{{ tab.icon }}</span>
+            <span
+              ><b>{{ tab.label }}</b
+              ><small>{{ tab.caption }}</small></span
+            >
+          </span>
+        </button>
+      </div>
     </div>
 
-    <article v-if="activeTab === 'pension' && connectedPension" class="linked-account-card">
+    <div v-if="activeTab === 'pension' && connectedPension" class="asset-account-shadow yl-stepped-card-shadow">
+    <article class="linked-account-card yl-card-frame pixel-step-card pixel-step-solid">
+      <div class="linked-account-card-surface pixel-step-surface">
       <button
         class="edit-account-button"
         type="button"
@@ -37,11 +42,11 @@
       <dl class="account-details">
         <div>
           <dt>계좌번호</dt>
-          <dd>{{ connectedPension.accountNumber }}</dd>
+          <dd class="account-number-value">{{ connectedPension.accountNumber }}</dd>
         </div>
         <div>
           <dt>잔액</dt>
-          <dd class="balance-value">{{ formatCurrency(connectedPension.balance) }}원</dd>
+          <dd class="balance-value yl-money">{{ formatCurrency(connectedPension.balance) }}원</dd>
         </div>
         <div>
           <dt>미래 적립금</dt>
@@ -56,7 +61,9 @@
         <b aria-hidden="true">→</b>
       </button>
       <TransactionHistory account-type="PENSION" :account-id="connectedPension.accountId" />
+      </div>
     </article>
+    </div>
 
     <article v-else-if="loadingConnectedAccount && activeTab === 'pension'" class="asset-card">
       <div class="modal-state">연결된 개인연금을 확인하고 있습니다.</div>
@@ -66,19 +73,23 @@
       v-else-if="activeTab === 'group' && connectedMoimAccounts.length"
       class="moim-card-grid"
     >
-      <article
+      <div
         v-for="account in connectedMoimAccounts"
         :key="account.moimAccountId"
-        class="moim-account-card"
-        :class="{ 'is-dragging': draggingMoimId === account.moimAccountId }"
-        :data-moim-id="account.moimAccountId"
-        draggable="true"
-        @dragstart="handleDesktopDragStart(account.moimAccountId, $event)"
-        @dragover.prevent
-        @drop="handleDesktopDrop(account.moimAccountId)"
-        @dragend="finishMoimDrag"
-        @click="openMoimDetail(account)"
+        class="asset-account-shadow moim-account-shadow yl-stepped-card-shadow"
       >
+        <article
+          class="moim-account-card yl-card-frame pixel-step-card pixel-step-solid"
+          :class="{ 'is-dragging': draggingMoimId === account.moimAccountId }"
+          :data-moim-id="account.moimAccountId"
+          draggable="true"
+          @dragstart="handleDesktopDragStart(account.moimAccountId, $event)"
+          @dragover.prevent
+          @drop="handleDesktopDrop(account.moimAccountId)"
+          @dragend="finishMoimDrag"
+          @click="openMoimDetail(account)"
+        >
+          <div class="moim-account-card-surface pixel-step-surface">
         <span
           class="drag-handle"
           role="button"
@@ -107,7 +118,7 @@
             소유주 {{ account.ownerName || '정보 확인 중' }}
           </small>
         </div>
-        <strong>{{ formatCurrency(account.balance) }}원</strong>
+        <strong class="yl-money">{{ formatCurrency(account.balance) }}원</strong>
         <p>{{ account.accountNumber }}</p>
         <small class="moim-account-name">{{ account.accountName }}</small>
         <div class="group-link-status">
@@ -122,7 +133,9 @@
             <span>그룹 연결 정보 준비 중</span>
           </template>
         </div>
-      </article>
+          </div>
+        </article>
+      </div>
     </section>
 
     <article v-else class="asset-card">
@@ -217,7 +230,7 @@
               <b>{{ account.bankName }} 개인연금</b>
               <small>{{ account.accountNumber }}</small>
             </span>
-            <strong>{{ formatCurrency(account.balance) }}원</strong>
+            <strong class="yl-money">{{ formatCurrency(account.balance) }}원</strong>
           </label>
         </div>
 
@@ -352,7 +365,7 @@
               ><b>{{ account.bankName }} 모임통장</b
               ><small>{{ account.accountNumber }}</small></span
             >
-            <strong>{{ formatCurrency(account.balance) }}원</strong>
+            <strong class="yl-money">{{ formatCurrency(account.balance) }}원</strong>
           </label>
         </div>
       </div>
@@ -385,7 +398,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import BaseModal from '@/components/base/BaseModal.vue'
 import TransactionHistory from '@/components/asset/TransactionHistory.vue'
 import {
@@ -404,6 +417,7 @@ import { getMyInfo } from '@/api/user'
 import { getGroups } from '@/api/group'
 
 const router = useRouter()
+const route = useRoute()
 
 const tabs = [
   { id: 'pension', icon: '₩', label: '개인연금', caption: '나의 노후 자산' },
@@ -423,7 +437,7 @@ const states = {
     button: '모임통장 연결하기',
   },
 }
-const activeTab = ref('pension')
+const activeTab = ref(route.query.tab === 'group' ? 'group' : 'pension')
 const content = computed(() => states[activeTab.value])
 const toast = ref('')
 const pensionModalOpen = ref(false)
@@ -865,7 +879,7 @@ function resetModal() {
   --purple-light: #f1edfa;
   min-height: calc(100vh - 80px);
   margin: -20px;
-  padding: 32px 40px 72px;
+  padding: 12px 20px 72px;
   background: #e6dcf6;
   color: #242329;
   box-sizing: border-box;
@@ -879,29 +893,43 @@ function resetModal() {
   gap: 12px;
   margin-bottom: 18px;
 }
+.asset-tab-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 4px;
+  min-width: 0;
+}
 .tabs button {
+  width: 100%;
   min-height: 68px;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  border: 1px solid #e2e0e6;
-  border-radius: 14px;
-  background: #fff;
+  padding: 0;
+  display: block;
+  border: 0;
+  border-radius: 0;
+  --pixel-outline-width: 2px;
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: #fff;
+  filter: none !important;
   color: #77737e;
   text-align: left;
   cursor: pointer;
   transition: 0.2s ease;
+}
+.asset-tab-surface {
+  display: flex;
+  min-height: 64px;
+  padding: 0 18px;
+  align-items: center;
+  gap: 13px;
 }
 .tabs button:hover {
   border-color: #bcb3d3;
   transform: translateY(-1px);
 }
 .tabs button.active {
-  border-color: var(--purple);
-  background: var(--purple);
+  border-color: #ac99d2;
+  --pixel-fill: var(--purple);
   color: #fff;
-  box-shadow: 0 8px 20px rgba(105, 82, 159, 0.18);
+  box-shadow: none;
 }
 .tab-icon {
   width: 34px;
@@ -958,11 +986,46 @@ function resetModal() {
   background: linear-gradient(135deg, #ffffff 0%, #faf8fe 100%);
   box-shadow: 0 10px 32px rgba(34, 28, 47, 0.055);
 }
+
+.asset-account-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 5px;
+}
+
+.linked-account-card.pixel-step-solid,
+.moim-account-card.pixel-step-solid {
+  width: 100%;
+  box-sizing: border-box;
+  --pixel-outline-width: 2px;
+  --pixel-outline-color: #ac99d2;
+  filter: none !important;
+}
+
+.linked-account-card-surface {
+  position: relative;
+  min-height: 344px;
+  padding: 31px;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: linear-gradient(135deg, #ffffff 0%, #faf8fe 100%);
+}
+
+.moim-account-card-surface {
+  position: relative;
+  min-height: 199px;
+  padding: 21px;
+  box-sizing: border-box;
+  background: linear-gradient(145deg, #fff, #f8f4fd);
+}
 .linked-account-card > * {
   position: relative;
   z-index: 1;
 }
 .linked-account-card::after {
+  content: none;
+}
+
+.linked-account-card-surface::after {
   content: '';
   width: 210px;
   height: 210px;
@@ -973,6 +1036,11 @@ function resetModal() {
   border-radius: 50%;
   background: #eee8fa;
   pointer-events: none;
+}
+
+.linked-account-card-surface > * {
+  position: relative;
+  z-index: 1;
 }
 .edit-account-button {
   width: 38px;
@@ -1046,6 +1114,10 @@ function resetModal() {
   font-size: 13px;
   font-weight: 700;
 }
+.account-details .account-number-value {
+  font-size: 17px;
+  letter-spacing: 0.02em;
+}
 .account-details .balance-value {
   color: #4f397e;
   font-size: 19px;
@@ -1087,6 +1159,10 @@ function resetModal() {
   transition:
     opacity 0.18s,
     transform 0.18s;
+}
+
+.moim-account-shadow {
+  min-width: 0;
 }
 .moim-account-card:active {
   cursor: grabbing;
@@ -1176,12 +1252,12 @@ function resetModal() {
   font-size: 12px;
   font-weight: 700;
 }
-.moim-account-card > strong {
+.moim-account-card-surface > strong {
   display: block;
   color: #33294a;
   font-size: 25px;
 }
-.moim-account-card > p {
+.moim-account-card-surface > p {
   margin: 10px 0 4px;
   color: #665e70;
   font-size: 13px;
@@ -1189,6 +1265,11 @@ function resetModal() {
 .moim-account-name {
   color: #9b95a2;
   font-size: 11px;
+}
+
+.account-details .balance-value,
+.moim-account-card-surface > strong {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
 }
 .group-link-status {
   min-height: 39px;
@@ -1774,7 +1855,7 @@ function resetModal() {
     max-width: 100%;
     min-height: calc(100dvh - 68px);
     margin: 0;
-    padding: 24px 20px 110px;
+    padding: 8px 14px 110px;
     overflow-x: hidden;
   }
   .tabs {
@@ -1808,6 +1889,10 @@ function resetModal() {
     padding: 26px 20px;
     border-radius: 16px;
   }
+  .linked-account-card-surface {
+    min-height: 324px;
+    padding: 23px 17px;
+  }
   .edit-account-button {
     top: 18px;
     right: 18px;
@@ -1827,6 +1912,10 @@ function resetModal() {
   .moim-account-card {
     min-height: 190px;
     touch-action: pan-y;
+  }
+.moim-account-card-surface {
+    min-height: 184px;
+    padding: 21px;
   }
   .moim-account-card.is-dragging {
     touch-action: none;
@@ -1885,6 +1974,37 @@ function resetModal() {
     width: calc(100% - 40px);
     text-align: center;
   }
+}
+
+.floating-add-button {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #69529f;
+  color: #fff;
+  box-shadow: none !important;
+  filter: none !important;
+  clip-path: polygon(
+    8px 0, calc(100% - 8px) 0,
+    calc(100% - 8px) 3px, calc(100% - 3px) 3px,
+    calc(100% - 3px) 8px, 100% 8px,
+    100% calc(100% - 8px), calc(100% - 3px) calc(100% - 8px),
+    calc(100% - 3px) calc(100% - 3px), calc(100% - 8px) calc(100% - 3px),
+    calc(100% - 8px) 100%, 8px 100%,
+    8px calc(100% - 3px), 3px calc(100% - 3px),
+    3px calc(100% - 8px), 0 calc(100% - 8px),
+    0 8px, 3px 8px, 3px 3px, 8px 3px
+  ) !important;
+}
+
+.floating-add-button:hover,
+.floating-add-button:active {
+  border: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  transform: none;
 }
 :global(.mobile-bottom-nav) {
   position: fixed !important;

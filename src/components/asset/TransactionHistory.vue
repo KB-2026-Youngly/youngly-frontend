@@ -1,5 +1,6 @@
 <template>
-  <section class="transaction-history" aria-labelledby="transaction-history-title">
+  <section class="transaction-history yl-card-frame pixel-step-card pixel-step-solid" aria-labelledby="transaction-history-title">
+    <div class="transaction-history-surface pixel-step-surface">
     <div class="history-heading">
       <div>
         <small>최근 이용 내역</small>
@@ -85,11 +86,11 @@
           </span>
         </div>
         <div class="transaction-amount">
-          <strong :class="typeClass(transaction.transactionType)">
+          <strong class="yl-money" :class="typeClass(transaction.transactionType)">
             {{ transaction.transactionType === 'DEPOSIT' ? '+' : '-'
             }}{{ formatCurrency(transaction.amount) }}원
           </strong>
-          <span>잔액 {{ formatCurrency(transaction.balanceAfter) }}원</span>
+          <span>잔액 <span class="yl-money">{{ formatCurrency(transaction.balanceAfter) }}원</span></span>
         </div>
       </li>
     </ul>
@@ -103,6 +104,7 @@
       {{ expanded ? '접어 보기' : `전체 내역 펼쳐 보기 (${transactions.length}건)` }}
       <span aria-hidden="true">{{ expanded ? '⌃' : '⌄' }}</span>
     </button>
+    </div>
   </section>
 </template>
 
@@ -250,9 +252,15 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeRoundMenu
 <style scoped>
 .transaction-history {
   margin-top: 20px;
-  padding: 22px;
-  border: 1px solid #e7e0ee;
-  border-radius: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  --pixel-outline-width: 2px;
+  --pixel-outline-color: #ac99d2;
+  filter: none !important;
+}
+.transaction-history-surface {
+  padding: 20px;
   background: #fff;
 }
 .history-heading {
@@ -373,6 +381,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeRoundMenu
   text-align: right;
 }
 .transaction-amount strong {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
   font-size: 14px;
 }
 .transaction-amount strong.deposit {
@@ -384,7 +393,10 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeRoundMenu
 @media (max-width: 560px) {
   .transaction-history {
     margin-top: 16px;
-    padding: 18px 16px;
+    padding: 0;
+  }
+  .transaction-history-surface {
+    padding: 16px 14px;
   }
   .history-filters { align-items: stretch; flex-direction: column; }
   .category-filters { width: 100%; }

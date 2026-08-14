@@ -1,11 +1,11 @@
 <template>
   <section class="detail-page">
-    <button class="back-button" type="button" @click="router.push('/asset')">← 자산으로</button>
-
     <div v-if="loading" class="detail-state">모임통장 정보를 불러오고 있어요.</div>
     <div v-else-if="error" class="detail-state error">{{ error }}</div>
     <template v-else-if="account">
-      <article class="account-summary">
+      <div class="detail-card-shadow yl-stepped-card-shadow">
+      <article class="account-summary yl-card-frame pixel-step-card pixel-step-solid">
+        <div class="account-summary-surface pixel-step-surface">
         <div class="summary-main-row">
           <img class="kb-icon" :src="kbIcon" alt="KB국민은행" />
           <div class="account-heading">
@@ -13,10 +13,14 @@
             <p>{{ account.accountNumber }}</p>
           </div>
         </div>
-        <strong class="account-balance">{{ formatCurrency(account.balance) }}원</strong>
+        <strong class="account-balance yl-money">{{ formatCurrency(account.balance) }}원</strong>
+        </div>
       </article>
+      </div>
 
-      <section v-if="group" class="deposit-status-section">
+      <div v-if="group" class="detail-card-shadow yl-stepped-card-shadow">
+      <section class="deposit-status-section yl-card-frame pixel-step-card pixel-step-solid">
+        <div class="deposit-status-surface pixel-step-surface">
         <div class="section-heading">
           <div><small>{{ group.groupName }}</small><h2>예치금 현황</h2></div>
           <strong>{{ members.length }}명 참여</strong>
@@ -29,15 +33,16 @@
             <div class="my-deposit-summary">
               <div>
                 <small>내 예치금</small>
-                <strong>{{ formatCurrency(myDeposit?.depositedAmount) }}원</strong>
+                <strong class="yl-money">{{ formatCurrency(myDeposit?.depositedAmount) }}원</strong>
               </div>
               <span :class="{ complete: myDepositComplete }">
-                {{ myDepositComplete ? '예치 완료' : `${formatCurrency(myDeposit?.remainingAmount)}원 부족` }}
+                <template v-if="myDepositComplete">예치 완료</template>
+                <template v-else><span class="yl-money">{{ formatCurrency(myDeposit?.remainingAmount) }}원</span> 부족</template>
               </span>
               <div class="my-deposit-progress" aria-hidden="true">
                 <span :style="{ width: `${myDepositProgress}%` }"></span>
               </div>
-              <p>최소 예치금 {{ formatCurrency(myDeposit?.requiredAmount) }}원</p>
+              <p>최소 예치금 <span class="yl-money">{{ formatCurrency(myDeposit?.requiredAmount) }}원</span></p>
             </div>
 
             <div class="deposit-visualization">
@@ -70,8 +75,8 @@
                 </div>
               </div>
               <div class="member-deposit">
-                <strong>{{ formatCurrency(member.currentDepositAmount) }}원</strong>
-                <span>/ {{ formatCurrency(member.requiredAmount) }}원</span>
+                <strong class="yl-money">{{ formatCurrency(member.currentDepositAmount) }}원</strong>
+                <span class="yl-money">/ {{ formatCurrency(member.requiredAmount) }}원</span>
               </div>
               <div class="deposit-progress" aria-hidden="true">
                 <span :style="{ width: `${depositProgress(member)}%` }"></span>
@@ -83,9 +88,13 @@
             <button class="primary-action" type="button" @click="openDepositModal">예치금 채우기</button>
           </div>
         </template>
+        </div>
       </section>
+      </div>
 
-      <TransactionHistory account-type="MOIM" :account-id="account.moimAccountId" :initial-limit="6" />
+      <div class="detail-card-shadow yl-stepped-card-shadow">
+        <TransactionHistory account-type="MOIM" :account-id="account.moimAccountId" :initial-limit="6" />
+      </div>
     </template>
 
     <BaseModal v-model="depositModalOpen" title="예치금 채우기" size="medium">
@@ -95,24 +104,24 @@
         <div class="transfer-account-card">
           <span>내 입출금 통장</span>
           <strong>{{ personalAccount?.bankName }} {{ personalAccount?.accountNumber }}</strong>
-          <b>{{ formatCurrency(personalAccount?.balance) }}원</b>
+          <b class="yl-money">{{ formatCurrency(personalAccount?.balance) }}원</b>
         </div>
         <div class="transfer-arrow" aria-hidden="true">↓</div>
         <div class="transfer-account-card destination">
           <span>{{ group?.groupName || '모임통장' }}</span>
           <strong>{{ account?.bankName }} {{ account?.accountNumber }}</strong>
-          <b>{{ formatCurrency(account?.balance) }}원</b>
+          <b class="yl-money">{{ formatCurrency(account?.balance) }}원</b>
         </div>
 
         <div class="deposit-guide">
-          <span>현재 내 예치금</span><b>{{ formatCurrency(myDeposit?.depositedAmount) }}원</b>
-          <span>최소 예치금</span><b>{{ formatCurrency(myDeposit?.requiredAmount) }}원</b>
+          <span>현재 내 예치금</span><b class="yl-money">{{ formatCurrency(myDeposit?.depositedAmount) }}원</b>
+          <span>최소 예치금</span><b class="yl-money">{{ formatCurrency(myDeposit?.requiredAmount) }}원</b>
         </div>
 
         <div class="amount-action-row">
           <label class="amount-field">
             <span>채울 금액</span>
-            <div><input v-model.number="depositAmount" type="number" min="0" step="1000" /><em>원</em></div>
+            <div class="yl-money"><input v-model.number="depositAmount" type="number" min="0" step="1000" /><em>원</em></div>
           </label>
           <button class="modal-primary" type="button" :disabled="!canRequestDeposit" @click="openDepositConfirm">
             채우기
@@ -125,7 +134,7 @@
     <BaseModal v-model="confirmModalOpen" title="예치금 이체 확인" size="small" :close-on-overlay="!depositSubmitting">
       <div class="confirm-copy">
         <span class="confirm-icon">↗</span>
-        <p><strong>{{ formatCurrency(depositAmount) }}원</strong>을<br /><b>{{ group?.groupName }}</b> 모임통장에 채우시겠습니까?</p>
+        <p><strong class="yl-money">{{ formatCurrency(depositAmount) }}원</strong>을<br /><b>{{ group?.groupName }}</b> 모임통장에 채우시겠습니까?</p>
       </div>
       <p v-if="depositError" class="inline-error">{{ depositError }}</p>
       <div class="confirm-actions">
@@ -142,7 +151,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import BaseModal from '@/components/base/BaseModal.vue'
 import TransactionHistory from '@/components/asset/TransactionHistory.vue'
 import kbIcon from '@/assets/icons/kb_icon.png'
@@ -150,7 +159,6 @@ import { getAccount, getMoimAccounts } from '@/api/account'
 import { depositToGroup, getGroups, getMemberDepositStatuses, getMyDepositStatus } from '@/api/group'
 
 const route = useRoute()
-const router = useRouter()
 const account = ref(null)
 const loading = ref(true)
 const error = ref('')
@@ -320,19 +328,21 @@ function formatCurrency(value) {
 </script>
 
 <style scoped>
-.detail-page { width: calc(100% + 40px); min-height: calc(100vh - 80px); margin: -20px; padding: 28px 40px 70px; background: #e6dcf6; box-sizing: border-box; }
+.detail-page { width: calc(100% + 40px); min-height: calc(100vh - 80px); margin: -20px; padding: 12px 20px 70px; background: #e6dcf6; box-sizing: border-box; }
 .detail-page * { box-sizing: border-box; }
-.detail-page > * { width: min(920px, 100%); margin-left: auto; margin-right: auto; }
-.back-button { display: block; margin-bottom: 16px; padding: 0; border: 0; background: transparent; color: #594775; font-weight: 800; text-align: left; cursor: pointer; }
+.detail-page > * { width: 100%; margin-left: auto; margin-right: auto; }
 .account-summary, .deposit-status-section { border: 1px solid rgba(105,82,159,.14); border-radius: 20px; background: #fff; box-shadow: 0 10px 28px rgba(49,37,72,.07); }
-.account-summary { padding: 24px 28px; }
+.detail-card-shadow { --yl-stepped-shadow-color: #c8b7e5; --yl-stepped-shadow-offset: 5px; margin-bottom: 20px; }
+.account-summary.pixel-step-solid,.deposit-status-section.pixel-step-solid { width: 100%; margin: 0; --pixel-outline-width: 2px; --pixel-outline-color: #ac99d2; filter: none !important; }
+.account-summary-surface { padding: 22px 26px; }
 .summary-main-row { display: flex; align-items: center; gap: 13px; }
 .kb-icon { width: 48px; height: 48px; flex: 0 0 48px; object-fit: contain; }
 .account-heading { min-width: 0; }
 .account-heading h1 { margin: 0; overflow: hidden; color: #30293a; font-size: 21px; text-overflow: ellipsis; white-space: nowrap; }
 .account-heading p { margin: 6px 0 0; color: #8b8195; font-size: 13px; }
 .account-balance { display: block; margin-top: 25px; color: #30293a; font-size: 30px; letter-spacing: -.7px; }
-.deposit-status-section { margin-top: 18px; padding: 24px 28px; }
+.deposit-status-section { margin-top: 0; padding: 0; }
+.deposit-status-surface { padding: 22px 26px; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .section-heading small { color: #8b8195; }
 .section-heading h2 { margin: 3px 0 0; color: #30293a; font-size: 19px; }
@@ -398,16 +408,27 @@ function formatCurrency(value) {
 .confirm-icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #69529f; font-size: 22px; }
 .confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 10px; }
 .confirm-actions button:first-child { border: 1px solid #ddd4e7; background: #fff; color: #6c6175; }
+.account-balance,
+.my-deposit-summary strong,
+.member-deposit strong,
+.member-deposit span,
+.transfer-account-card b,
+.deposit-guide b,
+.amount-field input,
+.amount-field em,
+.confirm-copy strong {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+}
 .toast { position: fixed; left: 50%; bottom: 30px; z-index: 20; width: auto; padding: 13px 20px; border-radius: 10px; color: #fff; background: rgba(35,32,40,.94); text-align: center; transform: translateX(-50%); }
 .toast-enter-active,.toast-leave-active { transition: .2s; }.toast-enter-from,.toast-leave-to { opacity: 0; transform: translate(-50%,8px); }
 @media (max-width: 767px) {
-  .detail-page { width: 100%; min-height: calc(100dvh - 68px); margin: 0; padding: 22px 20px 110px; }
-  .account-summary { padding: 20px 18px; border-radius: 16px; }
+  .detail-page { width: 100%; min-height: calc(100dvh - 68px); margin: 0; padding: 8px 14px 110px; }
+  .account-summary-surface { padding: 18px 16px; }
   .kb-icon { width: 44px; height: 44px; flex-basis: 44px; }
   .account-heading h1 { font-size: 17px; }
   .account-heading p { font-size: 12px; }
   .account-balance { margin-top: 22px; font-size: 27px; }
-  .deposit-status-section { padding: 20px 16px; border-radius: 16px; }
+  .deposit-status-surface { padding: 18px 14px; }
   .deposit-overview { grid-template-columns: 1fr; }
   .member-list li { gap: 10px; }
   .member-deposit strong,.member-deposit span { display: block; }
