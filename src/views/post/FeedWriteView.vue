@@ -92,7 +92,7 @@ const submitVerification = () => {
 </script>
 
 <style scoped>
-.verification-page { min-height: 100%; margin: -20px; background: #e6dcf6; font-family: 'DungGeunMo', monospace; }
+.verification-page { min-height: 100%; margin: -20px; background: #e6dcf6; font-family: 'YounglyNeoPixel', monospace; }
 .verification-content { width: 100%; margin: 0 auto; padding: 12px 20px 112px; box-sizing: border-box; }
 .verification-card-shadow { --yl-stepped-shadow-color: #c8b7e5; --yl-stepped-shadow-offset: 5px; }
 .verification-inner-shadow { --yl-stepped-shadow-color: #c8b7e5; --yl-stepped-shadow-offset: 4px; }

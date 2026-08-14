@@ -86,11 +86,11 @@
           </span>
         </div>
         <div class="transaction-amount">
-          <strong :class="typeClass(transaction.transactionType)">
+          <strong class="yl-money" :class="typeClass(transaction.transactionType)">
             {{ transaction.transactionType === 'DEPOSIT' ? '+' : '-'
             }}{{ formatCurrency(transaction.amount) }}원
           </strong>
-          <span>잔액 {{ formatCurrency(transaction.balanceAfter) }}원</span>
+          <span>잔액 <span class="yl-money">{{ formatCurrency(transaction.balanceAfter) }}원</span></span>
         </div>
       </li>
     </ul>

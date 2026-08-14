@@ -69,7 +69,9 @@ export default {
   },
   computed: {
     activeTab() {
-      return this.$route.path.startsWith('/groups') ? '/home' : this.$route.path
+      if (this.$route.path.startsWith('/groups')) return '/home'
+      if (this.$route.path.startsWith('/asset')) return '/asset'
+      return this.$route.path
     },
     activeSidebarTheme() {
       return this.currentTheme

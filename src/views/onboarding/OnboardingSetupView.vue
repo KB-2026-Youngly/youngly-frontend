@@ -28,7 +28,7 @@
             <input v-model="selectedAccountId" type="radio" :value="account.kbAccountId" />
             <span class="radio-mark"></span>
             <div><strong>{{ account.bankName }} 입출금 통장</strong><small>{{ account.accountNumber }}</small></div>
-            <b>{{ formatCurrency(account.balance) }}원</b>
+            <b class="yl-money">{{ formatCurrency(account.balance) }}원</b>
           </label>
         </div>
         <div v-else class="state error">{{ error || '연결할 수 있는 입출금 통장이 없습니다.' }}</div>

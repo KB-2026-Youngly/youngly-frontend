@@ -47,7 +47,7 @@ const goToDetail = (id) => {
 .group-list-container {
   padding: 20px;
   /* 💡 프로젝트 글로벌 CSS에 픽셀 폰트가 있다면 inherit 하거나 직접 지정! */
-  font-family: 'Galmuri11', 'Press Start 2P', monospace;
+  font-family: 'YounglyNeoPixel', monospace;
 }
 
 /* 👾 픽셀 헤더 */

@@ -31,7 +31,7 @@
         </span>
         <div>
           <span>전체 정산 완료 금액</span>
-          <strong class="summary-card__value">{{ formatAmount(totalCompletedAmount) }}</strong>
+          <strong class="summary-card__value yl-money">{{ formatAmount(totalCompletedAmount) }}</strong>
         </div>
       </section>
 
@@ -131,7 +131,7 @@
               </div>
               <div class="settlement-amount">
                 <span>정산 금액</span>
-                <strong>{{ formatAmount(settlement.amount) }}</strong>
+                <strong class="yl-money">{{ formatAmount(settlement.amount) }}</strong>
               </div>
             </div>
           </article>

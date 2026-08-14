@@ -13,15 +13,15 @@
           <div class="forecast-copy">
             <small>AI 예상 개인연금 적립 (이번 달)</small>
             <p>예상 적립 금액 <span>(현재 진행 상황 기준)</span></p>
-            <strong>68,000원 ~ 82,000원</strong>
+            <strong class="yl-money">68,000원 ~ 82,000원</strong>
           </div>
           <img :src="robotImage" alt="개인연금 예상 적립을 안내하는 AI 로봇" />
           <div class="range-wrap">
             <div class="range-bar"><i></i></div>
             <div class="scenario-row">
-              <div><span>보수적 시나리오</span><b>68,000원</b></div>
-              <div class="current"><span>현재 예상</span><b>75,000원</b></div>
-              <div><span>긍정적 시나리오</span><b>82,000원</b></div>
+              <div><span>보수적 시나리오</span><b class="yl-money">68,000원</b></div>
+              <div class="current"><span>현재 예상</span><b class="yl-money">75,000원</b></div>
+              <div><span>긍정적 시나리오</span><b class="yl-money">82,000원</b></div>
             </div>
           </div>
           <div class="notice-pill">ⓘ 챌린지 정산 전까지 달라질 수 있어요.</div>
@@ -30,12 +30,12 @@
         <article class="summary-card">
           <div class="summary-row">
             <span>지금까지 확정된 적립금</span>
-            <strong>30,000원</strong>
+            <strong class="yl-money">30,000원</strong>
             <small>정산 완료 챌린지</small>
           </div>
           <div class="summary-row accent">
             <span>진행 중 챌린지 예상분</span>
-            <strong>38,000원 ~ 52,000원</strong>
+            <strong class="yl-money">38,000원 ~ 52,000원</strong>
           </div>
           <div class="schedule-box">
             <span class="calendar-icon" aria-hidden="true">▣</span>

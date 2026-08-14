@@ -157,6 +157,7 @@
         <label class="form-field form-field--full">
           <span>1인당 최소 예치금</span>
           <input
+            class="yl-money"
             :value="formatDeposit(newGroup.deposit)"
             type="text"
             inputmode="numeric"
@@ -206,7 +207,8 @@
             <span class="account-option__bank">{{ account.bank }}</span>
             <span class="account-option__info">
               <strong>{{ account.name }}</strong>
-              <small>{{ account.isConnected ? '다른 방에 이미 연결됨' : `${account.number} · ${account.balance}` }}</small>
+              <small v-if="account.isConnected">다른 방에 이미 연결됨</small>
+              <small v-else>{{ account.number }} · <span class="yl-money">{{ account.balance }}</span></small>
             </span>
             <span class="account-option__check" aria-hidden="true">✓</span>
           </label>
@@ -1484,7 +1486,7 @@ const updateDeposit = (event) => {
 }
 
 :global(.youngly-modal .base-modal__title) {
-  font-family: 'DungGeunMo', monospace !important;
+  font-family: 'YounglyNeoPixel', monospace !important;
 }
 
 :global(.youngly-modal .base-modal__close) {

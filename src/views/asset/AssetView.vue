@@ -46,7 +46,7 @@
         </div>
         <div>
           <dt>잔액</dt>
-          <dd class="balance-value">{{ formatCurrency(connectedPension.balance) }}원</dd>
+          <dd class="balance-value yl-money">{{ formatCurrency(connectedPension.balance) }}원</dd>
         </div>
         <div>
           <dt>미래 적립금</dt>
@@ -118,7 +118,7 @@
             소유주 {{ account.ownerName || '정보 확인 중' }}
           </small>
         </div>
-        <strong>{{ formatCurrency(account.balance) }}원</strong>
+        <strong class="yl-money">{{ formatCurrency(account.balance) }}원</strong>
         <p>{{ account.accountNumber }}</p>
         <small class="moim-account-name">{{ account.accountName }}</small>
         <div class="group-link-status">
@@ -230,7 +230,7 @@
               <b>{{ account.bankName }} 개인연금</b>
               <small>{{ account.accountNumber }}</small>
             </span>
-            <strong>{{ formatCurrency(account.balance) }}원</strong>
+            <strong class="yl-money">{{ formatCurrency(account.balance) }}원</strong>
           </label>
         </div>
 
@@ -365,7 +365,7 @@
               ><b>{{ account.bankName }} 모임통장</b
               ><small>{{ account.accountNumber }}</small></span
             >
-            <strong>{{ formatCurrency(account.balance) }}원</strong>
+            <strong class="yl-money">{{ formatCurrency(account.balance) }}원</strong>
           </label>
         </div>
       </div>

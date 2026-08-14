@@ -3,7 +3,18 @@
     <div class="header-container">
       <!-- 1. 기본 헤더 (홈 등 일반 페이지) - develop 브랜치의 드롭다운 메뉴 적용 -->
       <div v-if="!isGroupDetail" class="default-header-content">
-        <div class="logo-text">CHALLENGE PIXEL</div>
+        <div class="header-brand">
+          <button
+            v-if="isMoimAccountDetail"
+            class="header-back-button"
+            type="button"
+            aria-label="자산으로 돌아가기"
+            @click="goBackToAssets"
+          >
+            <span aria-hidden="true">&lt;</span>
+          </button>
+          <div class="logo-text">CHALLENGE PIXEL</div>
+        </div>
 
         <div class="header-right">
           <span class="user-name">{{ nickname }}님</span>
@@ -47,9 +58,17 @@
             <div class="group-badges">
               <span class="group-badge">운동</span>
               <span class="group-badge">초대 중</span>
+              <span class="member-count">♟&nbsp; 1 / 6명</span>
             </div>
             <div class="group-title-row">
-              <span class="member-count">♟&nbsp; 1 / 6명</span>
+              <button
+                class="group-back-button"
+                type="button"
+                aria-label="그룹 목록으로 돌아가기"
+                @click="goBackToHome"
+              >
+                <span aria-hidden="true">&lt;</span>
+              </button>
               <button v-if="isGroupOwner" class="group-title" type="button" @click="openGroupEdit">
                 {{ groupTitle }} <span aria-hidden="true">›</span>
               </button>
@@ -93,11 +112,20 @@ const nickname = computed(() => user.value?.nickname || user.value?.loginId || '
 
 // 현재 경로가 그룹 상세 페이지인지 판별 (Composition API 방식)
 const isGroupDetail = computed(() => route.name === 'GroupDetail')
+const isMoimAccountDetail = computed(() => route.name === 'MoimAccountDetail')
 // mock 권한: 실제 API 연결 전에는 owner=false 쿼리로 비방장 상태를 확인할 수 있습니다.
 const isGroupOwner = computed(() => route.query.owner !== 'false')
 
 const closeMenu = () => {
   isMenuOpen.value = false
+}
+
+const goBackToAssets = () => {
+  router.push({ path: '/asset', query: { tab: 'group' } })
+}
+
+const goBackToHome = () => {
+  router.push('/home')
 }
 
 const handleOutsideClick = (event) => {
@@ -165,6 +193,37 @@ onBeforeUnmount(() => {
   width: 100%;
   align-items: center;
   justify-content: space-between;
+}
+
+.header-brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-back-button {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  padding: 0;
+  border: 0;
+  place-items: center;
+  flex: 0 0 30px;
+  background: transparent;
+  color: #2d1f4f;
+  cursor: pointer;
+}
+
+.header-back-button span {
+  transform: translate(-1px, -1px);
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.header-back-button:active {
+  transform: translateX(-2px);
 }
 
 .logo-text {
@@ -336,13 +395,13 @@ onBeforeUnmount(() => {
 
 .group-badges {
   gap: 3px;
-  align-items: flex-start;
-  padding-right: 52px;
+  justify-content: center;
+  padding: 0 52px;
 }
 
 .group-title-row {
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) 56px;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
   min-height: 22px;
   align-items: center;
   gap: 6px;
@@ -369,6 +428,29 @@ onBeforeUnmount(() => {
   color: #27272a;
   font-size: 10px;
   font-weight: 700;
+}
+
+.group-back-button {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  padding: 0;
+  border: 0;
+  place-items: center;
+  background: transparent;
+  color: #2d1f4f;
+  cursor: pointer;
+}
+
+.group-back-button span {
+  transform: translate(-1px, -1px);
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.group-back-button:active {
+  transform: translateX(-2px);
 }
 
 .group-actions {
@@ -437,6 +519,16 @@ onBeforeUnmount(() => {
 
   .logo-text {
     font-size: 16px;
+  }
+
+  .header-brand {
+    gap: 9px;
+  }
+
+  .header-back-button {
+    width: 27px;
+    height: 27px;
+    flex-basis: 27px;
   }
 
   .user-name {

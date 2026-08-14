@@ -50,7 +50,7 @@
           <button type="button" aria-label="계좌 메뉴">⋮</button>
         </div>
         <p class="account-number">{{ depositAccount?.accountNumber || '연결된 계좌가 없습니다' }} <button v-if="depositAccount" type="button" aria-label="계좌번호 복사" @click="copyAccountNumber"><img :src="accountNumberImage" alt="" /></button></p>
-        <div class="balance"><strong>{{ formatCurrency(depositAccount?.balance) }}</strong>원 <button type="button">숨김</button></div>
+        <div class="balance"><span class="yl-money"><strong>{{ formatCurrency(depositAccount?.balance) }}</strong>원</span> <button type="button">숨김</button></div>
         <div class="account-buttons">
           <button type="button">이체</button><button type="button">전용화면</button>
         </div>
@@ -63,7 +63,7 @@
         <button type="button" @click="router.push('/asset')">내 자산 한눈에 확인하기 ›</button>
       </section>
       <section class="summary-card card-spending">
-        <span>이번 주 카드결제</span><strong>0원</strong>
+        <span>이번 주 카드결제</span><strong class="yl-money">0원</strong>
       </section>
 
     </main>

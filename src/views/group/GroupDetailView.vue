@@ -269,6 +269,7 @@
         <label class="group-edit-field">
           <span>1인당 최소 예치금</span>
           <input
+            class="yl-money"
             :value="formatGroupDeposit(groupEditForm.deposit)"
             type="text"
             inputmode="numeric"
@@ -1043,7 +1044,7 @@ button { font: inherit; }
   border-radius: 17px;
   background: #f0ede8;
   color: #222;
-  font-family: 'DungGeunMo', 'Courier New', monospace;
+  font-family: 'YounglyNeoPixel', monospace;
   font-size: 23px;
   letter-spacing: 2px;
   cursor: pointer;
@@ -1089,7 +1090,7 @@ button { font: inherit; }
   background: #f0ede8;
   color: #222;
   padding: 0 18px;
-  font-family: 'DungGeunMo', 'Courier New', monospace;
+  font-family: 'YounglyNeoPixel', monospace;
   font-size: 20px;
   text-align: center;
 }
@@ -1385,7 +1386,7 @@ button { font: inherit; }
 
 :global(.youngly-modal),
 :global(.youngly-modal *) {
-  font-family: 'DungGeunMo', monospace !important;
+  font-family: 'YounglyNeoPixel', monospace !important;
 }
 
 :global(.group-invite-modal),

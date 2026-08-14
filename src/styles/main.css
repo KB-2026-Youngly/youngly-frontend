@@ -1,10 +1,8 @@
 @font-face {
-  font-family: 'DungGeunMo';
-  src: url('../assets/fonts/DungGeunMo.eot');
+  font-family: 'YounglyNeoPixel';
   src:
-    url('../assets/fonts/DungGeunMo.eot?#iefix') format('embedded-opentype'),
-    url('../assets/fonts/DungGeunMo.woff2') format('woff2'),
-    url('../assets/fonts/DungGeunMo.woff') format('woff');
+    url('../assets/fonts/YounglyNeoPixel.woff2') format('woff2'),
+    url('../assets/fonts/YounglyNeoPixel.woff') format('woff');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -30,15 +28,32 @@ body,
   background-color: #ffffff;
 }
 
+html body,
+:root body #app,
+:root body #app *,
+:root body .base-modal__overlay,
+:root body .base-modal__overlay *,
+:root body .gacha-overlay,
+:root body .gacha-overlay * {
+  font-family: 'YounglyNeoPixel', monospace !important;
+}
+
 .youngly-service {
   --app-background: var(--yl-purple-light);
   min-height: 100vh;
   background: var(--app-background);
-  font-family: 'DungGeunMo', monospace;
+  font-family: 'YounglyNeoPixel', monospace;
 }
 
 .youngly-service * {
   font-family: inherit;
+}
+
+/* 잔액·예치금·정산금 등 실제 금액 표시에만 사용합니다. */
+.yl-money,
+.yl-money * {
+  font-family: 'YounglyNeoPixel', monospace !important;
+  font-variant-numeric: tabular-nums;
 }
 
 .youngly-service button,
@@ -46,7 +61,7 @@ body,
 .youngly-service textarea,
 .youngly-service select,
 .youngly-modal {
-  font-family: 'DungGeunMo', monospace;
+  font-family: 'YounglyNeoPixel', monospace;
 }
 
 /* 페이지들이 순차적으로 공유할 픽셀 UI 기본 단위 */
@@ -221,7 +236,7 @@ body,
 .mypage-layout input,
 .mypage-layout textarea,
 .mypage-layout select {
-  font-family: 'DungGeunMo', monospace;
+  font-family: 'YounglyNeoPixel', monospace;
 }
 
 .mypage-layout :is(
@@ -230,7 +245,7 @@ body,
   .summary-card__value,
   .settlement-amount strong
 ) {
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif !important;
+  font-family: 'YounglyNeoPixel', monospace !important;
 }
 
 /* 마이페이지 하위 화면에서 공통으로 사용하는 뒤로가기 버튼 */
