@@ -85,33 +85,36 @@
           <strong>{{ characters.length }}명</strong>
         </div>
 
-        <template v-if="characters.length">
-          <InventoryGrid
-            :characters="characters"
-            :selected-character-id="selectedCharacterId"
-            :equipped-character-id="equippedCharacterId"
-            @select="selectCharacter"
-          />
-
-          <div class="equip-panel collectible-step-card">
-            <div class="equip-panel__copy">
-              <small>선택한 캐릭터</small>
-              <strong>{{ selectedCharacter?.name || '캐릭터를 선택해 주세요' }}</strong>
-            </div>
-            <EquipButton
-              :loading="equippingCharacterId != null"
-              :disabled="!selectedCharacter"
-              :equipped="selectedIsEquipped"
-              @equip="equipSelectedCharacter"
+        <div class="inventory-panel__content">
+          <template v-if="characters.length">
+            <InventoryGrid
+              :characters="characters"
+              :selected-character-id="selectedCharacterId"
+              :equipped-character-id="equippedCharacterId"
+              :equip-effect-character-id="equipEffectCharacterId"
+              @select="selectCharacter"
             />
-            <p v-if="equipError" class="equip-panel__error" role="alert">{{ equipError }}</p>
-          </div>
-        </template>
-        <BaseEmptyState
-          v-else
-          title="아직 보유한 캐릭터가 없어요"
-          description="위의 뽑기 버튼으로 첫 캐릭터를 만나 보세요."
-        />
+
+            <div class="equip-panel collectible-step-card">
+              <div class="equip-panel__copy">
+                <small>선택한 캐릭터</small>
+                <strong>{{ selectedCharacter?.name || '캐릭터를 선택해 주세요' }}</strong>
+              </div>
+              <EquipButton
+                :loading="equippingCharacterId != null"
+                :disabled="!selectedCharacter"
+                :equipped="selectedIsEquipped"
+                @equip="equipCharacterWithEffect"
+              />
+              <p v-if="equipError" class="equip-panel__error" role="alert">{{ equipError }}</p>
+            </div>
+          </template>
+          <BaseEmptyState
+            v-else
+            title="아직 보유한 캐릭터가 없어요"
+            description="위의 뽑기 버튼으로 첫 캐릭터를 만나 보세요."
+          />
+        </div>
       </section></div>
     </template>
 
@@ -119,6 +122,7 @@
       :open="isDrawModalOpen"
       :mode="drawModalMode"
       :balance="balance"
+      :cost="CHARACTER_DRAW_COST"
       :character="drawnCharacter"
       :loading="isDrawAttemptActive"
       :animation-key="drawAnimationKey"
@@ -133,7 +137,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { AlertTriangle, ArrowLeft, Check, Sparkles } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
@@ -179,6 +183,8 @@ const isDrawModalOpen = ref(false)
 const drawModalMode = ref('confirm')
 const isDrawAttemptActive = ref(false)
 const drawAnimationKey = ref(0)
+const equipEffectCharacterId = ref(null)
+let equipEffectTimer = null
 const MIN_DRAW_ANIMATION_MS = 1800
 const allCharactersOwned = computed(() => characters.value.length >= KNOWN_CHARACTER_COUNT)
 const equippedUsesCoverImage = computed(() => isCoverCharacterImage(equippedCharacter.value))
@@ -217,6 +223,28 @@ const selectedIsEquipped = computed(
     selectedCharacterId.value != null &&
     String(selectedCharacterId.value) === String(equippedCharacterId.value),
 )
+
+const equipCharacterWithEffect = async () => {
+  const previousEquippedId = equippedCharacterId.value
+  await equipSelectedCharacter()
+
+  if (
+    equipError.value ||
+    equippedCharacterId.value == null ||
+    String(equippedCharacterId.value) === String(previousEquippedId)
+  ) {
+    return
+  }
+
+  if (equipEffectTimer) clearTimeout(equipEffectTimer)
+  equipEffectCharacterId.value = null
+  await nextTick()
+  equipEffectCharacterId.value = equippedCharacterId.value
+  equipEffectTimer = setTimeout(() => {
+    equipEffectCharacterId.value = null
+    equipEffectTimer = null
+  }, 950)
+}
 
 const openDrawModal = () => {
   if (drawDisabled.value) return
@@ -281,13 +309,17 @@ const confirmDraw = async () => {
 const equipDrawnCharacter = async () => {
   if (!drawnCharacter.value?.characterId || equippingCharacterId.value != null) return
   selectCharacter(drawnCharacter.value.characterId)
-  await equipSelectedCharacter()
+  await equipCharacterWithEffect()
   if (!equipError.value) closeDrawModal()
 }
 
 onMounted(() => {
   ensureOwnedCharacters()
   pointStore.fetchPointBalance()
+})
+
+onBeforeUnmount(() => {
+  if (equipEffectTimer) clearTimeout(equipEffectTimer)
 })
 </script>
 
@@ -615,18 +647,39 @@ onMounted(() => {
 }
 
 .inventory-panel {
-  padding: 0 24px 26px;
+  width: 100%;
+  padding: 0;
   overflow: hidden;
+  box-sizing: border-box;
+}
+
+.inventory-panel__heading,
+.inventory-panel__content {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .inventory-panel__heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0 -24px 24px;
+  margin: 0;
   padding: 21px 24px 18px;
-  border-bottom: 1px solid #eee8f3;
   background: linear-gradient(180deg, #fdfcfe, #faf8fc);
+}
+
+.inventory-panel__heading::after {
+  content: '';
+  position: absolute;
+  right: 2px;
+  bottom: 0;
+  left: 2px;
+  height: 3px;
+  background: linear-gradient(to bottom, #7658b5 0 2px, #d8ccea 2px 3px);
+}
+
+.inventory-panel__content {
+  padding: 24px 24px 26px;
 }
 
 .inventory-panel__heading h2 {
@@ -714,13 +767,12 @@ onMounted(() => {
 }
 
 @media (max-width: 560px) {
-  .inventory-panel {
-    padding: 0 16px 20px;
+  .inventory-panel__heading {
+    padding: 17px 16px 15px;
   }
 
-  .inventory-panel__heading {
-    margin: 0 -16px 18px;
-    padding: 17px 16px 15px;
+  .inventory-panel__content {
+    padding: 18px 16px 20px;
   }
 
   .equip-panel {
