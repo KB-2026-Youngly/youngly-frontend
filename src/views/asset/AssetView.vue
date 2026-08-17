@@ -8,10 +8,10 @@
           role="tab"
           :aria-selected="activeTab === tab.id"
           :class="{ active: activeTab === tab.id }"
-          @click="activeTab = tab.id"
+          @click="selectAssetTab(tab.id)"
         >
           <span class="asset-tab-surface pixel-step-surface">
-            <span class="tab-icon">{{ tab.icon }}</span>
+            <span class="tab-icon"><img :src="tab.icon" alt="" /></span>
             <span
               ><b>{{ tab.label }}</b
               ><small>{{ tab.caption }}</small></span
@@ -33,7 +33,7 @@
         ✎
       </button>
       <div class="linked-card-heading">
-        <span class="linked-icon">KB</span>
+        <img class="linked-icon" :src="kbIcon" alt="KB" />
         <div>
           <small>연결된 개인연금</small>
           <h2>{{ connectedPension.bankName }} 개인연금</h2>
@@ -110,7 +110,7 @@
           ✎
         </button>
         <div class="moim-card-bank">
-          <span>KB</span><small>{{ account.bankName }} 모임통장</small>
+          <img :src="kbIcon" alt="KB" /><small>{{ account.bankName }} 모임통장</small>
         </div>
         <div v-if="!account.owner" class="ownership-row">
           <span class="ownership-badge participant">참여 중</span>
@@ -138,11 +138,11 @@
       </div>
     </section>
 
-    <article v-else class="asset-card">
+    <div v-else class="empty-asset-shadow yl-stepped-card-shadow">
+    <article class="asset-card empty-asset-card pixel-step-card pixel-step-solid">
+      <div class="empty-asset-surface pixel-step-surface">
       <div class="card-decoration"></div>
-      <div class="empty-icon" aria-hidden="true">{{ content.icon }}</div>
       <h2>{{ content.title }}</h2>
-      <p>{{ content.description }}</p>
       <button
         class="connect-button"
         :class="{ 'group-connect-button': activeTab === 'group' }"
@@ -152,7 +152,9 @@
         {{ content.button }}
         <span>→</span>
       </button>
+      </div>
     </article>
+    </div>
 
     <div v-if="activeTab === 'group' && connectedMoimAccounts.length" class="floating-add">
       <transition name="floating-menu">
@@ -187,23 +189,29 @@
       "
       :close-on-overlay="!submitting"
       :close-on-esc="!submitting"
+      :show-close-button="false"
+      :modal-class="[
+        'pension-connect-modal',
+        modalStep === 'choice' ? 'pension-connect-modal--choice' : 'pension-connect-modal--select',
+      ]"
+      :auto-focus="false"
       size="medium"
       @close="resetModal"
     >
       <div v-if="modalStep === 'choice'" class="connection-options">
         <button type="button" @click="openPensionList">
-          <span class="option-icon">KB</span>
+          <img class="option-icon option-icon-image" :src="pensionChainIcon" alt="" />
           <span
             ><b>보유중인 KB 개인연금 연결하기</b><small>내 계좌를 조회해 연결합니다.</small></span
           >
           <strong>→</strong>
         </button>
         <a
-          href="https://www.kbsec.com/go.able?linkcd=m06010001"
+          href="https://omoney.kbstar.com/quics?page=C055442"
           target="_blank"
           rel="noopener noreferrer"
         >
-          <span class="option-icon new">＋</span>
+          <img class="option-icon option-icon-image" :src="pensionPlusIcon" alt="" />
           <span
             ><b>KB 개인연금 개설하러 가기</b
             ><small>KB증권 페이지가 새 창에서 열립니다.</small></span
@@ -282,6 +290,9 @@
       size="small"
       :close-on-overlay="!moimEditSubmitting"
       :close-on-esc="!moimEditSubmitting"
+      :show-close-button="false"
+      modal-class="pension-connect-modal pension-connect-modal--choice moim-management-modal"
+      :auto-focus="false"
       @close="resetMoimEditModal"
     >
       <div v-if="editingMoimAccount" class="moim-edit-content">
@@ -322,12 +333,19 @@
       :title="moimModalStep === 'choice' ? '모임통장 연결하기' : '보유 모임통장 선택'"
       :close-on-overlay="!moimSubmitting"
       :close-on-esc="!moimSubmitting"
+      :show-close-button="false"
+      :modal-class="[
+        'pension-connect-modal',
+        'moim-connect-modal',
+        moimModalStep === 'choice' ? 'pension-connect-modal--choice' : 'pension-connect-modal--select',
+      ]"
+      :auto-focus="false"
       size="medium"
       @close="resetMoimModal"
     >
       <div v-if="moimModalStep === 'choice'" class="connection-options">
         <button type="button" @click="openMoimList">
-          <span class="option-icon">KB</span>
+          <img class="option-icon option-icon-image" :src="moimChainIcon" alt="" />
           <span
             ><b>KB 모임통장 연결하기</b
             ><small>보유중인 모임통장을 여러 개 연결할 수 있습니다.</small></span
@@ -339,7 +357,7 @@
           target="_blank"
           rel="noopener noreferrer"
         >
-          <span class="option-icon new">＋</span>
+          <img class="option-icon option-icon-image" :src="moimPlusIcon" alt="" />
           <span
             ><b>KB 모임통장 개설하러 가기</b
             ><small>KB국민은행 페이지가 새 창에서 열립니다.</small></span
@@ -397,7 +415,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseModal from '@/components/base/BaseModal.vue'
 import TransactionHistory from '@/components/asset/TransactionHistory.vue'
@@ -415,13 +433,20 @@ import {
 } from '@/api/account'
 import { getMyInfo } from '@/api/user'
 import { getGroups } from '@/api/group'
+import pensionTabIcon from '@/assets/characters/bear.png'
+import moimTabIcon from '@/assets/icons/loginIcon/starfriend.png'
+import pensionChainIcon from '@/assets/asset_icon/pension_chain.png'
+import pensionPlusIcon from '@/assets/asset_icon/pension_plus.png'
+import moimChainIcon from '@/assets/asset_icon/moim_chain.png'
+import moimPlusIcon from '@/assets/asset_icon/moim_plus.png'
+import kbIcon from '@/assets/icons/kb_icon.png'
 
 const router = useRouter()
 const route = useRoute()
 
 const tabs = [
-  { id: 'pension', icon: '₩', label: '개인연금', caption: '나의 노후 자산' },
-  { id: 'group', icon: '♟', label: '모임통장', caption: '함께 관리하는 자산' },
+  { id: 'pension', icon: pensionTabIcon, label: '개인연금', caption: '나의 노후 자산' },
+  { id: 'group', icon: moimTabIcon, label: '모임통장', caption: '함께 관리하는 자산' },
 ]
 const states = {
   pension: {
@@ -439,6 +464,21 @@ const states = {
 }
 const activeTab = ref(route.query.tab === 'group' ? 'group' : 'pension')
 const content = computed(() => states[activeTab.value])
+
+function selectAssetTab(tabId) {
+  activeTab.value = tabId
+  router.replace({
+    name: 'Asset',
+    query: tabId === 'group' ? { ...route.query, tab: 'group' } : { ...route.query, tab: undefined },
+  })
+}
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    activeTab.value = tab === 'group' ? 'group' : 'pension'
+  },
+)
 const toast = ref('')
 const pensionModalOpen = ref(false)
 const modalStep = ref('choice')
@@ -476,6 +516,104 @@ let longPressTimer
 let mobileDragActive = false
 let mobileDragPointerId = null
 let timer
+let pensionSheetElement = null
+let pensionSheetTouch = null
+let activeConnectSheet = 'pension'
+
+function bindPensionSheetGestures(selector = '.pension-connect-modal', type = 'pension') {
+  activeConnectSheet = type
+  pensionSheetElement = document.querySelector(selector)
+  if (!pensionSheetElement) return
+  pensionSheetElement.addEventListener('touchstart', startPensionSheetDrag, { passive: true })
+  pensionSheetElement.addEventListener('touchmove', movePensionSheetDrag, { passive: false })
+  pensionSheetElement.addEventListener('touchend', endPensionSheetDrag, { passive: true })
+  pensionSheetElement.addEventListener('touchcancel', endPensionSheetDrag, { passive: true })
+}
+
+function unbindPensionSheetGestures() {
+  if (!pensionSheetElement) return
+  pensionSheetElement.removeEventListener('touchstart', startPensionSheetDrag)
+  pensionSheetElement.removeEventListener('touchmove', movePensionSheetDrag)
+  pensionSheetElement.removeEventListener('touchend', endPensionSheetDrag)
+  pensionSheetElement.removeEventListener('touchcancel', endPensionSheetDrag)
+  pensionSheetElement = null
+  pensionSheetTouch = null
+}
+
+function startPensionSheetDrag(event) {
+  if (!window.matchMedia('(max-width: 767px)').matches || event.touches.length !== 1) return
+  const currentStep =
+    activeConnectSheet === 'moim'
+      ? moimModalStep.value
+      : activeConnectSheet === 'pension'
+        ? modalStep.value
+        : 'choice'
+  if (currentStep === 'select') return
+  const body = pensionSheetElement?.querySelector('.base-modal__body')
+  if (body?.scrollTop > 0) return
+  pensionSheetTouch = {
+    startY: event.touches[0].clientY,
+    delta: 0,
+    initialHeight: pensionSheetElement.offsetHeight,
+  }
+  pensionSheetElement.style.transition = 'none'
+}
+
+function movePensionSheetDrag(event) {
+  if (!pensionSheetTouch || event.touches.length !== 1) return
+  const delta = event.touches[0].clientY - pensionSheetTouch.startY
+  pensionSheetTouch.delta = delta
+  if (Math.abs(delta) < 6) return
+  event.preventDefault()
+  if (delta < 0) {
+    pensionSheetElement.style.height = `${Math.min(window.innerHeight * 0.88, pensionSheetTouch.initialHeight - delta)}px`
+    return
+  }
+  pensionSheetElement.style.transform = `translate3d(0, ${delta}px, 0)`
+}
+
+function endPensionSheetDrag() {
+  if (!pensionSheetTouch || !pensionSheetElement) return
+  const delta = pensionSheetTouch.delta
+  pensionSheetTouch = null
+  pensionSheetElement.style.transition = 'height 300ms cubic-bezier(0.22, 1, 0.36, 1), transform 300ms cubic-bezier(0.22, 1, 0.36, 1)'
+  if (delta < -45) {
+    pensionSheetElement.style.height = '88dvh'
+    pensionSheetElement.style.transform = 'translate3d(0, 0, 0)'
+  } else if (delta > 90) {
+    pensionSheetElement.style.transform = 'translate3d(0, 100%, 0)'
+    const closeHandler =
+      activeConnectSheet === 'moim'
+        ? closeMoimModal
+        : activeConnectSheet === 'moim-edit'
+          ? closeMoimEditModal
+          : closeModal
+    window.setTimeout(closeHandler, 280)
+  } else {
+    pensionSheetElement.style.transform = 'translate3d(0, 0, 0)'
+  }
+}
+
+watch(pensionModalOpen, async (isOpen) => {
+  unbindPensionSheetGestures()
+  if (!isOpen) return
+  await nextTick()
+  bindPensionSheetGestures()
+})
+
+watch(moimModalOpen, async (isOpen) => {
+  unbindPensionSheetGestures()
+  if (!isOpen) return
+  await nextTick()
+  bindPensionSheetGestures('.moim-connect-modal', 'moim')
+})
+
+watch(moimEditModalOpen, async (isOpen) => {
+  unbindPensionSheetGestures()
+  if (!isOpen) return
+  await nextTick()
+  bindPensionSheetGestures('.moim-management-modal', 'moim-edit')
+})
 
 onMounted(() => {
   loadConnectedPension()
@@ -484,6 +622,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   clearTimeout(longPressTimer)
   removeMobileDragListeners()
+  unbindPensionSheetGestures()
 })
 
 function showToast(message) {
@@ -602,6 +741,11 @@ async function connectSelectedMoimAccounts() {
 function closeMoimModal() {
   moimModalOpen.value = false
   resetMoimModal()
+}
+
+function closeMoimEditModal() {
+  moimEditModalOpen.value = false
+  resetMoimEditModal()
 }
 
 function resetMoimModal() {
@@ -900,7 +1044,7 @@ function resetModal() {
 }
 .tabs button {
   width: 100%;
-  min-height: 68px;
+  min-height: 56px;
   padding: 0;
   display: block;
   border: 0;
@@ -916,7 +1060,7 @@ function resetModal() {
 }
 .asset-tab-surface {
   display: flex;
-  min-height: 64px;
+  min-height: 54px;
   padding: 0 18px;
   align-items: center;
   gap: 13px;
@@ -932,19 +1076,48 @@ function resetModal() {
   box-shadow: none;
 }
 .tab-icon {
-  width: 34px;
-  height: 34px;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
   display: grid;
   place-items: center;
   border-radius: 10px;
-  background: #f1eff4;
+  background: transparent;
   color: #5d5864;
   font-size: 17px;
   font-weight: 800;
 }
+.tab-icon img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+.asset-tab-shadow:nth-child(2) .tab-icon img {
+  width: 56px;
+  height: 56px;
+  max-width: 100%;
+  max-height: 100%;
+}
+.asset-tab-shadow:nth-child(2) .tab-icon {
+  width: 56px;
+  height: 56px;
+  flex-basis: 56px;
+}
+.asset-tab-shadow:first-child .tab-icon {
+  width: 56px;
+  height: 56px;
+  flex-basis: 56px;
+}
+.asset-tab-shadow:first-child .asset-tab-surface > span:last-child {
+  transform: translateX(-4px);
+}
 .tabs button.active .tab-icon {
-  background: rgba(255, 255, 255, 0.17);
+  background: transparent;
   color: #fff;
+}
+.tabs .asset-tab-shadow:first-child button .tab-icon,
+.tabs .asset-tab-shadow:first-child button.active .tab-icon {
+  background: transparent;
 }
 .tabs b,
 .tabs small {
@@ -975,6 +1148,32 @@ function resetModal() {
   background: #fff;
   text-align: center;
   box-shadow: 0 10px 32px rgba(34, 28, 47, 0.055);
+}
+.empty-asset-card.pixel-step-solid {
+  width: 100%;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0;
+  --pixel-outline-width: 2px;
+  --pixel-outline-color: #ac99d2;
+  box-shadow: none;
+  filter: none !important;
+}
+.empty-asset-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 5px;
+}
+.empty-asset-surface {
+  min-height: 386px;
+  padding: 53px 28px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  text-align: center;
 }
 .linked-account-card {
   min-height: 350px;
@@ -1070,16 +1269,10 @@ function resetModal() {
   padding-right: 55px;
 }
 .linked-icon {
-  flex: 0 0 54px;
-  width: 54px;
-  height: 54px;
-  display: grid;
-  place-items: center;
-  border-radius: 16px;
-  background: #69529f;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 900;
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
 }
 .linked-card-heading small {
   color: #918a99;
@@ -1237,15 +1430,10 @@ function resetModal() {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.moim-card-bank span {
-  width: 36px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  background: #ffcc00;
-  font-size: 10px;
-  font-weight: 900;
+.moim-card-bank img {
+  width: 30px;
+  height: 24px;
+  object-fit: contain;
 }
 .moim-card-bank small {
   color: #777080;
@@ -1500,7 +1688,8 @@ function resetModal() {
   font-size: 20px;
   letter-spacing: -0.5px;
 }
-.asset-card > p {
+.asset-card > p,
+.asset-card .empty-asset-surface > p {
   margin: 0;
   color: #85818c;
   font-size: 13px;
@@ -1605,6 +1794,17 @@ function resetModal() {
   background: #fff2c7;
   color: #856900;
   font-size: 20px;
+}
+.option-icon-image {
+  width: 66px;
+  height: 66px;
+  padding: 0;
+  object-fit: contain;
+}
+.connection-options button:has(.option-icon-image),
+.connection-options a:has(.option-icon-image) {
+  padding-left: 10px;
+  grid-template-columns: 66px minmax(0, 1fr) 20px;
 }
 .selection-guide {
   margin: 0 0 14px;
@@ -1850,6 +2050,70 @@ function resetModal() {
   transform: translate(-50%, 8px);
 }
 @media (max-width: 767px) {
+  :global(.base-modal__overlay:has(.pension-connect-modal)) {
+    align-items: flex-end;
+    padding: 0;
+    z-index: 10000 !important;
+  }
+  :global(.pension-connect-modal) {
+    width: 100%;
+    height: auto;
+    max-width: none;
+    max-height: 88dvh;
+    margin: 0;
+    overflow: hidden;
+    border-width: 3px 0 0;
+    border-radius: 26px 26px 0 0 !important;
+    touch-action: pan-y;
+    transition: height 300ms cubic-bezier(0.22, 1, 0.36, 1);
+    animation: pension-sheet-in 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  :global(.pension-connect-modal--choice) {
+    height: auto;
+  }
+  :global(.pension-connect-modal--select) {
+    height: auto;
+  }
+  :global(.pension-connect-modal .base-modal__header) {
+    position: relative;
+    justify-content: center;
+    padding: 29px 20px 13px;
+    text-align: center;
+    user-select: none;
+  }
+  :global(.pension-connect-modal .base-modal__title) {
+    width: 100%;
+    text-align: center;
+  }
+  :global(.pension-connect-modal .base-modal__header::before) {
+    content: '';
+    position: absolute;
+    top: 11px;
+    left: 50%;
+    width: 42px;
+    height: 5px;
+    border-radius: 999px;
+    background: #b4adbd;
+    transform: translateX(-50%);
+  }
+  :global(.pension-connect-modal .base-modal__body) {
+    max-height: none;
+    padding: 12px 20px 22px;
+    overflow: visible;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  :global(.pension-connect-modal .base-modal__footer) {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+  :global(.pension-connect-modal .connection-options button),
+  :global(.pension-connect-modal .connection-options a) {
+    padding-left: 10px;
+    grid-template-columns: 66px minmax(0, 1fr);
+  }
+  :global(.pension-connect-modal .connection-options > * > strong) {
+    display: none;
+  }
   .asset-page {
     width: 100%;
     max-width: 100%;
@@ -1866,13 +2130,35 @@ function resetModal() {
   .tabs button {
     width: 100%;
     min-width: 0;
-    min-height: 62px;
+    min-height: 52px;
     padding: 0 10px;
     border-radius: 12px;
   }
+  .asset-tab-surface {
+    min-height: 50px;
+  }
   .tab-icon {
-    width: 30px;
-    height: 30px;
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+  }
+  .tab-icon img {
+    width: 37px;
+    height: 37px;
+  }
+  .asset-tab-shadow:nth-child(2) .tab-icon img {
+    width: 50px;
+    height: 50px;
+  }
+  .asset-tab-shadow:nth-child(2) .tab-icon {
+    width: 50px;
+    height: 50px;
+    flex-basis: 50px;
+  }
+  .asset-tab-shadow:first-child .tab-icon {
+    width: 50px;
+    height: 50px;
+    flex-basis: 50px;
   }
   .tabs small {
     display: none;
@@ -1883,6 +2169,10 @@ function resetModal() {
     min-height: 340px;
     padding: 42px 16px 35px;
     border-radius: 16px;
+  }
+  .empty-asset-surface {
+    min-height: 336px;
+    padding: 40px 14px 33px;
   }
   .linked-account-card {
     min-height: 330px;
@@ -1947,6 +2237,12 @@ function resetModal() {
     line-height: 1.45;
     word-break: keep-all;
   }
+  .pension-connect-modal--select .pension-list {
+    max-height: 210px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
   .tooltip-content {
     width: auto;
     left: 0;
@@ -1973,6 +2269,15 @@ function resetModal() {
     bottom: 92px;
     width: calc(100% - 40px);
     text-align: center;
+  }
+}
+
+@keyframes pension-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
   }
 }
 

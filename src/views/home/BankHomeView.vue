@@ -12,7 +12,7 @@
           aria-haspopup="menu"
           @click="userMenuOpen = !userMenuOpen"
         >
-          {{ displayName }} 님 <span :class="{ open: userMenuOpen }">›</span>
+          {{ displayName }}님 <span :class="{ open: userMenuOpen }">›</span>
         </button>
         <transition name="user-dropdown">
           <div v-if="userMenuOpen" class="user-dropdown" role="menu">
@@ -56,7 +56,11 @@
         </div>
       </section>
 
-      <div class="carousel-indicator"><button type="button">‹</button><span>1/3</span><button type="button">›</button></div>
+      <div class="carousel-indicator">
+        <button type="button" :disabled="depositAccounts.length <= 1" aria-label="이전 계좌" @click="showPreviousAccount">‹</button>
+        <span>{{ currentAccountNumber }}/{{ totalAccountCount }}</span>
+        <button type="button" :disabled="depositAccounts.length <= 1" aria-label="다음 계좌" @click="showNextAccount">›</button>
+      </div>
 
       <section class="summary-card">
         <span>나의 총 자산</span>
@@ -77,7 +81,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getAccount } from '@/api/account'
+import { getAccount, searchAccounts } from '@/api/account'
 import { logout } from '@/api/auth'
 import { getMyInfo } from '@/api/user'
 import familyImage from '@/assets/second_view/famliy.png'
@@ -87,7 +91,11 @@ import bottomMenuImage from '@/assets/second_view/bottom_menu.png'
 import kbIconImage from '@/assets/icons/kb_icon.png'
 
 const router = useRouter()
-const depositAccount = ref(null)
+const depositAccounts = ref([])
+const currentAccountIndex = ref(0)
+const depositAccount = computed(() => depositAccounts.value[currentAccountIndex.value] || null)
+const totalAccountCount = computed(() => Math.max(depositAccounts.value.length, 1))
+const currentAccountNumber = computed(() => depositAccounts.value.length ? currentAccountIndex.value + 1 : 1)
 const currentUser = ref(null)
 const enteringYoungly = ref(false)
 const userMenuOpen = ref(false)
@@ -109,12 +117,38 @@ onMounted(async () => {
     getAccount('DEPOSIT'),
   ])
   if (userResult.status === 'fulfilled') currentUser.value = userResult.value.data
-  if (accountResult.status === 'fulfilled') depositAccount.value = accountResult.value.data
+  if (currentUser.value?.name && currentUser.value?.birthday) {
+    try {
+      const { data } = await searchAccounts({
+        name: currentUser.value.name,
+        birthday: currentUser.value.birthday,
+      })
+      depositAccounts.value = (Array.isArray(data) ? data : []).filter(
+        (account) => account.accountType === 'DEPOSIT',
+      )
+    } catch {
+      depositAccounts.value = []
+    }
+  }
+  if (!depositAccounts.value.length && accountResult.status === 'fulfilled' && accountResult.value.data) {
+    depositAccounts.value = [accountResult.value.data]
+  }
 })
 onBeforeUnmount(() => document.removeEventListener('pointerdown', closeUserMenu))
 
 function closeUserMenu(event) {
   if (!userMenuRef.value?.contains(event.target)) userMenuOpen.value = false
+}
+
+function showPreviousAccount() {
+  if (depositAccounts.value.length <= 1) return
+  currentAccountIndex.value =
+    (currentAccountIndex.value - 1 + depositAccounts.value.length) % depositAccounts.value.length
+}
+
+function showNextAccount() {
+  if (depositAccounts.value.length <= 1) return
+  currentAccountIndex.value = (currentAccountIndex.value + 1) % depositAccounts.value.length
 }
 
 async function handleLogout() {
@@ -217,4 +251,202 @@ function formatCurrency(value) {
 @media(max-width:600px){.account-card{padding-bottom:52px!important}.user-name{max-width:130px!important;overflow:hidden!important;text-overflow:ellipsis!important}}
 @media(max-width:380px){.user-name{max-width:96px!important}}
 .user-menu{position:relative}.user-name span{display:inline-block;transition:transform .18s}.user-name span.open{transform:rotate(90deg)}.user-dropdown{min-width:145px;padding:7px;position:absolute;top:calc(100% + 9px);left:13px;z-index:30;border:1px solid #e0e2e4;border-radius:12px;background:#fff;box-shadow:0 12px 30px rgba(32,36,40,.15)}.user-dropdown button{width:100%;height:42px;padding:0 12px;display:flex;align-items:center;gap:9px;border-radius:8px!important;color:#474b50;font-size:13px;font-weight:700;text-align:left}.user-dropdown button:hover{background:#f3f1f7}.user-dropdown button:disabled{cursor:wait;opacity:.55}.user-dropdown button span{color:#72549d;font-size:18px}.user-dropdown-enter-active,.user-dropdown-leave-active{transition:opacity .15s,transform .15s;transform-origin:top left}.user-dropdown-enter-from,.user-dropdown-leave-to{opacity:0;transform:translateY(-5px) scale(.98)}
+</style>
+
+<style scoped>
+.bank-home,
+.bank-home :deep(*) {
+  font-family: Pretendard, "Noto Sans KR", Arial, sans-serif !important;
+}
+
+/* Bank home typography and account-card refinements */
+.summary-card button {
+  font-size: 17px;
+  font-weight: 400;
+}
+
+.all-account {
+  height: 70px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.all-account strong {
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.account-card {
+  border-radius: 17px;
+}
+
+.account-buttons button {
+  border-radius: 2px;
+}
+
+.account-number {
+  margin-bottom: 28px !important;
+}
+
+@media (max-width: 600px) {
+  .summary-card button {
+    font-size: 14px;
+  }
+
+  .all-account {
+    height: 60px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+
+  .all-account strong {
+    font-size: 16px;
+  }
+
+  .account-card {
+    border-radius: 15px;
+  }
+
+  .account-number {
+    margin-bottom: 26px !important;
+  }
+}
+
+/* Keep all bank-home cards visually consistent. */
+.all-account,
+.summary-card {
+  border-radius: 17px;
+}
+
+.all-account strong,
+.summary-card button {
+  font-weight: 600;
+}
+
+.balance strong {
+  font-size: 20px !important;
+  font-weight: 600;
+}
+
+.card-spending strong {
+  font-weight: 600;
+}
+
+.account-buttons {
+  margin-top: 14px !important;
+}
+
+.account-buttons button {
+  height: 38px !important;
+}
+
+@media (max-width: 600px) {
+  .all-account,
+  .summary-card {
+    border-radius: 15px;
+  }
+
+  .balance strong {
+    font-size: 20px !important;
+  }
+
+  .account-buttons {
+    margin-top: 12px !important;
+  }
+
+  .account-buttons button {
+    height: 36px !important;
+  }
+}
+
+.summary-card:not(.card-spending) button {
+  margin-top: 10px;
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.summary-card:not(.card-spending) > span {
+  font-size: 16px;
+}
+
+.summary-card:not(.card-spending) {
+  min-height: 0;
+  padding-top: 26px;
+  padding-bottom: 26px;
+}
+
+.account-card {
+  padding-bottom: 42px !important;
+}
+
+@media (max-width: 600px) {
+  .summary-card:not(.card-spending) button {
+    margin-top: 8px;
+    font-size: 17px;
+  }
+
+  .summary-card:not(.card-spending) > span {
+    font-size: 15px;
+  }
+
+  .summary-card:not(.card-spending) {
+    padding-top: 23px;
+    padding-bottom: 23px;
+  }
+
+  .account-card {
+    padding-bottom: 36px !important;
+  }
+}
+
+.user-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 22px !important;
+  font-weight: 400 !important;
+  line-height: 1.2;
+}
+
+.user-name span {
+  margin-left: 0;
+  font-size: 37px;
+  line-height: 1;
+  vertical-align: 0;
+  transform: translateY(-2px);
+}
+
+.user-name span.open {
+  transform: translateY(-2px) rotate(90deg);
+}
+
+.profile img {
+  transform: translateY(-1px);
+}
+
+.profile {
+  width: 86px !important;
+  height: 34px !important;
+}
+
+@media (max-width: 600px) {
+  .user-name {
+    font-size: 18px !important;
+  }
+
+  .user-name span {
+    font-size: 34px;
+  }
+
+  .profile {
+    width: 78px !important;
+    height: 31px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .user-name {
+    font-size: 16px !important;
+  }
+}
 </style>

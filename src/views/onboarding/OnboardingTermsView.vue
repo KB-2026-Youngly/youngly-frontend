@@ -36,8 +36,8 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const terms = [
-  { id: 1, label: '영리 서비스 이용약관 [필수]' },
-  { id: 2, label: '개인정보 수집·이용·제공 동의서(영리) [필수]' },
+  { id: 1, label: 'YOUNGLY 서비스 이용약관 [필수]' },
+  { id: 2, label: '개인정보 수집·이용·제공 동의서(YOUNGLY) [필수]' },
   { id: 3, label: '개인(신용)정보 수집·이용·제공 동의서(KB금융그룹 오픈 API서비스용) [필수]' },
 ]
 const agreements = ref([])
