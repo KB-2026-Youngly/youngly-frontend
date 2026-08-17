@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import { pinia } from '@/stores'
+import { useUserStore } from '@/stores/user'
 
 const routes = [
   {
@@ -200,13 +202,19 @@ const router = createRouter({
   scrollBehavior: () => ({ top: 0 }),
 })
 
-router.beforeEach((to) => {
-  const accessToken = localStorage.getItem('youngly_access_token')
+router.beforeEach(async (to) => {
+  const userStore = useUserStore(pinia)
+  const hasStoredToken = Boolean(localStorage.getItem('youngly_access_token'))
+  const needsAuthentication = to.matched.some((record) => record.meta.requiresAuth)
+  const shouldValidate = hasStoredToken && (needsAuthentication || to.name === 'Login')
+  const isAuthenticated = shouldValidate
+    ? await userStore.initializeAuth()
+    : hasStoredToken
 
-  if (to.matched.some((record) => record.meta.requiresAuth) && !accessToken) {
+  if (needsAuthentication && !isAuthenticated) {
     return { name: 'Login', query: { redirect: to.fullPath } }
   }
-  if (to.name === 'Login' && accessToken) {
+  if (to.name === 'Login' && isAuthenticated) {
     return { name: 'BankHome' }
   }
 })

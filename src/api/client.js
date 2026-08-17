@@ -15,4 +15,16 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('youngly_access_token')
+      localStorage.removeItem('youngly_user')
+      window.dispatchEvent(new CustomEvent('youngly:auth-expired'))
+    }
+    return Promise.reject(error)
+  },
+)
+
 export default apiClient

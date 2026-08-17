@@ -8,6 +8,14 @@ export function getRound(roundId) {
   return apiClient.get(`/rounds/${roundId}`)
 }
 
+export function getRoundRanking(roundId) {
+  return apiClient.get(`/rounds/${roundId}/ranking`)
+}
+
+export function getRoundSettlements(roundId) {
+  return apiClient.get(`/rounds/${roundId}/settlements`)
+}
+
 export function getRoundTransferRequests(roundId) {
   return apiClient.get(`/rounds/${roundId}/transfer-requests`)
 }
