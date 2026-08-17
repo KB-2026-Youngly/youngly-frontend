@@ -6,7 +6,6 @@
         <small>최근 이용 내역</small>
         <h3 id="transaction-history-title">거래내역</h3>
       </div>
-      <button type="button" :disabled="loading" @click="loadTransactions">새로고침</button>
     </div>
 
     <div v-if="accountType === 'MOIM'" class="history-filters">
@@ -55,7 +54,12 @@
                 :class="{ selected: selectedRoundId === String(round.roundId) }"
                 @click="selectRound(String(round.roundId))"
               >
-                <span>{{ round.roundNo }}라운드</span>
+                <span class="round-option-copy">
+                  <strong>{{ round.roundNo }}라운드</strong>
+                  <small v-if="round.startDate && round.endDate">
+                    {{ formatRoundPeriod(round.startDate, round.endDate) }}
+                  </small>
+                </span>
                 <b aria-hidden="true">{{ selectedRoundId === String(round.roundId) ? '✓' : '' }}</b>
               </button>
             </div>
@@ -111,6 +115,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { getAccountTransactions } from '@/api/account'
+import { getRound } from '@/api/round'
 
 const props = defineProps({
   accountType: { type: String, required: true },
@@ -127,6 +132,7 @@ const selectedCategory = ref('ALL')
 const selectedRoundId = ref('')
 const roundMenuOpen = ref(false)
 const roundFilterRef = ref(null)
+const roundDetails = ref({})
 const categoryFilters = [
   { label: '전체', value: 'ALL' },
   { label: '예치금', value: 'CHARGE' },
@@ -146,6 +152,8 @@ const roundOptions = computed(() => {
       rounds.set(String(transaction.roundId), {
         roundId: transaction.roundId,
         roundNo: transaction.roundNo,
+        startDate: roundDetails.value[String(transaction.roundId)]?.startDate,
+        endDate: roundDetails.value[String(transaction.roundId)]?.endDate,
       })
     }
   })
@@ -180,7 +188,10 @@ async function loadTransactions() {
       selectedRoundId.value || null,
     )
     transactions.value = Array.isArray(data) ? data : []
-    if (!selectedRoundId.value) allTransactions.value = transactions.value
+    if (!selectedRoundId.value) {
+      allTransactions.value = transactions.value
+      await loadRoundDetails()
+    }
     expanded.value = false
   } catch (requestError) {
     transactions.value = []
@@ -188,6 +199,30 @@ async function loadTransactions() {
   } finally {
     loading.value = false
   }
+}
+
+async function loadRoundDetails() {
+  const roundIds = [
+    ...new Set(
+      allTransactions.value
+        .map((transaction) => transaction.roundId)
+        .filter((roundId) => roundId != null),
+    ),
+  ].filter((roundId) => !roundDetails.value[String(roundId)])
+
+  if (!roundIds.length) return
+
+  const results = await Promise.allSettled(roundIds.map((roundId) => getRound(roundId)))
+  const nextDetails = { ...roundDetails.value }
+  results.forEach((result, index) => {
+    if (result.status !== 'fulfilled') return
+    const detail = result.value?.data
+    nextDetails[String(roundIds[index])] = {
+      startDate: detail?.startDate,
+      endDate: detail?.endDate,
+    }
+  })
+  roundDetails.value = nextDetails
 }
 
 function handleRoundChange() {
@@ -232,6 +267,22 @@ function formatDate(value) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value))
+}
+
+function formatRoundPeriod(startDate, endDate) {
+  const compact = (value) => {
+    const date = new Date(`${value}T00:00:00`)
+    if (Number.isNaN(date.getTime())) return value
+    return new Intl.DateTimeFormat('ko-KR', {
+      year: '2-digit',
+      month: '2-digit',
+      day: '2-digit',
+    })
+      .format(date)
+      .replace(/\.\s?/g, '.')
+      .replace(/\.$/, '')
+  }
+  return `${compact(startDate)} ~ ${compact(endDate)}`
 }
 
 watch(
@@ -306,6 +357,9 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeRoundMenu
 .round-menu button:hover { background: #f6f1fb; color: #5e428c; }
 .round-menu button.selected { color: #5d408d; background: #eee6f8; font-weight: 900; }
 .round-menu button b { min-width: 16px; color: #69529f; text-align: center; }
+.round-option-copy { display: grid; gap: 2px; }
+.round-option-copy strong { color: inherit; font-size: 12px; }
+.round-option-copy small { color: #91869b; font-size: 10px; font-weight: 600; }
 .round-menu-enter-active,.round-menu-leave-active { transition: opacity .15s, transform .15s; transform-origin: top right; }
 .round-menu-enter-from,.round-menu-leave-to { opacity: 0; transform: translateY(-5px) scale(.98); }
 .history-state {

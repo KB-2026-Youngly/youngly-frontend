@@ -186,3 +186,10 @@ async function handleLogin() {
 @media(min-width:768px){.certificate-login{padding-top:50px}.certificate-title h1{font-size:42px}.pattern-grid{width:260px;height:260px}.login-sheet{right:50%;left:auto;width:min(680px,calc(100% - 40px));border-radius:28px 28px 0 0;transform:translateX(50%)}.fade-enter-from .login-sheet,.fade-leave-to .login-sheet{transform:translate(50%,100%)}.submit-login{width:calc(100% + 56px)}}
 @media(max-width:480px){.kb-header{height:70px;padding:0 22px}.kb-symbol{font-size:26px}.kb-logo b{font-size:21px}.kb-logo strong{font-size:19px}.header-actions{gap:18px}.search-button{transform:scale(.85)}.menu-button{width:34px}.certificate-login{min-height:580px;padding-top:70px}.certificate-title h1{font-size:33px}.certificate-title button{font-size:15px}.pattern-area{width:100%}.pattern-grid{width:260px;height:260px;padding:28px}.pattern-grid span{width:22px;height:22px}.pattern-options{gap:14px;font-size:14px}.pattern-options label span{width:25px;height:25px}.other-login{height:54px}.simple-service{height:86px;flex-basis:86px}.login-sheet{padding-right:20px;padding-left:20px}.sheet-tabs button{height:54px;font-size:15px}.submit-login{width:calc(100% + 40px);margin-left:-20px}.login-links a{padding:0 10px}}
 </style>
+
+<style scoped>
+.first-login,
+.first-login :deep(*) {
+  font-family: Pretendard, "Noto Sans KR", Arial, sans-serif !important;
+}
+</style>

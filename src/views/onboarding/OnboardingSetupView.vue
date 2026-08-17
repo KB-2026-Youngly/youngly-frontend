@@ -13,7 +13,7 @@
           <h2>{{ group.label }}</h2>
           <div class="interest-chips">
             <label v-for="item in group.items" :key="item.id">
-              <input v-model="selectedInterestIds" type="checkbox" :value="item.id" />
+              <input v-model="selectedInterestIds" type="checkbox" :value="item.id" @change="handleInterestChange(item.id)" />
               <span>{{ item.name }}</span>
             </label>
           </div>
@@ -52,7 +52,7 @@ import { searchAccounts } from '@/api/account'
 import { completeOnboarding, getMyInfo } from '@/api/user'
 
 const router = useRouter()
-const investmentNames = ['IT/테크','금융','헬스케어/바이오','에너지/친환경','소비재/유통','부동산/리츠','자동차/모빌리티','엔터테인먼트/미디어','반도체','기타']
+const investmentNames = ['IT/테크','금융','헬스케어/바이오','에너지/친환경','소비재/유통','부동산/리츠','자동차/모빌리티','엔터테인먼트/미디어','반도체','관심없음']
 const generalNames = ['여행','운동/피트니스','게임','독서','반려동물','요리/맛집','뷰티/패션','자기계발','음악/공연','재테크/경제']
 const interestGroups = [
   { label: '투자 관심 분야', items: investmentNames.map((name,index) => ({ id:index+1,name })) },
@@ -90,6 +90,22 @@ async function submitOnboarding() {
   } catch (requestError) {
     submitError.value = requestError.response?.data?.message || '초기 설정을 저장하지 못했습니다.'
   } finally { submitting.value = false }
+}
+function handleInterestChange(interestId) {
+  const noInvestmentInterestId = 10
+
+  if (interestId === noInvestmentInterestId && selectedInterestIds.value.includes(interestId)) {
+    selectedInterestIds.value = selectedInterestIds.value.filter(
+      (id) => id === noInvestmentInterestId || id > noInvestmentInterestId,
+    )
+    return
+  }
+
+  if (interestId < noInvestmentInterestId && selectedInterestIds.value.includes(interestId)) {
+    selectedInterestIds.value = selectedInterestIds.value.filter(
+      (id) => id !== noInvestmentInterestId,
+    )
+  }
 }
 function formatCurrency(value) { return Number(value || 0).toLocaleString('ko-KR') }
 </script>
