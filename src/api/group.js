@@ -4,6 +4,38 @@ export function getGroups() {
   return apiClient.get('/groups')
 }
 
+export function createGroup(payload) {
+  return apiClient.post('/groups', payload)
+}
+
+export function joinGroup(inviteCode) {
+  return apiClient.post('/groups/join', { inviteCode })
+}
+
+export function getGroupDetail(groupId) {
+  return apiClient.get(`/groups/${groupId}`)
+}
+
+export function updateGroup(groupId, payload) {
+  return apiClient.put(`/groups/${groupId}`, payload)
+}
+
+export function getGroupRounds(groupId) {
+  return apiClient.get(`/groups/${groupId}/rounds`)
+}
+
+export function createGroupRound(groupId, payload) {
+  return apiClient.post(`/groups/${groupId}/rounds`, payload)
+}
+
+export function getGroupUsers(groupId) {
+  return apiClient.get(`/groups/${groupId}/groupusers`)
+}
+
+export function kickGroupUser(groupId, groupUserId) {
+  return apiClient.delete(`/groups/${groupId}/groupusers/${groupUserId}`)
+}
+
 export function getMemberDepositStatuses(groupId) {
   return apiClient.get(`/groups/${groupId}/deposit`)
 }

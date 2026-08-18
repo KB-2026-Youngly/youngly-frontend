@@ -60,9 +60,9 @@
         <div class="group-meta-row">
           <div class="group-header-copy">
             <div class="group-badges">
-              <span class="group-badge">운동</span>
-              <span class="group-badge">초대 중</span>
-              <span class="member-count">♟&nbsp; 1 / 6명</span>
+              <span class="group-badge">{{ groupCategory }}</span>
+              <span class="group-badge">{{ groupStatusLabel }}</span>
+              <span class="member-count">♟&nbsp; {{ groupMemberCount }} / {{ groupMemberLimit }}명</span>
             </div>
             <div class="group-title-row">
               <button
@@ -102,7 +102,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
 import bellIconUrl from '@/assets/icons/bell.svg'
@@ -127,6 +127,10 @@ const notificationsLoading = ref(false)
 const notificationsError = ref('')
 let notificationPollTimer = null
 const groupTitle = ref('30일 매일 운동 챌린지')
+const groupCategory = ref('운동')
+const groupStatus = ref('RECRUITING')
+const groupMemberCount = ref(1)
+const groupMemberLimit = ref(6)
 const nickname = computed(() => user.value?.nickname || user.value?.loginId || '회원')
 const unreadNotificationCount = computed(
   () => notifications.value.filter((notification) => !notification.isRead).length,
@@ -135,8 +139,13 @@ const unreadNotificationCount = computed(
 // 현재 경로가 그룹 상세 페이지인지 판별 (Composition API 방식)
 const isGroupDetail = computed(() => route.name === 'GroupDetail')
 const isMoimAccountDetail = computed(() => route.name === 'MoimAccountDetail')
-// mock 권한: 실제 API 연결 전에는 owner=false 쿼리로 비방장 상태를 확인할 수 있습니다.
-const isGroupOwner = computed(() => route.query.owner !== 'false')
+// mock 권한: 실제 API 연결 전에는 owner=false 쿼리로 그룹장이 아닌 상태를 확인할 수 있습니다.
+const isGroupOwner = ref(route.query.owner !== 'false')
+const groupStatusLabel = computed(() => ({
+  RECRUITING: '초대 중',
+  ONGOING: '진행 중',
+  FINISHED: '종료',
+}[groupStatus.value] || '상태 확인 중'))
 
 const closeMenu = () => {
   isMenuOpen.value = false
@@ -204,10 +213,15 @@ const refreshNotificationsWhenVisible = () => {
 }
 
 // 로컬스토리지에서 그룹 정보 로드
-const loadGroupInfo = () => {
+const loadGroupInfo = (event) => {
   try {
-    const groupInfo = JSON.parse(localStorage.getItem('youngly_group_info') || '{}')
+    const groupInfo = event?.detail || JSON.parse(localStorage.getItem('youngly_group_info') || '{}')
     groupTitle.value = groupInfo.title || '30일 매일 운동 챌린지'
+    groupCategory.value = groupInfo.category || '운동'
+    groupStatus.value = groupInfo.status || 'RECRUITING'
+    groupMemberCount.value = Number(groupInfo.memberCount) || 0
+    groupMemberLimit.value = Number(groupInfo.memberLimit) || 6
+    if (typeof groupInfo.isOwner === 'boolean') isGroupOwner.value = groupInfo.isOwner
   } catch {
     groupTitle.value = '30일 매일 운동 챌린지'
   }
@@ -239,6 +253,11 @@ onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
   document.addEventListener('visibilitychange', refreshNotificationsWhenVisible)
 })
+
+watch(
+  () => route.params.id,
+  () => loadGroupInfo(),
+)
 
 onBeforeUnmount(() => {
   if (notificationPollTimer) window.clearInterval(notificationPollTimer)
@@ -408,6 +427,12 @@ onBeforeUnmount(() => {
   overflow: hidden;
   border-radius: 50%;
   clip-path: none;
+}
+
+.profile-button__avatar :deep(img) {
+  padding: 0;
+  object-fit: cover;
+  transform: scale(1.18);
 }
 
 .profile-dropdown {

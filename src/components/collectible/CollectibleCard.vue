@@ -4,6 +4,7 @@
     :class="{
       'character-card--selected': selected,
       'character-card--equipped': equipped,
+      'character-card--equip-effect': equipEffect,
       'character-card--cover': usesCoverImage,
     }"
     type="button"
@@ -11,8 +12,6 @@
     :aria-label="`${character.name || '캐릭터'} 선택${equipped ? ', 현재 장착 중' : ''}`"
     @click="emit('select', character.characterId)"
   >
-    <span v-if="equipped" class="character-card__badge">장착 중</span>
-
     <span class="character-card__image">
       <CharacterPreview :character="character" />
     </span>
@@ -42,6 +41,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  equipEffect: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['select'])
@@ -51,8 +54,8 @@ const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
 <style scoped>
 .character-card {
   --character-selected: #f59e0b;
-  --character-equipped: #34705a;
-  --character-equipped-shadow: rgba(52, 112, 90, 0.22);
+  --character-equipped: #d99a18;
+  --character-equipped-shadow: rgba(217, 154, 24, 0.24);
 
   position: relative;
   display: grid;
@@ -95,7 +98,82 @@ const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
 }
 
 .collectible-step-card > * { position: relative; z-index: 1; }
-.collectible-step-card.character-card--equipped { background: var(--character-equipped) !important; }
+.collectible-step-card.character-card--equipped {
+  background: var(--character-equipped) !important;
+  filter: drop-shadow(6px 6px 0 rgba(181, 121, 9, 0.28));
+}
+
+.collectible-step-card.character-card--equip-effect {
+  animation: character-equip-pop 0.58s cubic-bezier(0.2, 0.9, 0.3, 1.35);
+}
+
+.collectible-step-card.character-card--equipped::before {
+  inset: 4px;
+}
+
+.collectible-step-card.character-card--equip-effect::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  z-index: 3;
+  background:
+    radial-gradient(circle at 18% 24%, #fff6a8 0 3px, transparent 4px),
+    radial-gradient(circle at 82% 31%, #ffffff 0 2px, transparent 3px),
+    radial-gradient(circle at 25% 76%, #ffd95c 0 2px, transparent 3px),
+    radial-gradient(circle at 76% 72%, #fff6a8 0 3px, transparent 4px),
+    linear-gradient(
+      112deg,
+      transparent 25%,
+      rgba(255, 226, 101, 0.08) 38%,
+      rgba(255, 248, 190, 0.78) 49%,
+      rgba(255, 255, 255, 0.92) 52%,
+      rgba(255, 226, 101, 0.08) 63%,
+      transparent 75%
+    );
+  background-position: center, center, center, center, 150% 0;
+  background-size: auto, auto, auto, auto, 240% 100%;
+  clip-path: inherit;
+  opacity: 0;
+  pointer-events: none;
+  animation: character-equip-shine 0.82s ease-out 0.08s both;
+}
+
+@keyframes character-equip-pop {
+  0% {
+    transform: scale(0.96);
+  }
+  45% {
+    transform: scale(1.035);
+  }
+  72% {
+    transform: scale(0.99);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes character-equip-shine {
+  0% {
+    background-position: center, center, center, center, 150% 0;
+    opacity: 0;
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    background-position: center, center, center, center, -150% 0;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collectible-step-card.character-card--equipped,
+  .collectible-step-card.character-card--equip-effect,
+  .collectible-step-card.character-card--equip-effect::after {
+    animation: none;
+  }
+}
 
 .character-card:hover {
   transform: translateY(-3px);
@@ -111,7 +189,7 @@ const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
 .character-card--equipped {
   border: 3px solid var(--character-equipped);
   box-shadow:
-    0 0 0 3px rgba(52, 112, 90, 0.1),
+    0 0 0 3px rgba(217, 154, 24, 0.11),
     0 13px 26px var(--character-equipped-shadow);
 }
 
@@ -120,12 +198,9 @@ const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
   width: 100%;
   aspect-ratio: 1;
   overflow: hidden;
-  border: 1px solid #ede7f5;
-  border-radius: 12px;
-  background:
-    linear-gradient(45deg, #f4effa 25%, transparent 25%) 0 0 / 20px 20px,
-    linear-gradient(45deg, transparent 75%, #f4effa 75%) 0 0 / 20px 20px,
-    #faf8fd;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .character-card--cover {
@@ -137,22 +212,23 @@ const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
 
 .character-card--cover .character-card__image {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: 2px;
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
   aspect-ratio: auto;
   overflow: hidden;
   border: 0;
   border-radius: 0;
   background: transparent;
+  clip-path: inherit;
 }
 
 .character-card--cover > strong {
   position: absolute;
   z-index: 1;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  right: 2px;
+  bottom: 2px;
+  left: 2px;
   padding: 36px 12px 12px;
   color: #ffffff;
   background: linear-gradient(180deg, transparent, rgba(12, 30, 74, 0.9));
@@ -161,6 +237,32 @@ const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
   line-height: 1.3;
   text-align: center;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 9px),
+    calc(100% - 3px) calc(100% - 9px),
+    calc(100% - 3px) calc(100% - 3px),
+    calc(100% - 9px) calc(100% - 3px),
+    calc(100% - 9px) 100%,
+    9px 100%,
+    9px calc(100% - 3px),
+    3px calc(100% - 3px),
+    3px calc(100% - 9px),
+    0 calc(100% - 9px)
+  );
+}
+
+.character-card--cover.character-card--equipped .character-card__image {
+  inset: 4px;
+  width: calc(100% - 8px);
+  height: calc(100% - 8px);
+}
+
+.character-card--cover.character-card--equipped > strong {
+  right: 4px;
+  bottom: 4px;
+  left: 4px;
 }
 
 .character-card strong {
@@ -168,20 +270,6 @@ const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
   font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.character-card__badge {
-  position: absolute;
-  z-index: 1;
-  top: 8px;
-  left: 8px;
-  padding: 5px 8px;
-  border: 0;
-  border-radius: 999px;
-  color: #ffffff;
-  background: var(--character-equipped);
-  font-size: 10px;
-  font-weight: 900;
 }
 
 .character-card__check {
@@ -235,6 +323,6 @@ const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
 
 .character-card--equipped {
   border: 3px solid var(--character-equipped);
-  box-shadow: 6px 6px 0 rgba(52, 112, 90, 0.24);
+  box-shadow: 6px 6px 0 rgba(181, 121, 9, 0.24);
 }
 </style>

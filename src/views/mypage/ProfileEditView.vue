@@ -32,36 +32,13 @@
       :success-message="successMessage"
       @submit="handleProfileSubmit"
     />
-
-    <div class="account-menu-shadow yl-stepped-card-shadow"><nav class="account-menu yl-mypage-card" aria-label="계정 관리">
-      <p class="account-menu__title">계정 관리</p>
-      <button class="account-menu__item" type="button">
-        <span class="account-menu__icon" aria-hidden="true">
-          <LockKeyhole :size="18" />
-        </span>
-        <span class="account-menu__copy">
-          <strong>비밀번호 변경</strong>
-        </span>
-        <ChevronRight :size="18" aria-hidden="true" />
-      </button>
-
-      <button class="account-menu__item account-menu__item--danger" type="button">
-        <span class="account-menu__icon" aria-hidden="true">
-          <UserRoundX :size="18" />
-        </span>
-        <span class="account-menu__copy">
-          <strong>회원 탈퇴</strong>
-        </span>
-        <ChevronRight :size="18" aria-hidden="true" />
-      </button>
-    </nav></div>
   </div>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { ArrowLeft, ChevronRight, LockKeyhole, UserRoundX } from 'lucide-vue-next'
+import { ArrowLeft } from 'lucide-vue-next'
 import BaseEmptyState from '@/components/base/BaseEmptyState.vue'
 import BaseSpinner from '@/components/base/BaseSpinner.vue'
 import ProfileForm from '@/components/mypage/ProfileForm.vue'
@@ -138,7 +115,6 @@ onMounted(() => {
 }
 
 .back-link-shadow { --yl-stepped-shadow-color: #c8b7e5; --yl-stepped-shadow-offset: 5px; width: fit-content !important; }
-.account-menu-shadow { --yl-stepped-shadow-color: #c8b7e5; --yl-stepped-shadow-offset: 7px; margin-top: 18px; }
 
 .back-link:hover {
   background: var(--color-surface-hover, #f4f2f8);
@@ -146,27 +122,9 @@ onMounted(() => {
   transform: translate(2px, 2px);
 }
 
-.back-link:focus-visible,
-.account-menu__item:focus-visible {
+.back-link:focus-visible {
   outline: 3px solid var(--color-focus, rgba(124, 104, 215, 0.28));
   outline-offset: 2px;
-}
-
-.account-menu {
-  display: grid;
-  margin-top: 0;
-  padding: 20px 22px 4px;
-  border: 1px solid rgba(113, 86, 173, 0.09);
-  border-radius: 20px;
-  background: var(--color-surface, #ffffff);
-  box-shadow: 0 14px 34px rgba(66, 43, 99, 0.09);
-}
-
-.account-menu__title {
-  margin: 0 0 8px;
-  color: #4d4755;
-  font-size: 13px;
-  font-weight: 800;
 }
 
 .state-panel {
@@ -178,61 +136,6 @@ onMounted(() => {
   background: var(--color-surface, #ffffff);
 }
 
-.account-menu__item {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  min-height: 62px;
-  padding: 0;
-  border: 0;
-  border-bottom: 1px solid var(--color-border, #ddd9e8);
-  color: var(--color-text, #33313d);
-  background: transparent;
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.account-menu__item:last-child {
-  border-bottom: 0;
-}
-
-.account-menu__item:hover {
-  color: var(--color-primary, #7156ad);
-}
-
-.account-menu__icon {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  color: var(--color-primary, #7156ad);
-  background: var(--color-primary-soft, #f0eafd);
-}
-
-.account-menu__copy {
-  display: grid;
-  gap: 4px;
-}
-
-.account-menu__copy strong {
-  font-size: 14px;
-}
-
-.account-menu__item--danger,
-.account-menu__item--danger:hover {
-  color: var(--color-danger, #e96363);
-}
-
-.account-menu__item--danger .account-menu__icon {
-  color: var(--color-danger, #e96363);
-  background: #fff1f1;
-}
 
 @media (max-width: 767px) {
   .profile-edit-page {
@@ -241,20 +144,9 @@ onMounted(() => {
     padding: 20px 16px 52px;
   }
 
-  .account-menu {
-    margin-top: 14px;
-    padding: 18px 16px 2px;
-    border-radius: 18px;
-  }
-
   .back-link-shadow + .state-panel,
   .back-link-shadow + .profile-form-shadow {
     margin-top: 16px;
-  }
-
-  .account-menu__item {
-    grid-template-columns: 38px minmax(0, 1fr) auto;
-    min-height: 60px;
   }
 }
 </style>
@@ -281,17 +173,12 @@ onMounted(() => {
   transform: translate(2px, 2px);
 }
 
-.profile-edit-page :is(.state-panel, .account-menu) {
+.profile-edit-page .state-panel {
   border: 2px solid var(--mypage-ink);
   border-radius: 20px;
   background: #ffffff;
   box-shadow: none;
   filter: none !important;
-}
-
-.account-menu__icon {
-  border: 1px solid #d8ccea;
-  border-radius: 11px;
 }
 
 @media (max-width: 767px) {

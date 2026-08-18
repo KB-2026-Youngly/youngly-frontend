@@ -6,6 +6,7 @@
       :character="character"
       :selected="String(character.characterId) === String(selectedCharacterId)"
       :equipped="String(character.characterId) === String(equippedCharacterId)"
+      :equip-effect="String(character.characterId) === String(equipEffectCharacterId)"
       @select="emit('select', $event)"
     />
   </div>
@@ -24,6 +25,10 @@ defineProps({
     default: null,
   },
   equippedCharacterId: {
+    type: [Number, String],
+    default: null,
+  },
+  equipEffectCharacterId: {
     type: [Number, String],
     default: null,
   },

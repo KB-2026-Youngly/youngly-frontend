@@ -11,7 +11,7 @@
 
     <!-- 모바일 전용 하단 네비게이션 (화면 폭 768px 미만일 때 노출) -->
     <MobileBottomNav
-      v-else
+      v-else-if="!isBottomNavHidden"
       :items="items"
       :current-theme="currentTheme"
       @on-camera-click="handleCameraClick"
@@ -35,19 +35,33 @@ export default {
     return {
       items: navigationItems,
       isMobile: false,
+      isBottomNavHidden: false,
+      openBottomSheets: new Set(),
       currentTheme: 1,
     }
   },
   mounted() {
     this.checkMediaQuery()
     window.addEventListener('resize', this.checkMediaQuery)
+    window.addEventListener('youngly-bottom-nav-visibility', this.setBottomNavVisibility)
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.checkMediaQuery)
+    window.removeEventListener('youngly-bottom-nav-visibility', this.setBottomNavVisibility)
   },
   methods: {
     checkMediaQuery() {
       this.isMobile = window.innerWidth < 768
+    },
+    setBottomNavVisibility(event) {
+      const { id, hidden } = event.detail || {}
+      if (id) {
+        if (hidden) this.openBottomSheets.add(id)
+        else this.openBottomSheets.delete(id)
+        this.isBottomNavHidden = this.openBottomSheets.size > 0
+        return
+      }
+      this.isBottomNavHidden = Boolean(hidden)
     },
     updateTheme(newTheme) {
       this.currentTheme = newTheme

@@ -138,18 +138,6 @@ const routes = [
     ],
   },
   {
-    path: '/posts/:id',
-    component: DefaultLayout,
-    meta: { requiresAuth: true },
-    children: [
-      {
-        path: '',
-        name: 'FeedDetail',
-        component: () => import('@/views/post/FeedDetailView.vue'),
-      },
-    ],
-  },
-  {
     path: '/groups',
     component: DefaultLayout,
     meta: { requiresAuth: true },
