@@ -99,7 +99,18 @@ const routes = [
         name: 'PensionInsight',
         component: () => import('@/views/asset/PensionInsightView.vue'),
       },
+      {
+        path: 'pension/survey',
+        name: 'PensionSurvey',
+        component: () => import('@/views/asset/SurveyView.vue'),
+      },
     ],
+  },
+  {
+    path: '/asset/pension/funds',
+    name: 'PensionFundProducts',
+    component: () => import('@/views/asset/PensionFundProductsView.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/calendar',
