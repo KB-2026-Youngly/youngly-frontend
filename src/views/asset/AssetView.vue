@@ -60,7 +60,14 @@
         AI 개인연금 인사이트
         <b aria-hidden="true">→</b>
       </button>
-      <TransactionHistory account-type="PENSION" :account-id="connectedPension.accountId" />
+      <TransactionHistory
+        account-type="PENSION"
+        :account-id="connectedPension.accountId"
+        :account-number="connectedPension.accountNumber"
+        :bank-name="connectedPension.bankName"
+        :account-name="`${connectedPension.bankName} 개인연금`"
+        is-account-owner
+      />
       </div>
     </article>
     </div>
@@ -90,15 +97,6 @@
           @click="openMoimDetail(account)"
         >
           <div class="moim-account-card-surface pixel-step-surface">
-        <span
-          class="drag-handle"
-          role="button"
-          aria-label="길게 눌러 순서 변경"
-          @pointerdown.stop="handleMoimPointerDown(account.moimAccountId, $event)"
-          @click.stop
-          @contextmenu.prevent
-          >≡</span
-        >
         <button
           v-if="account.owner"
           class="moim-edit-button"
@@ -124,7 +122,7 @@
         <div class="group-link-status">
           <template v-if="account.groupName">
             <b>{{ account.groupName }}</b>
-            <span>{{ account.groupCount }}명 참여</span>
+            <span class="group-member-count">{{ account.groupCount }}명 참여</span>
           </template>
           <template v-else-if="account.groupLinked === false">
             <span>아직 연결된 그룹이 없어요</span>
@@ -132,6 +130,15 @@
           <template v-else>
             <span>그룹 연결 정보 준비 중</span>
           </template>
+          <span
+            class="drag-handle"
+            role="button"
+            aria-label="길게 눌러 순서 변경"
+            @pointerdown.stop="handleMoimPointerDown(account.moimAccountId, $event)"
+            @click.stop
+            @contextmenu.prevent
+            ><span aria-hidden="true">⠿</span></span
+          >
         </div>
           </div>
         </article>
@@ -1212,7 +1219,7 @@ function resetModal() {
 .moim-account-card-surface {
   position: relative;
   min-height: 199px;
-  padding: 21px;
+  padding: 21px 21px 14px;
   box-sizing: border-box;
   background: linear-gradient(145deg, #fff, #f8f4fd);
 }
@@ -1242,19 +1249,19 @@ function resetModal() {
   z-index: 1;
 }
 .edit-account-button {
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
   position: absolute;
-  top: 24px;
-  right: 24px;
+  top: 30px;
+  right: 14px;
   z-index: 2;
   border: 1px solid #dad3e4;
-  border-radius: 10px;
+  border-radius: 9px;
   background: #fff;
   color: #69529f;
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
   transition: 0.18s;
 }
@@ -1366,16 +1373,24 @@ function resetModal() {
   box-shadow: 0 12px 30px rgba(79, 57, 126, 0.2);
 }
 .drag-handle {
-  position: absolute;
-  top: 14px;
-  left: 17px;
-  color: #8d839c;
-  font-size: 24px;
-  font-weight: 800;
-  line-height: 1;
+  grid-column: 3;
+  justify-self: end;
+  z-index: 8;
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: rgba(105, 82, 159, 0.7);
   cursor: grab;
+  transform: translate(5px, 2px);
   touch-action: none;
   -webkit-touch-callout: none;
+}
+.drag-handle span {
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1;
 }
 .drag-handle:active {
   cursor: grabbing;
@@ -1403,7 +1418,7 @@ function resetModal() {
   display: flex;
   align-items: center;
   gap: 9px;
-  margin: 28px 0 12px;
+  margin: 6px 0 12px;
 }
 .ownership-row {
   min-height: 24px;
@@ -1415,7 +1430,7 @@ function resetModal() {
 .ownership-badge {
   padding: 5px 8px;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   line-height: 1;
 }
@@ -1426,7 +1441,7 @@ function resetModal() {
 .account-owner-name {
   overflow: hidden;
   color: #817989;
-  font-size: 10px;
+  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1437,22 +1452,22 @@ function resetModal() {
 }
 .moim-card-bank small {
   color: #777080;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
 }
 .moim-account-card-surface > strong {
   display: block;
   color: #33294a;
-  font-size: 25px;
+  font-size: 27px;
 }
 .moim-account-card-surface > p {
   margin: 10px 0 4px;
   color: #665e70;
-  font-size: 13px;
+  font-size: 15px;
 }
 .moim-account-name {
   color: #9b95a2;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .account-details .balance-value,
@@ -1460,26 +1475,29 @@ function resetModal() {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
 }
 .group-link-status {
-  min-height: 39px;
-  margin-top: 18px;
-  padding-top: 12px;
-  display: flex;
+  min-height: 31px;
+  margin-top: 12px;
+  padding-top: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 25px;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   border-top: 1px solid #e8e2ed;
   color: #8c8495;
-  font-size: 11px;
+  font-size: 13px;
 }
 .group-link-status b {
   overflow: hidden;
   color: #4c405e;
-  font-size: 12px;
+  font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .group-link-status span {
   flex: 0 0 auto;
+}
+.group-link-status .group-member-count {
+  margin-right: 0;
 }
 .moim-edit-content > small,
 .moim-edit-content > strong,
@@ -2184,8 +2202,8 @@ function resetModal() {
     padding: 23px 17px;
   }
   .edit-account-button {
-    top: 18px;
-    right: 18px;
+    top: 13px;
+    right: 14px;
   }
   .linked-card-heading h2 {
     font-size: 17px;
@@ -2205,7 +2223,7 @@ function resetModal() {
   }
 .moim-account-card-surface {
     min-height: 184px;
-    padding: 21px;
+    padding: 21px 21px 14px;
   }
   .moim-account-card.is-dragging {
     touch-action: none;

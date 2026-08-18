@@ -13,7 +13,7 @@
           >
             <span aria-hidden="true">&lt;</span>
           </button>
-          <div class="logo-text">CHALLENGE PIXEL</div>
+          <img class="header-logo" :src="headerLogoUrl" alt="Youngly" />
         </div>
 
         <div class="header-right">
@@ -98,6 +98,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
 import bellIconUrl from '@/assets/icons/bell.svg'
+import headerLogoUrl from '@/assets/icons/yl_header_logo.png'
 import UserProfileAvatar from '@/components/common/UserProfileAvatar.vue'
 import NotificationSheet from '@/components/common/NotificationSheet.vue'
 import { getNotifications, readNotification } from '@/api/notification'
@@ -311,12 +312,16 @@ onBeforeUnmount(() => {
   transform: translateX(-2px);
 }
 
-.logo-text {
-  color: #2d1f4f;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 20px;
-  font-weight: 900;
-  text-shadow: 2px 2px 0 #e5e5f7;
+.header-logo {
+  display: block;
+  width: auto;
+  height: 68px;
+  margin-left: -5px;
+  object-fit: contain;
+}
+
+.header-back-button + .header-logo {
+  margin-left: 0;
 }
 
 .header-right {
@@ -634,8 +639,13 @@ onBeforeUnmount(() => {
     backface-visibility: hidden;
   }
 
-  .logo-text {
-    font-size: 16px;
+  .header-logo {
+    height: 60px;
+    margin-left: -4px;
+  }
+
+  .header-back-button + .header-logo {
+    margin-left: 0;
   }
 
   .header-brand {
