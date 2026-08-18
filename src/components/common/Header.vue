@@ -410,6 +410,12 @@ onBeforeUnmount(() => {
   clip-path: none;
 }
 
+.profile-button__avatar :deep(img) {
+  padding: 0;
+  object-fit: cover;
+  transform: scale(1.18);
+}
+
 .profile-dropdown {
   position: absolute;
   top: calc(100% + 10px);

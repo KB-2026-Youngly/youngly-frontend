@@ -16,7 +16,11 @@
     <ProfileCard v-else :summary="activitySummary" @edit="goToProfileEdit" />
 
     <div class="character-card-shadow yl-stepped-card-shadow">
-    <section class="character-card yl-stepped-card-shape" aria-labelledby="character-title">
+    <RouterLink
+      to="/characters"
+      class="character-card yl-stepped-card-shape"
+      aria-labelledby="character-title"
+    >
       <div class="character-card__surface yl-stepped-card-shape">
       <span class="character-card__badge">MY CHARACTER</span>
       <div class="character-card__preview">
@@ -32,31 +36,22 @@
         <h2 id="character-title">내 캐릭터</h2>
         <span class="character-card__action">캐릭터 뽑기 · 선택 및 장착</span>
       </div>
-      <button
+      <span
         class="character-card__button pixel-step-button pixel-step-button--compact pixel-step-solid"
-        type="button"
-        aria-label="내 캐릭터 선택 화면으로 이동"
-        @click="router.push('/characters')"
+        aria-hidden="true"
       >
         <span class="character-card__button-surface pixel-step-surface"><ChevronRight :size="20" aria-hidden="true" /></span>
-      </button>
+      </span>
       </div>
-    </section></div>
+    </RouterLink></div>
 
     <SettingsMenu :items="settingsItems" @select="handleSettingSelect" />
 
-    <SettingsMenu
-      aria-label="계정 관리"
-      :items="accountManagementItems"
-      @select="handleAccountManagementSelect"
-    />
-
-    <div class="logout-button-shadow yl-stepped-card-shadow"><BaseButton class="logout-button pixel-step-button pixel-step-solid" variant="ghost" block @click="logout">
-      <span class="logout-button__surface pixel-step-surface">
-        <LogOut :size="16" aria-hidden="true" />
-        로그아웃
-      </span>
-    </BaseButton></div>
+    <div class="account-exit-bar" role="group" aria-label="계정 종료 메뉴">
+      <button type="button" @click="logout">로그아웃</button>
+      <span class="account-exit-bar__divider" aria-hidden="true"></span>
+      <button type="button" @click="openWithdrawalModal">회원 탈퇴</button>
+    </div>
 
     <BaseModal
       v-model="isWithdrawalOpen"
@@ -114,7 +109,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { ChevronRight, LogOut, TriangleAlert } from 'lucide-vue-next'
+import { ChevronRight, TriangleAlert } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { deactivateMyAccount } from '@/api/user'
 import BaseButton from '@/components/base/BaseButton.vue'
@@ -177,19 +172,10 @@ const settingsItems = [
     label: '고객센터',
     href: 'https://obank.kbstar.com/quics?page=osupp#loading',
   },
-]
-
-const accountManagementItems = [
   {
     id: 'password',
     icon: 'password',
     label: '비밀번호 변경',
-  },
-  {
-    id: 'withdrawal',
-    icon: 'withdrawal',
-    label: '회원 탈퇴',
-    danger: true,
   },
 ]
 
@@ -200,11 +186,7 @@ const goToProfileEdit = () => {
 const handleSettingSelect = (settingId) => {
   if (settingId === 'account') router.push('/mypage/accounts')
   if (settingId === 'settlements') router.push('/mypage/settlements')
-}
-
-const handleAccountManagementSelect = (settingId) => {
   if (settingId === 'password') router.push('/mypage/password')
-  if (settingId === 'withdrawal') openWithdrawalModal()
 }
 
 const openWithdrawalModal = () => {
@@ -290,20 +272,78 @@ onMounted(() => {
 
 .mypage > :first-child,
 .character-card-shadow,
-.logout-button-shadow {
+.settings-menu-shell,
+.account-exit-bar {
   grid-column: 1 / -1;
 }
 
-.logout-button__surface {
-  display: inline-flex;
+.account-exit-bar {
+  position: relative;
+  isolation: isolate;
+  display: flex;
   width: 100%;
-  min-height: 50px;
+  min-height: 46px;
+  padding: 6px 18px;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  color: #655b6d;
-  background: rgba(255, 255, 255, 0.74);
+  border: 0;
+  color: rgba(80, 69, 91, 0.5);
+  background: rgba(172, 153, 210, 0.2);
+  filter: drop-shadow(5px 5px 0 rgba(200, 183, 229, 0.18));
+  clip-path: polygon(9px 0, calc(100% - 9px) 0, calc(100% - 9px) 3px, calc(100% - 3px) 3px, calc(100% - 3px) 9px, 100% 9px, 100% calc(100% - 9px), calc(100% - 3px) calc(100% - 9px), calc(100% - 3px) calc(100% - 3px), calc(100% - 9px) calc(100% - 3px), calc(100% - 9px) 100%, 9px 100%, 9px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 9px), 0 calc(100% - 9px), 0 9px, 3px 9px, 3px 3px, 9px 3px);
   box-sizing: border-box;
+}
+
+.account-exit-bar::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  z-index: 0;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  clip-path: inherit;
+  pointer-events: none;
+}
+
+.account-exit-bar button {
+  position: relative;
+  z-index: 1;
+  min-width: 112px;
+  padding: 9px 18px;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.account-exit-bar button:hover {
+  color: #655b6d;
+  background: rgba(255, 255, 255, 0.48);
+}
+
+.account-exit-bar button:last-child:hover {
+  color: #b65d68;
+}
+
+.account-exit-bar button:focus-visible {
+  outline: 2px solid rgba(113, 86, 173, 0.28);
+  outline-offset: 1px;
+}
+
+.account-exit-bar__divider {
+  position: relative;
+  z-index: 1;
+  width: 1px;
+  height: 16px;
+  flex: 0 0 1px;
+  background: rgba(101, 91, 109, 0.12);
 }
 
 .state-panel {
@@ -328,6 +368,9 @@ onMounted(() => {
   background: #ac99d2;
   box-shadow: none;
   box-sizing: border-box;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: none;
 }
 
 .character-card__surface {
@@ -436,40 +479,16 @@ onMounted(() => {
 
 .character-card__button-surface { display: grid; width: 100%; height: 100%; place-items: center; color: var(--color-primary-dark, #7156ad); background: #eee7fb; }
 
-.character-card__button:hover {
+.character-card:hover .character-card__button {
   color: #ffffff;
   background: var(--color-primary-hover, #7156ad);
   box-shadow: 1px 1px 0 #cbbbe4;
   transform: translate(2px, 2px);
 }
 
-.character-card__button:focus-visible {
+.character-card:focus-visible {
   outline: 3px solid var(--color-focus, rgba(124, 104, 215, 0.28));
   outline-offset: 2px;
-}
-
-.logout-button {
-  --pixel-outline-color: #ac99d2;
-  --pixel-fill: rgba(255, 255, 255, 0.74);
-  min-height: 54px;
-  margin-top: 2px;
-  padding: 2px;
-  border: 0;
-  border-radius: 0;
-  color: #655b6d;
-  background: rgba(255, 255, 255, 0.74);
-  box-shadow: none;
-  filter: none !important;
-  font-weight: 800;
-}
-
-.logout-button-shadow {
-  --yl-stepped-shadow-color: #c8b7e5;
-  --yl-stepped-shadow-offset: 5px;
-}
-
-.logout-button:hover:not(:disabled) {
-  color: var(--color-danger, #e96363);
 }
 
 .withdrawal-content {
@@ -592,9 +611,15 @@ onMounted(() => {
     border-radius: 10px;
   }
 
-  .logout-button {
-    min-height: 48px;
-    border-radius: 14px;
+  .account-exit-bar {
+    min-height: 44px;
+    padding-inline: 10px;
+  }
+
+  .account-exit-bar button {
+    min-width: 0;
+    flex: 1;
+    padding-inline: 10px;
   }
 }
 

@@ -108,9 +108,13 @@
             v-for="settlement in sortedSettlements"
             :key="settlement.settlementId"
             class="settlement-card settlement-stepped-panel settlement-stepped-panel--small"
+            :class="`settlement-card--${settlement.status.toLowerCase()}`"
           >
             <div class="settlement-card__heading">
-              <strong>{{ settlement.round }}라운드</strong>
+              <strong class="settlement-card__round">
+                <span>{{ settlement.round }}</span>
+                라운드
+              </strong>
               <span
                 class="settlement-status"
                 :class="`settlement-status--${settlement.status.toLowerCase()}`"
@@ -496,7 +500,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
 
 .settlement-list {
   display: grid;
-  gap: 11px;
+  gap: 15px;
 }
 
 .settlement-card {
@@ -511,28 +515,58 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 15px;
-  border-bottom: 1px solid #eee9f2;
-  background: #faf8fc;
+  min-height: 48px;
+  padding: 9px 14px;
+  border-bottom: 1px solid #e9e1f0;
+  background: linear-gradient(90deg, #f5effb, #faf8fd);
+  box-sizing: border-box;
 }
 
-.settlement-card__heading > strong {
-  font-size: 13px;
+.settlement-card__round {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #40354d;
+  font-size: 12px;
+}
+
+.settlement-card__round span {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  color: #ffffff;
+  background: #7658b5;
+  font-size: 12px;
+  line-height: 1;
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, calc(100% - 5px) 2px, calc(100% - 2px) 2px, calc(100% - 2px) 5px, 100% 5px, 100% calc(100% - 5px), calc(100% - 2px) calc(100% - 5px), calc(100% - 2px) calc(100% - 2px), calc(100% - 5px) calc(100% - 2px), calc(100% - 5px) 100%, 5px 100%, 5px calc(100% - 2px), 2px calc(100% - 2px), 2px calc(100% - 5px), 0 calc(100% - 5px), 0 5px, 2px 5px, 2px 2px, 5px 2px);
 }
 
 .settlement-status--completed {
   color: #5e4499;
   background: #eee7f8;
+  border: 1px solid #d8c8ed;
 }
 
 .settlement-status--processing {
   color: #8a6519;
   background: #fff5d9;
+  border: 1px solid #efd795;
 }
 
 .settlement-status--pending {
   color: #6f6977;
   background: #efedf1;
+  border: 1px solid #dcd8df;
+}
+
+.settlement-status::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .settlement-card__body {
@@ -540,7 +574,8 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
   align-items: center;
-  padding: 16px;
+  padding: 14px 15px;
+  background: #ffffff;
 }
 
 .account-info {
@@ -556,9 +591,10 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   width: 38px;
   height: 38px;
   place-items: center;
-  border-radius: 12px;
+  border-radius: 0;
   color: var(--color-primary);
   background: var(--color-primary-soft);
+  clip-path: polygon(7px 0, calc(100% - 7px) 0, calc(100% - 7px) 3px, calc(100% - 3px) 3px, calc(100% - 3px) 7px, 100% 7px, 100% calc(100% - 7px), calc(100% - 3px) calc(100% - 7px), calc(100% - 3px) calc(100% - 3px), calc(100% - 7px) calc(100% - 3px), calc(100% - 7px) 100%, 7px 100%, 7px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 7px), 0 calc(100% - 7px), 0 7px, 3px 7px, 3px 3px, 7px 3px);
 }
 
 .account-info > div {
@@ -582,8 +618,11 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
 
 .settlement-amount {
   display: grid;
-  gap: 4px;
+  gap: 2px;
   min-width: 100px;
+  padding: 8px 11px;
+  border-left: 3px solid #c6b4df;
+  background: #f8f4fc;
   text-align: right;
 }
 
@@ -593,7 +632,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
 }
 
 .settlement-amount strong {
-  color: #4e3a68;
+  color: #513b72;
   font-size: clamp(15px, 4vw, 18px);
   letter-spacing: -0.03em;
   white-space: nowrap;
@@ -650,15 +689,14 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
 
 @media (max-width: 420px) {
   .settlement-card__body {
-    grid-template-columns: 1fr;
-    gap: 13px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 9px;
+    padding-inline: 12px;
   }
 
   .settlement-amount {
-    min-width: 0;
-    padding-top: 12px;
-    border-top: 1px solid #eee9f2;
-    text-align: left;
+    min-width: 86px;
+    padding: 7px 8px;
   }
 
   .settlement-amount strong {
@@ -758,6 +796,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
 
 .settlement-stepped-panel {
   --settlement-panel-fill: #ffffff;
+  --settlement-panel-border: #ac99d2;
   position: relative;
   isolation: isolate;
   border: 0 !important;
@@ -778,7 +817,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
 .settlement-stepped-panel::before {
   inset: 0;
   z-index: 0;
-  background: #ac99d2;
+  background: var(--settlement-panel-border);
 }
 
 .settlement-stepped-panel::after {
@@ -799,6 +838,20 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
 
 .settlement-stepped-panel--small {
   filter: drop-shadow(3px 3px 0 #ded3ed);
+}
+
+.settlement-card--processing {
+  --settlement-panel-border: #d59a20;
+  filter: drop-shadow(3px 3px 0 #ead9ad);
+}
+
+.settlement-card--processing .settlement-card__round span {
+  background: #d59a20;
+}
+
+.settlement-card--processing .settlement-amount {
+  border-left-color: #d59a20;
+  background: #fffaf0;
 }
 
 .group-section.settlement-stepped-panel {
