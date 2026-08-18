@@ -14,7 +14,11 @@
                 <p>마감 전 인증을 완료하세요</p>
               </div>
             </div>
-            <button class="action-btn">
+            <button
+              class="action-btn"
+              type="button"
+              @click="goToVerification"
+            >
               <span>인증하기</span>
               <ArrowRight :size="15" :stroke-width="2.4" aria-hidden="true" />
             </button>
@@ -61,11 +65,27 @@
           참여 그룹 없음
         </div>
 
-        <div v-for="group in groups" :key="group.id" class="group-card-shadow yl-stepped-card-shadow">
+        <div
+          v-for="group in groups"
+          :key="group.id"
+          class="group-card-shadow yl-stepped-card-shadow"
+        >
           <div
+            :data-group-id="group.id"
             class="group-card yl-card-frame pixel-step-card pixel-step-solid"
-            :class="{ 'is-completed': group.isCompleted, 'is-pending': group.isPending }"
-            @click="goToGroupDetail(group.id)"
+            :class="{
+              'is-completed': group.isCompleted,
+              'is-pending': group.isPending,
+              'is-recruiting': group.rawStatus === 'RECRUITING',
+              'is-ongoing': group.rawStatus === 'ONGOING',
+              'is-reordering': draggingGroupId === group.id
+            }"
+            draggable="true"
+            @click="handleGroupCardClick(group)"
+            @dragstart="handleGroupDesktopDragStart(group.id, $event)"
+            @dragover.prevent
+            @drop="handleGroupDesktopDrop(group.id)"
+            @dragend="finishGroupDrag"
           >
             <div class="group-card-surface pixel-step-surface">
             <!-- 좌측: 크기를 1/3로 줄인 오버랩 프로필 -->
@@ -106,6 +126,17 @@
                 <path d="M9 18L15 12L9 6" stroke="#999999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
+
+            <span
+              class="group-drag-handle"
+              role="button"
+              aria-label="우하단을 길게 눌러 그룹 순서 변경"
+              @pointerdown.stop="handleGroupPointerDown(group.id, $event)"
+              @click.stop
+              @contextmenu.prevent
+            >
+              <span aria-hidden="true">⠿</span>
+            </span>
             </div>
           </div>
         </div>
@@ -315,7 +346,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import {
   BookOpen,
   ArrowRight,
@@ -330,8 +361,17 @@ import {
 
 import { useRouter } from 'vue-router';
 import BaseModal from '@/components/base/BaseModal.vue';
-import { createGroup as createGroupRequest, getGroupDetail, getGroups, getGroupUsers, joinGroup } from '@/api/group';
+import {
+  createGroup as createGroupRequest,
+  getGroupDetail,
+  getGroups,
+  getGroupUsers,
+  getMyDepositStatus,
+  joinGroup,
+} from '@/api/group';
 import { getMoimAccounts } from '@/api/account';
+import { getGroupRounds } from '@/api/round'
+import { getVerificationFeed } from '@/api/post'
 
 const router = useRouter();
 
@@ -341,13 +381,263 @@ const goToGroupDetail = (groupId) => {
   router.push(`/groups/${groupId}`);
 };
 
+const handleGroupCardClick = (group) => {
+  if (preventNextGroupClick) {
+    preventNextGroupClick = false;
+    return;
+  }
+
+  goToGroupDetail(group.id);
+};
+
 const goToDeposit = () => {
-  router.push({ path: '/asset', query: { tab: 'group' } });
+  if (!unpaidDepositGroup.value?.moimAccountId) return;
+
+  router.push({
+    name: 'MoimAccountDetail',
+    params: {
+      moimAccountId: unpaidDepositGroup.value.moimAccountId,
+    },
+  });
+};
+
+const moveGroup = (targetGroupId) => {
+  if (
+    !targetGroupId ||
+    String(targetGroupId) === String(draggingGroupId.value)
+  ) {
+    return;
+  }
+
+  const fromIndex = groups.value.findIndex(
+    (group) => String(group.id) === String(draggingGroupId.value)
+  );
+
+  const targetIndex = groups.value.findIndex(
+    (group) => String(group.id) === String(targetGroupId)
+  );
+
+  if (fromIndex < 0 || targetIndex < 0) return;
+
+  const [group] = groups.value.splice(fromIndex, 1);
+
+  groups.value.splice(targetIndex, 0, group);
+};
+
+const saveGroupOrder = () => {
+  const expires = new Date(
+    Date.now() + 1000 * 60 * 60 * 24 * 30
+  ).toUTCString();
+
+  document.cookie =
+    `youngly_home_group_order=${encodeURIComponent(
+      JSON.stringify(groups.value.map((group) => group.id))
+    )}; expires=${expires}; path=/; SameSite=Lax`;
+};
+
+const getGroupOrderCookie = () => {
+  const cookiePrefix = 'youngly_home_group_order=';
+
+  const storedCookie = document.cookie
+    .split('; ')
+    .find((cookie) => cookie.startsWith(cookiePrefix));
+
+  if (!storedCookie) return [];
+
+  try {
+    return JSON.parse(
+      decodeURIComponent(
+        storedCookie.slice(cookiePrefix.length)
+      )
+    );
+  } catch {
+    return [];
+  }
+};
+
+const handleGroupDesktopDragStart = (groupId, event) => {
+  if (window.matchMedia('(max-width: 767px)').matches) {
+    event.preventDefault();
+    return;
+  }
+
+  draggingGroupId.value = groupId;
+  preventNextGroupClick = true;
+
+  event.dataTransfer.effectAllowed = 'move';
+};
+
+const handleGroupDesktopDrop = (targetGroupId) => {
+  moveGroup(targetGroupId);
+  finishGroupDrag();
+};
+
+const finishGroupDrag = () => {
+  if (draggingGroupId.value) {
+    saveGroupOrder();
+    draggingGroupId.value = null;
+
+    window.setTimeout(() => {
+      preventNextGroupClick = false;
+    }, 0);
+  }
+};
+
+const handleGroupPointerDown = (groupId, event) => {
+  if (!window.matchMedia('(max-width: 767px)').matches) return;
+
+  if (event.pointerType === 'mouse' || !event.isPrimary) return;
+
+  event.preventDefault();
+
+  clearTimeout(groupLongPressTimer);
+
+  const startX = event.clientX;
+  const startY = event.clientY;
+
+  const cancelLongPress = (moveEvent) => {
+    if (moveEvent.pointerId !== event.pointerId) return;
+
+    if (
+      Math.abs(moveEvent.clientX - startX) > 14 ||
+      Math.abs(moveEvent.clientY - startY) > 14
+    ) {
+      clearTimeout(groupLongPressTimer);
+      removePendingGroupDragListeners();
+    }
+  };
+
+  const cancelPendingDrag = (endEvent) => {
+    if (endEvent.pointerId !== event.pointerId) return;
+
+    clearTimeout(groupLongPressTimer);
+    removePendingGroupDragListeners();
+  };
+
+  const removePendingGroupDragListeners = () => {
+    window.removeEventListener('pointermove', cancelLongPress);
+    window.removeEventListener('pointerup', cancelPendingDrag);
+    window.removeEventListener('pointercancel', cancelPendingDrag);
+  };
+
+  groupLongPressTimer = window.setTimeout(() => {
+    removePendingGroupDragListeners();
+
+    draggingGroupId.value = groupId;
+    mobileGroupDragActive = true;
+    mobileGroupPointerId = event.pointerId;
+    preventNextGroupClick = true;
+
+    navigator.vibrate?.(25);
+
+    window.addEventListener(
+      'pointermove',
+      handleMobileGroupDragMove,
+      { passive: false }
+    );
+
+    window.addEventListener(
+      'pointerup',
+      finishMobileGroupDrag
+    );
+
+    window.addEventListener(
+      'pointercancel',
+      finishMobileGroupDrag
+    );
+  }, 450);
+
+  window.addEventListener(
+    'pointermove',
+    cancelLongPress,
+    { passive: false }
+  );
+
+  window.addEventListener(
+    'pointerup',
+    cancelPendingDrag
+  );
+
+  window.addEventListener(
+    'pointercancel',
+    cancelPendingDrag
+  );
+};
+
+const handleMobileGroupDragMove = (event) => {
+  if (
+    !mobileGroupDragActive ||
+    event.pointerId !== mobileGroupPointerId
+  ) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const edgeSize = 72;
+
+  if (event.clientY < edgeSize) {
+    window.scrollBy({
+      top: -12,
+      behavior: 'auto',
+    });
+  }
+
+  if (event.clientY > window.innerHeight - edgeSize) {
+    window.scrollBy({
+      top: 12,
+      behavior: 'auto',
+    });
+  }
+
+  const targetCard = document
+    .elementFromPoint(event.clientX, event.clientY)
+    ?.closest('[data-group-id]');
+
+  moveGroup(targetCard?.dataset.groupId);
+};
+
+const finishMobileGroupDrag = (event) => {
+  if (
+    event?.pointerId != null &&
+    event.pointerId !== mobileGroupPointerId
+  ) {
+    return;
+  }
+
+  clearTimeout(groupLongPressTimer);
+
+  if (mobileGroupDragActive) {
+    finishGroupDrag();
+  }
+
+  mobileGroupDragActive = false;
+  mobileGroupPointerId = null;
+
+  removeMobileGroupDragListeners();
+};
+
+const removeMobileGroupDragListeners = () => {
+  window.removeEventListener(
+    'pointermove',
+    handleMobileGroupDragMove
+  );
+
+  window.removeEventListener(
+    'pointerup',
+    finishMobileGroupDrag
+  );
+
+  window.removeEventListener(
+    'pointercancel',
+    finishMobileGroupDrag
+  );
 };
 
 // 상단 인증 개수 상태
-const unverifiedCount = ref(1);
-const hasUnpaidDeposit = ref(true);
+const unverifiedCount = ref(0);
+const hasUnpaidDeposit = ref(false);
+const unpaidDepositGroup = ref(null);
 const groupActionModalOpen = ref(false);
 const groupModalOpen = ref(false);
 const accountConnectModalOpen = ref(false);
@@ -387,6 +677,13 @@ const groups = ref([]);
 const groupsLoading = ref(false);
 const groupsError = ref('');
 
+const draggingGroupId = ref(null);
+
+let groupLongPressTimer = null;
+let mobileGroupDragActive = false;
+let mobileGroupPointerId = null;
+let preventNextGroupClick = false;
+
 const categoryLabels = {
   EXERCISE: '운동',
   READING: '독서',
@@ -395,6 +692,10 @@ const categoryLabels = {
   CUSTOM: '기타',
   DRAFT: '기타',
 };
+
+const goToVerification = () => {
+  router.push({ name: 'FeedWrite' })
+}
 
 const statusLabels = {
   RECRUITING: '팀원 모집중',
@@ -450,6 +751,7 @@ const buildGroupCard = async (group) => {
   return {
     id: group.groupId,
     moimAccountId: group.moimAccountId,
+    rawStatus,
     profiles,
     memberCount: joinedCount,
     category: categoryLabels[detail.challengeType || group.challengeType] || '기타',
@@ -474,6 +776,31 @@ const loadGroups = async () => {
     const response = await getGroups();
     const groupList = Array.isArray(response.data) ? response.data : [];
     groups.value = await Promise.all(groupList.map(buildGroupCard));
+
+    const savedGroupOrder = getGroupOrderCookie();
+
+    if (
+      Array.isArray(savedGroupOrder) &&
+      savedGroupOrder.length
+    ) {
+      const orderIndex = new Map(
+        savedGroupOrder.map((id, index) => [
+          String(id),
+          index,
+        ])
+      );
+
+      groups.value.sort(
+        (first, second) =>
+          (orderIndex.get(String(first.id)) ?? Infinity) -
+          (orderIndex.get(String(second.id)) ?? Infinity)
+      );
+    }
+
+      await Promise.all([
+        loadDepositStatus(),
+        loadUnverifiedCount(),
+      ])
   } catch (error) {
     groups.value = [];
     groupsError.value = getGroupLoadErrorMessage(error);
@@ -482,6 +809,98 @@ const loadGroups = async () => {
     groupsLoading.value = false;
   }
 };
+
+const loadUnverifiedCount = async () => {
+  try {
+    const currentUser = JSON.parse(
+      localStorage.getItem('youngly_user') || '{}'
+    )
+
+    if (!currentUser.userId) {
+      unverifiedCount.value = 0
+      return
+    }
+
+    const ongoingGroups = groups.value.filter(
+      (group) =>
+        group.rawStatus === 'ONGOING' &&
+        !group.isPending
+    )
+
+    const today = new Date().toLocaleDateString('sv-SE')
+
+    const results = await Promise.allSettled(
+      ongoingGroups.map(async (group) => {
+        const roundsResponse = await getGroupRounds(group.id)
+
+        const rounds = Array.isArray(roundsResponse.data)
+          ? roundsResponse.data
+          : []
+
+        const currentRound = rounds.find(
+          (round) => round.roundStatus === 'ONGOING'
+        )
+
+        if (!currentRound?.roundId) {
+          return false
+        }
+
+        const feedResponse = await getVerificationFeed({
+          roundId: currentRound.roundId,
+          date: today,
+        })
+
+        const posts = Array.isArray(feedResponse.data)
+          ? feedResponse.data
+          : []
+
+        const hasMyPost = posts.some(
+          (post) =>
+            String(post.userId) === String(currentUser.userId)
+        )
+
+        return !hasMyPost
+      })
+    )
+
+    unverifiedCount.value = results.filter(
+      (result) =>
+        result.status === 'fulfilled' &&
+        result.value === true
+    ).length
+  } catch (error) {
+    console.error('오늘 미인증 개수 조회 실패:', error)
+    unverifiedCount.value = 0
+  }
+}
+
+const loadDepositStatus = async () => {
+  const targetGroups = groups.value.filter(
+    (group) => !group.isPending && group.moimAccountId
+  );
+
+  const results = await Promise.allSettled(
+    targetGroups.map(async (group) => {
+      const response = await getMyDepositStatus(group.id);
+
+      return {
+        group,
+        deposit: response.data,
+      };
+    })
+  );
+
+  const unpaid = results.find(
+    (result) =>
+      result.status === 'fulfilled' &&
+      Number(result.value.deposit?.remainingAmount || 0) > 0
+  );
+
+  hasUnpaidDeposit.value = Boolean(unpaid);
+  unpaidDepositGroup.value = unpaid?.value.group || null;
+};
+
+
 
 // 프로필 배경색 지정 함수
 const getProfileColor = (index) => {
@@ -681,6 +1100,11 @@ const updateDeposit = (event) => {
 };
 
 onMounted(loadGroups);
+
+onBeforeUnmount(() => {
+  clearTimeout(groupLongPressTimer);
+  removeMobileGroupDragListeners();
+});
 </script>
 
 <style scoped>
@@ -816,6 +1240,14 @@ onMounted(loadGroups);
 .group-card.is-completed {
   border: 2px solid #7156AD;
   background-color: #F9F7FC;
+}
+
+/* .group-card.is-recruiting {
+  border: 2px dashed #9b8abf;
+} */
+
+.group-card.is-ongoing {
+  border: 2px solid #7156ad;
 }
 
 .group-card.is-pending {
@@ -2501,5 +2933,17 @@ onMounted(loadGroups);
   background-repeat: no-repeat;
   background-position: right 18px center;
   background-size: 16px 16px;
+}
+
+.group-card.is-recruiting.pixel-step-solid {
+  --pixel-outline-width: 0px;
+  --pixel-outline-color: transparent;
+  padding: 0 !important;
+  border: 2px dashed #8f79b8 !important;
+  background: transparent !important;
+}
+
+.group-card.is-recruiting .group-card-surface {
+  background: #f3f3f3;
 }
 </style>

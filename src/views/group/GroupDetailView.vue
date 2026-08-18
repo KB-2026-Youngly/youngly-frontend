@@ -25,7 +25,11 @@
                   }}</span>
                 </p>
               </div>
-              <button class="account-button" type="button" @click="router.push('/asset')">
+              <button
+  class="account-button"
+  type="button"
+  @click="goToMoimAccount"
+>
                 <Landmark :size="15" :stroke-width="2.2" aria-hidden="true" />
                 <span>모임통장</span>
                 <ArrowRight :size="15" :stroke-width="2.4" aria-hidden="true" />
@@ -90,11 +94,17 @@
         </section>
       </div>
 
-      <div class="day-selector" aria-label="인증 날짜 선택">
-        <button type="button" aria-label="이전 날짜">&lt;</button>
-        <strong>오늘</strong>
-        <button type="button" aria-label="다음 날짜">&gt;</button>
-      </div>
+      <div class="day-selector">
+  <button type="button" @click="changeFeedDate(-1)">&lt;</button>
+
+  <strong>
+    {{ selectedDate === new Date().toLocaleDateString('sv-SE')
+      ? '오늘'
+      : selectedDate }}
+  </strong>
+
+  <button type="button" @click="changeFeedDate(1)">&gt;</button>
+</div>
 
       <section class="feed-list" aria-label="참여자 인증 목록">
         <div
@@ -146,64 +156,57 @@
                   />
                   <div class="verification-shade"></div>
                   <p class="verification-message">{{ member.message }}</p>
-                  <div v-if="!member.isMe && !member.reviewStatus" class="review-actions">
-                    <button
-                      type="button"
-                      class="reject-button"
-                      @click.stop="openRejectModal(member)"
+
+                  <div
+                        v-if="
+                          !member.isMe &&
+                          !member.reviewStatus &&
+                          !member.myApproval
+                        "
+                        class="review-deadline"
+                      >
+                        승인/반려 마감 {{ getReviewCountdown(member) }}
+                      </div>
+                  <div
+                      v-if="
+                        !member.isMe &&
+                        !member.reviewStatus &&
+                        !member.myApproval &&
+                        !isReviewExpired(member)
+                      "
+                      class="review-actions"
                     >
+                    <button type="button" class="reject-button" @click.stop="openRejectModal(member)">
                       <X :size="14" :stroke-width="2.5" aria-hidden="true" />
                       <span>반려</span>
                     </button>
-                    <button
-                      type="button"
-                      class="approve-button"
-                      @click.stop="reviewVerification(member, 'approved')"
-                    >
+                    <button type="button" class="approve-button" @click.stop="reviewVerification(member)">
                       <Check :size="14" :stroke-width="2.5" aria-hidden="true" />
                       <span>승인</span>
                     </button>
-                  </div>
-                  <div v-if="member.reviewStatus" class="post-engagement" aria-label="게시글 반응">
-                    <button
-                      class="engagement-item"
-                      type="button"
-                      :aria-label="`댓글 ${member.commentCount}개, 상세 보기`"
-                      @click.stop="openPostDetail(member)"
-                    >
-                      <span class="engagement-icon"
-                        ><MessageCircle :size="23" :stroke-width="2.2" aria-hidden="true"
-                      /></span>
-                      <b>{{ member.commentCount }}</b>
-                    </button>
-                    <button
-                      class="engagement-item"
-                      :class="{ 'is-active': member.myReaction === 'like' }"
-                      type="button"
-                      :aria-pressed="member.myReaction === 'like'"
-                      :aria-label="`좋아요 ${member.likeCount}개`"
-                      @click.stop="toggleFeedReaction(member, 'like')"
-                    >
-                      <span class="engagement-icon"
-                        ><ThumbsUp :size="23" :stroke-width="2.2" aria-hidden="true"
-                      /></span>
-                      <b>{{ member.likeCount }}</b>
-                    </button>
-                    <button
-                      class="engagement-item"
-                      :class="{ 'is-active': member.myReaction === 'dislike' }"
-                      type="button"
-                      :aria-pressed="member.myReaction === 'dislike'"
-                      :aria-label="`싫어요 ${member.dislikeCount}개`"
-                      @click.stop="toggleFeedReaction(member, 'dislike')"
-                    >
-                      <span class="engagement-icon"
-                        ><ThumbsDown :size="23" :stroke-width="2.2" aria-hidden="true"
-                      /></span>
-                      <b>{{ member.dislikeCount }}</b>
-                    </button>
-                  </div>
-                  <div v-if="member.reviewStatus" class="latest-comment-row">
+                </div>
+                <div
+  v-if="member.reviewStatus === 'approved'"
+  class="post-engagement"
+  aria-label="게시글 반응"
+>
+                  <button class="engagement-item" type="button" :aria-label="`댓글 ${member.commentCount}개, 상세 보기`" @click.stop="openPostDetail(member)">
+                    <span class="engagement-icon"><MessageCircle :size="23" :stroke-width="2.2" aria-hidden="true" /></span>
+                    <b>{{ member.commentCount }}</b>
+                  </button>
+                  <button class="engagement-item" :class="{ 'is-active': member.myReaction === 'like' }" type="button" :aria-pressed="member.myReaction === 'like'" :aria-label="`좋아요 ${member.likeCount}개`" @click.stop="toggleFeedReaction(member, 'like')">
+                    <span class="engagement-icon"><ThumbsUp :size="23" :stroke-width="2.2" aria-hidden="true" /></span>
+                    <b>{{ member.likeCount }}</b>
+                  </button>
+                  <button class="engagement-item" :class="{ 'is-active': member.myReaction === 'dislike' }" type="button" :aria-pressed="member.myReaction === 'dislike'" :aria-label="`싫어요 ${member.dislikeCount}개`" @click.stop="toggleFeedReaction(member, 'dislike')">
+                    <span class="engagement-icon"><ThumbsDown :size="23" :stroke-width="2.2" aria-hidden="true" /></span>
+                    <b>{{ member.dislikeCount }}</b>
+                  </button>
+                </div>
+                  <div
+  v-if="member.reviewStatus === 'approved'"
+  class="latest-comment-row"
+>
                     <span
                       class="latest-comment-avatar"
                       :title="member.latestCommentAuthor || '김민준'"
@@ -221,18 +224,19 @@
                   </span>
                 </div>
                 <button
-                  v-else
-                  type="button"
-                  class="pending-verification"
-                  @click="handlePendingCard(member)"
-                >
-                  <strong>{{
-                    member.isMe ? '눌러서 인증하러 가기 📷 ›' : '눌러서 깨우기 ⏰ ›'
-                  }}</strong>
-                  <span :class="{ 'deadline-text': member.isMe }">{{
-                    member.isMe ? '23:14:32' : 'ZZZ...'
-                  }}</span>
-                </button>
+
+  v-else
+  type="button"
+  class="pending-verification"
+  @click="handlePendingCard(member)"
+>
+  <strong>
+    {{ member.isMe
+      ? '눌러서 인증하러 가기 📷 ›'
+      : '눌러서 깨우기 ⏰ ›'
+    }}
+  </strong>
+</button>
               </template>
               <p v-else class="sleep-message">ZZZ...</p>
               <span
@@ -448,7 +452,7 @@
             <li v-for="member in editMembers" :key="`edit-${member.name}`">
               <span class="member-editor-avatar">{{ member.initial }}</span>
               <strong>{{ member.isMe ? 'Yuna Park' : member.name }}</strong>
-              <button type="button" @click="removeMember(member.name)">내보내기</button>
+              <button type="button" @click="removeMember(member)">내보내기</button>
             </li>
           </ul>
         </section>
@@ -549,17 +553,10 @@
           <strong>{{ selectedPost.message }}</strong>
         </div>
         <div class="post-reaction-info">
-          <span class="post-approval-status"
-            >승인 {{ selectedPost.approvalCount }}/6명 · 과반수 승인 완료</span
-          >
-          <p>
-            <b>좋아요 {{ postLikes.length }}</b
-            >{{ postLikes.join(', ') }}
-          </p>
-          <p>
-            <b>싫어요 {{ postDislikes.length }}</b
-            >{{ postDislikes.join(', ') }}
-          </p>
+
+          <span class="post-approval-status">승인 {{ selectedPost.approvalCount }}/{{ groupInfo.memberCount }}명 · 과반수 승인 완료</span>
+          <p><b>좋아요 {{ postLikes.length }}</b>{{ postLikes.join(', ') }}</p>
+          <p><b>싫어요 {{ postDislikes.length }}</b>{{ postDislikes.join(', ') }}</p>
         </div>
         <section class="post-comments" aria-label="댓글">
           <h3>
@@ -625,115 +622,86 @@ import {
   X,
 } from 'lucide-vue-next'
 import BaseModal from '@/components/base/BaseModal.vue'
-import { getGroupDetail } from '@/api/group'
-import { getGroupRounds, getRoundRanking, getRoundSettlements } from '@/api/round'
-import { getMyCertificationPosts } from '@/api/post'
+import {
+  getGroupDetail,
+  getGroupUsers,
+  kickGroupUser,
+  updateGroup,
+} from '@/api/group'
+
+import {
+  createGroupRound,
+  getGroupRounds,
+  getRoundRanking,
+  getRoundSettlements,
+} from '@/api/round'
+
+import {
+  getVerificationFeed,
+  getVerificationPostDetail,
+  reviewVerificationPost,
+  createPostComment,
+  setPostReaction,
+  deletePostReaction,
+  deleteVerificationPost,
+  getMyCertificationPosts,
+} from '@/api/post'
+
 import { useUserStore } from '@/stores/user'
-import verificationImageOne from '@/assets/photos/excercise/KakaoTalk_Photo_2026-08-08-01-50-24.jpeg'
-import verificationImageTwo from '@/assets/photos/excercise/KakaoTalk_Photo_2026-08-08-01-49-38.jpeg'
-import verificationImageThree from '@/assets/photos/excercise/KakaoTalk_Photo_2026-08-08-01-49-11.jpeg'
-const members = reactive([
-  {
-    name: '김민준',
-    initial: '김',
-    isMe: true,
-    progress: 72,
-    completedCount: 4,
-    averageRate: 72,
-    isVerified: false,
-  },
-  {
-    name: '허경민',
-    initial: '허',
-    isMe: false,
-    progress: 68,
-    completedCount: 5,
-    averageRate: 68,
-    isVerified: true,
-    image: verificationImageOne,
-    message: '운오완',
-    commentCount: 4,
-    likeCount: 3,
-    dislikeCount: 1,
-    latestComment: '꾸준함이 최고입니다!',
-    latestCommentAuthor: '신성욱',
-    latestCommentInitial: '신',
-  },
-  {
-    name: '신성욱',
-    initial: '신',
-    isMe: false,
-    progress: 55,
-    completedCount: 5,
-    averageRate: 78,
-    isVerified: true,
-    image: verificationImageTwo,
-    message: '오운완. 돈줘 빼액~',
-    commentCount: 4,
-    likeCount: 3,
-    dislikeCount: 1,
-    latestComment: '도웅하지마라.',
-    latestCommentAuthor: '김민준',
-    latestCommentInitial: '김',
-  },
-  {
-    name: '김상우',
-    initial: '김',
-    isMe: false,
-    progress: 45,
-    completedCount: 3,
-    averageRate: 45,
-    isVerified: false,
-  },
-  {
-    name: '여강휘',
-    initial: '여',
-    isMe: false,
-    progress: 72,
-    completedCount: 2,
-    averageRate: 40,
-    isVerified: true,
-    image: verificationImageThree,
-    message: '^^b',
-    commentCount: 2,
-    likeCount: 2,
-    dislikeCount: 0,
-    latestComment: '오늘도 수고했어요!',
-    latestCommentAuthor: '김효민',
-    latestCommentInitial: '김',
-  },
-  {
-    name: '김효민',
-    initial: '김',
-    isMe: false,
-    progress: 35,
-    completedCount: 1,
-    averageRate: 28,
-    isVerified: false,
-  },
-])
+
+const members = reactive([])
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-const challengeStarted = computed(() => groupInfo.status === 'ONGOING')
-const challengeDay = 20
-const challengeDuration = computed(() => groupInfo.roundCycleDays || 30)
-const postMajorityApproved = true
-const displayedMembers = computed(() => (allMembersJoined.value ? members : members.slice(0, 1)))
-
-const rankingSegments = computed(() => (allMembersJoined.value ? members.length : 4))
-
-const myProgress = computed(() => members.find((member) => member.isMe)?.progress ?? 0)
-const rankedMembers = computed(() =>
-  [...members].sort((a, b) => b.completedCount - a.completedCount || b.averageRate - a.averageRate),
+const challengeStarted = computed(
+  () => currentRound.value?.roundStatus === 'ONGOING'
 )
+
+const challengeDay = computed(() => {
+  if (!currentRound.value?.startDate) return 0
+
+  const start = new Date(`${currentRound.value.startDate}T00:00:00`)
+  const today = new Date()
+
+  start.setHours(0, 0, 0, 0)
+  today.setHours(0, 0, 0, 0)
+
+  return Math.max(
+    1,
+    Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1
+  )
+})
+
+const challengeDuration = 28
+
+const displayedMembers = computed(() =>
+  allMembersJoined.value ? members : members.slice(0, 1)
+)
+
+const goToMoimAccount = () => {
+  if (!groupInfo.moimAccountId) return
+
+  router.push({
+    name: 'MoimAccountDetail',
+    params: {
+      moimAccountId: groupInfo.moimAccountId,
+    },
+  })
+}
+
+// const rankingSegments = computed(() => (allMembersJoined.value ? members.length : 4))
+
+// const myProgress = computed(() => members.find((member) => member.isMe)?.progress ?? 0)
+// const rankedMembers = computed(() =>
+//   [...members].sort((a, b) => b.completedCount - a.completedCount || b.averageRate - a.averageRate),
+// )
 const inviteCode = ref('A7K2P9')
 const inviteModalOpen = ref(false)
 const copyComplete = ref(false)
 const isOwner = ref(route.query.owner !== 'false')
 const startDateModalOpen = ref(false)
-const startDate = ref('2026-07-24')
+const startDate = ref('')
 const startDateConfigured = ref(false)
 const rankingModalOpen = ref(false)
 const rankingRounds = ref([])
@@ -831,13 +799,11 @@ const rankingRemainingLabel = computed(() => {
 })
 const postDetailOpen = ref(false)
 const selectedPost = ref(null)
-const postLikes = ['김민준', '신성욱', '여강휘', '김효민']
-const postDislikes = ['김상우']
-const postComments = ref([
-  { id: 1, author: '김민준', text: ' 오늘도 운동 완료! 멋져요 🙌' },
-  { id: 2, author: '신성욱', text: ' 꾸준함이 최고입니다!' },
-  { id: 3, author: '여강휘', text: ' 내일도 같이 달려요!' },
-])
+
+const postLikes = ref([])
+const postDislikes = ref([])
+const postComments = ref([])
+
 const newPostComment = ref('')
 const rejectModalOpen = ref(false)
 const rejectReason = ref('')
@@ -862,6 +828,13 @@ const groupCategories = [
   { name: '습관', icon: CalendarCheck2 },
   { name: '기타', icon: Shapes },
 ]
+const categoryValues = {
+  운동: 'EXERCISE',
+  독서: 'READING',
+  공부: 'STUDY',
+  습관: 'HABIT',
+  기타: 'CUSTOM',
+}
 const groupEditForm = reactive({
   title: '30일 매일 운동 챌린지',
   category: '운동',
@@ -881,8 +854,59 @@ const groupInfo = reactive({
   memberLimit: 6,
   memberCount: 0,
   durationDays: 7,
-  roundCycleDays: 30,
+  roundCycleDays: 28,
+  moimAccountId: '',
+  futureDepositRatioRule: '',
 })
+
+const now = ref(new Date())
+
+let countdownTimer = null
+
+const getReviewDeadline = (member) => {
+  if (!member?.createdAt) return null
+
+  const created = new Date(member.createdAt)
+
+  const deadline = new Date(
+    created.getFullYear(),
+    created.getMonth(),
+    created.getDate() + 2,
+    0,
+    0,
+    0
+  )
+
+  return deadline
+}
+
+const getReviewCountdown = (member) => {
+  const deadline = getReviewDeadline(member)
+
+  if (!deadline) return ''
+
+  const diff = deadline.getTime() - now.value.getTime()
+
+  if (diff <= 0) return '마감'
+
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  const minutes = Math.floor((diff / (1000 * 60)) % 60)
+  const seconds = Math.floor((diff / 1000) % 60)
+
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+}
+
+const isReviewExpired = (member) => {
+  const deadline = getReviewDeadline(member)
+
+  if (!deadline) return true
+
+  return now.value >= deadline
+}
+
+const selectedDate = ref(
+  new Date().toLocaleDateString('sv-SE')
+)
 
 const inviteSlots = computed(() => {
   const maxCount = Number(groupInfo.memberLimit) || 0
@@ -919,6 +943,7 @@ const syncGroupHeader = () => {
     goal: groupInfo.goal,
     category: groupInfo.category,
     status: groupInfo.status,
+    memberCount: groupInfo.memberCount,
     memberLimit: groupInfo.memberLimit,
     isOwner: isOwner.value,
     weeklyCount: groupEditForm.weeklyCount,
@@ -937,11 +962,14 @@ const applyGroupDetail = (detail) => {
   groupInfo.category = categoryNames[detail.challengeType] || '기타'
   groupInfo.status = detail.groupStatus || 'RECRUITING'
   groupInfo.memberLimit = Number(detail.groupCount) || groupInfo.memberLimit
+  groupInfo.moimAccountId = detail.moimAccountId || ''
 
   groupInfo.memberCount = Number(detail.memberCount) || 0
 
   groupInfo.durationDays = Number(detail.durationDays) || groupInfo.durationDays
   groupInfo.roundCycleDays = Number(detail.roundCycleDays) || groupInfo.roundCycleDays
+  groupInfo.futureDepositRatioRule =
+  detail.futureDepositRatioRule || ''
 
   groupEditForm.title = groupInfo.title
   groupEditForm.category = groupInfo.category
@@ -949,6 +977,8 @@ const applyGroupDetail = (detail) => {
   groupEditForm.goal = groupInfo.goal
   groupEditForm.deposit = Number(detail.baseDepositAmount) || 0
   groupEditForm.additionalRule = detail.customRule || ''
+  groupEditForm.failurePassCount =
+  Number(detail.defaultFailPassCount) || 0
 
   inviteCode.value = detail.inviteCode || ''
   isOwner.value = Boolean(detail.inviteCode)
@@ -970,6 +1000,119 @@ const loadGroupInfo = async () => {
     console.error('그룹 상세 조회 실패:', error)
   } finally {
     groupLoading.value = false
+  }
+}
+
+// const loadCurrentRound = async () => {
+//   const groupId = String(route.params.id || '')
+//   if (!groupId) return
+
+//   try {
+//     const response = await getGroupRounds(groupId)
+//     const rounds = Array.isArray(response.data) ? response.data : []
+
+//     currentRound.value =
+//       rounds.find((round) => round.roundStatus === 'ONGOING') ||
+//       rounds[0] ||
+//       null
+//   } catch (error) {
+//     console.error('현재 라운드 조회 실패:', error)
+//     currentRound.value = null
+//   }
+// }
+
+const loadGroupMembers = async () => {
+  const groupId = String(route.params.id || '')
+  if (!groupId) return
+
+  try {
+    const response = await getGroupUsers(groupId)
+
+    const currentUser = JSON.parse(
+  localStorage.getItem('youngly_user') || '{}'
+)
+
+const loadedMembers = (response.data || []).map((member) => ({
+  groupUserId: member.groupUserId,
+  userId: member.userId,
+  name: member.nickname,
+  initial: member.nickname?.charAt(0) || '',
+  profileImageUrl: member.profileImageUrl,
+  isLeader: member.leader,
+
+  // 로그인한 사용자와 비교
+  isMe: String(member.userId) === String(currentUser.userId),
+}))
+
+    members.splice(0, members.length, ...loadedMembers)
+    editMembers.splice(
+      0,
+      editMembers.length,
+      ...loadedMembers.map((member) => ({ ...member }))
+    )
+
+    groupInfo.memberCount = loadedMembers.length
+  } catch (error) {
+    console.error('그룹 참여자 조회 실패:', error)
+  }
+}
+
+const loadVerificationFeed = async () => {
+  if (!currentRound.value?.roundId) return
+
+  try {
+    const response = await getVerificationFeed({
+      roundId: currentRound.value.roundId,
+      date: selectedDate.value,
+    })
+
+    const posts = Array.isArray(response.data)
+      ? response.data
+      : []
+
+    // 먼저 모든 참여자를 미인증 상태로 초기화
+    members.forEach((member) => {
+      member.isVerified = false
+      member.postId = null
+      member.image = null
+      member.message = ''
+      member.commentCount = 0
+      member.likeCount = 0
+      member.dislikeCount = 0
+      member.reviewStatus = ''
+      member.myReaction = null
+      member.myApproval = null
+    })
+
+    // 해당 날짜에 인증한 참여자 정보 덮어쓰기
+    posts.forEach((post) => {
+      const member = members.find(
+        (item) => String(item.userId) === String(post.userId)
+      )
+
+      if (!member) return
+
+      member.postId = post.postId
+      member.isVerified = true
+      member.image = post.photoUrl
+      member.message = post.content
+      member.commentCount = post.commentCount || 0
+      member.likeCount = post.likeCount || 0
+      member.dislikeCount = post.dislikeCount || 0
+      member.latestComment = post.latestCommentContent || ''
+      member.myReaction = post.myReaction?.toLowerCase() || null
+      member.myApproval = post.myApproval || null
+      member.createdAt = post.postedAt
+
+      member.reviewStatus =
+        post.postStatus === 'APPROVED'
+          ? 'approved'
+          : post.postStatus === 'REJECTED'
+            ? 'rejected'
+            : ''
+    })
+  } catch (error) {
+    console.error('인증 피드 조회 실패:', error)
   }
 }
 
@@ -1135,8 +1278,30 @@ const roundStatusLabel = (status) =>
   status ||
   '상태 확인 중'
 
-const setStartDate = () => {
-  startDateConfigured.value = true
+const setStartDate = async () => {
+  if (!startDate.value) return
+
+  const groupId = String(route.params.id || '')
+  if (!groupId) return
+
+  try {
+    await createGroupRound(groupId, {
+      startDate: startDate.value,
+    })
+
+    startDateConfigured.value = true
+
+    // 생성된 라운드 다시 조회
+    await loadCurrentRoundOverview()
+    await loadVerificationFeed()
+  } catch (error) {
+    console.error('시작 날짜 설정 실패:', error)
+
+    alert(
+      error?.response?.data?.message ||
+      '시작 날짜를 설정하지 못했습니다.'
+    )
+  }
 }
 
 const handlePendingCard = (member) => {
@@ -1148,8 +1313,21 @@ const handlePendingCard = (member) => {
   alert(`${member.name}님을 깨웠습니다! (mock)`)
 }
 
-const reviewVerification = (member, status) => {
-  member.reviewStatus = status
+const reviewVerification = async (member) => {
+  if (!member?.postId) return
+
+  try {
+    await reviewVerificationPost({
+      postId: member.postId,
+      approvalStatus: 'APPROVE',
+    })
+
+
+    await loadVerificationFeed()
+  } catch (error) {
+    console.error('인증 승인 실패:', error)
+    alert(error?.response?.data?.message || '승인 처리에 실패했습니다.')
+  }
 }
 
 const getReviewState = (member) => {
@@ -1164,13 +1342,25 @@ const openRejectModal = (member) => {
   rejectModalOpen.value = true
 }
 
-const submitRejection = () => {
-  if (!rejectingMember.value || !rejectReason.value) return
-  rejectingMember.value.reviewStatus = 'rejected'
-  rejectingMember.value.latestComment = `반려 사유: ${rejectReason.value}`
-  rejectingMember.value.latestCommentAuthor = '김민준'
-  rejectingMember.value.latestCommentInitial = '김'
-  rejectModalOpen.value = false
+const submitRejection = async () => {
+  if (!rejectingMember.value?.postId || !rejectReason.value) return
+
+  try {
+    await reviewVerificationPost({
+      postId: rejectingMember.value.postId,
+      approvalStatus: 'REJECT',
+      rejectReason: rejectReason.value,
+    })
+
+    rejectModalOpen.value = false
+    rejectingMember.value = null
+    rejectReason.value = ''
+
+    await loadVerificationFeed()
+  } catch (error) {
+    console.error('인증 반려 실패:', error)
+    alert(error?.response?.data?.message || '반려 처리에 실패했습니다.')
+  }
 }
 
 const resetRejectModal = () => {
@@ -1181,56 +1371,149 @@ const resetRejectModal = () => {
   rejectReason.value = ''
 }
 
-const openPostDetail = (member) => {
-  if (!member.isVerified || !postMajorityApproved) return
-  selectedPost.value = { ...member, approvalCount: 4 }
-  postDetailOpen.value = true
-}
+const openPostDetail = async (member) => {
+  if (!member?.postId) return
 
-const toggleFeedReaction = (member, reaction) => {
-  const countKey = reaction === 'like' ? 'likeCount' : 'dislikeCount'
-  const previousReaction = member.myReaction
+  try {
+    const response = await getVerificationPostDetail(member.postId)
+    const detail = response.data
 
-  if (previousReaction === reaction) {
-    member[countKey] = Math.max(0, (member[countKey] || 0) - 1)
-    member.myReaction = null
-    return
+    selectedPost.value = {
+      ...member,
+      approvalCount: detail.approveCount || 0,
+      rejectCount: detail.rejectCount || 0,
+      postStatus: detail.postStatus,
+    }
+
+    postLikes.value = (detail.likers || []).map(
+      (user) => user.nickname
+    )
+
+    postDislikes.value = (detail.dislikers || []).map(
+      (user) => user.nickname
+    )
+
+    postComments.value = (detail.comments || []).map(
+      (comment) => ({
+        id: comment.postCommentId,
+        author: comment.nickname,
+        text: comment.content,
+      })
+    )
+
+    postDetailOpen.value = true
+  } catch (error) {
+    console.error('게시글 상세 조회 실패:', error)
   }
+}
 
-  if (previousReaction) {
-    const previousCountKey = previousReaction === 'like' ? 'likeCount' : 'dislikeCount'
-    member[previousCountKey] = Math.max(0, (member[previousCountKey] || 0) - 1)
+const toggleFeedReaction = async (member, reaction) => {
+  if (!member?.postId) return
+
+  try {
+    const previousReaction = member.myReaction
+
+    if (previousReaction === reaction) {
+      await deletePostReaction(member.postId)
+    } else {
+      await setPostReaction({
+        postId: member.postId,
+        reactionType: reaction.toUpperCase(),
+      })
+    }
+
+    await loadVerificationFeed()
+  } catch (error) {
+    console.error('좋아요/싫어요 처리 실패:', error)
+
+    alert(
+      error?.response?.data?.message ||
+      '반응 처리에 실패했습니다.'
+    )
   }
-
-  member[countKey] = (member[countKey] || 0) + 1
-  member.myReaction = reaction
 }
 
-const addPostComment = () => {
-  if (!newPostComment.value) return
-  postComments.value.push({ id: Date.now(), author: '김민준', text: ` ${newPostComment.value}` })
-  newPostComment.value = ''
+const addPostComment = async () => {
+  if (!newPostComment.value || !selectedPost.value?.postId) return
+
+  try {
+    await createPostComment({
+      postId: selectedPost.value.postId,
+      content: newPostComment.value,
+    })
+
+    newPostComment.value = ''
+
+    // 댓글 등록 후 상세 다시 조회
+    await openPostDetail(selectedPost.value)
+  } catch (error) {
+    console.error('댓글 등록 실패:', error)
+
+    alert(
+      error?.response?.data?.message ||
+      '댓글 등록에 실패했습니다.'
+    )
+  }
 }
 
-const deleteOwnPost = () => {
-  if (!selectedPost.value?.isMe) return
+const deleteOwnPost = async () => {
+  if (!selectedPost.value?.isMe || !selectedPost.value?.postId) return
   if (!window.confirm('이 인증 게시글을 삭제할까요?')) return
 
-  const ownMember = members.find((member) => member.isMe && member.name === selectedPost.value.name)
-  if (!ownMember) return
+  try {
+    await deleteVerificationPost(selectedPost.value.postId)
 
-  ownMember.isVerified = false
-  delete ownMember.image
-  delete ownMember.message
-  delete ownMember.reviewStatus
-  localStorage.removeItem('youngly_group_verification')
-  postDetailOpen.value = false
-  selectedPost.value = null
+    postDetailOpen.value = false
+    selectedPost.value = null
+
+    // 현재 날짜 피드 다시 조회
+    await loadVerificationFeed()
+  } catch (error) {
+    console.error('인증글 삭제 실패:', error)
+
+    alert(
+      error?.response?.data?.message ||
+      '인증글 삭제에 실패했습니다.'
+    )
+  }
 }
 
-const removeMember = (name) => {
-  const index = editMembers.findIndex((member) => member.name === name)
-  if (index >= 0) editMembers.splice(index, 1)
+const removeMember = async (member) => {
+  if (!member?.groupUserId) return
+
+  if (!window.confirm(`${member.name}님을 내보낼까요?`)) return
+
+  try {
+    await kickGroupUser(
+      String(route.params.id || ''),
+      member.groupUserId
+    )
+
+    const index = editMembers.findIndex(
+      (item) => item.groupUserId === member.groupUserId
+    )
+
+    if (index >= 0) {
+      editMembers.splice(index, 1)
+    }
+
+    const memberIndex = members.findIndex(
+      (item) => item.groupUserId === member.groupUserId
+    )
+
+    if (memberIndex >= 0) {
+      members.splice(memberIndex, 1)
+    }
+
+    groupInfo.memberCount = members.length
+  } catch (error) {
+    console.error('참여자 내보내기 실패:', error)
+
+    alert(
+      error?.response?.data?.message ||
+      '참여자를 내보내지 못했습니다.'
+    )
+  }
 }
 
 const handleFeedCardClick = (member) => {
@@ -1238,6 +1521,9 @@ const handleFeedCardClick = (member) => {
     preventNextFeedClick = false
     return
   }
+
+  if (member.reviewStatus !== 'approved') return
+
   openPostDetail(member)
 }
 
@@ -1368,13 +1654,36 @@ const updateGroupDeposit = (event) => {
   groupEditForm.deposit = Number(event.target.value.replace(/[^0-9]/g, '')) || 0
 }
 
-const saveGroupEdit = () => {
-  members.splice(0, members.length, ...editMembers.map((member) => ({ ...member })))
-  groupInfo.title = groupEditForm.title
-  groupInfo.goal = groupEditForm.goal
-  groupInfo.category = groupEditForm.category
-  syncGroupHeader()
-  groupEditComplete.value = true
+const saveGroupEdit = async () => {
+  const groupId = String(route.params.id || '')
+  if (!groupId) return
+
+  try {
+    await updateGroup(groupId, {
+      groupName: groupEditForm.title,
+      challengeType: categoryValues[groupEditForm.category],
+      content: groupEditForm.goal,
+      minCount: groupEditForm.weeklyCount,
+      baseDepositAmount: groupEditForm.deposit,
+      defaultFailPassCount: groupEditForm.failurePassCount,
+      customRule: groupEditForm.additionalRule,
+
+      // 기존 설정 유지
+      durationDays: groupInfo.durationDays,
+      roundCycleDays: groupInfo.roundCycleDays,
+      futureDepositRatioRule: groupInfo.futureDepositRatioRule,
+    })
+
+    await loadGroupInfo()
+
+    groupEditComplete.value = true
+  } catch (error) {
+    console.error('그룹 수정 실패:', error)
+    alert(
+      error?.response?.data?.message ||
+      '그룹 수정에 실패했습니다.'
+    )
+  }
 }
 
 const closeGroupEdit = () => {
@@ -1519,6 +1828,16 @@ const endGroupEditSwipe = () => {
   window.setTimeout(() => resetGroupEditSheetStyles(state.sheet, state.overlay), 390)
 }
 
+// 날짜 이동 함수
+const changeFeedDate = async (days) => {
+  const date = new Date(`${selectedDate.value}T00:00:00`)
+  date.setDate(date.getDate() + days)
+
+  selectedDate.value = date.toLocaleDateString('sv-SE')
+
+  await loadVerificationFeed()
+}
+
 const cancelGroupEditSwipe = () => {
   const state = groupEditSwipeState
   if (!state) return
@@ -1542,6 +1861,8 @@ watch(
     if (groupId && groupId !== previousGroupId) {
       await loadGroupInfo()
       await loadCurrentRoundOverview()
+      await loadGroupMembers()
+      await loadVerificationFeed()
     }
   },
 )
@@ -1591,6 +1912,13 @@ onMounted(async () => {
 
   await loadGroupInfo()
   await loadCurrentRoundOverview()
+  await loadGroupMembers()
+  await loadVerificationFeed()
+
+  countdownTimer = setInterval(() => {
+  now.value = new Date()
+  }, 1000)
+
 })
 
 onBeforeUnmount(() => {
@@ -1598,6 +1926,10 @@ onBeforeUnmount(() => {
   clearTimeout(groupEditCloseTimer)
   removeMobileFeedDragListeners()
   unbindGroupEditSheetGestures()
+
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+  }
 })
 </script>
 
