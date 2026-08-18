@@ -1,5 +1,6 @@
 import apiClient from './client'
 
+export const getMyCertificationPosts = (params) => apiClient.get('/posts/mine', { params })
 export function getVerificationFeed({ roundId, date }) {
   return apiClient.get(`/posts/groups/${roundId}`, {
     params: { date },
