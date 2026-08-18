@@ -38,6 +38,16 @@ html body,
   font-family: 'YounglyNeoPixel', monospace !important;
 }
 
+/* KB 로그인·뱅킹 홈은 은행 기본 UI 글꼴을 사용합니다. */
+:root body #app .first-login,
+:root body #app .first-login *,
+:root body #app .bank-home,
+:root body #app .bank-home *,
+:root body #app .onboarding-page,
+:root body #app .onboarding-page * {
+  font-family: Pretendard, 'Noto Sans KR', Arial, sans-serif !important;
+}
+
 .youngly-service {
   --app-background: var(--yl-purple-light);
   min-height: 100vh;

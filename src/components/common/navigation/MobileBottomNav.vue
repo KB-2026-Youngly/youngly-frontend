@@ -89,7 +89,7 @@ export default {
   z-index: 999;
   image-rendering: pixelated;
   background-color: #ffffff;
-  border-top: 1px solid #2d1f4f;
+  border-top: 2px solid #2d1f4f;
   transition: all 0.2s ease;
   transform: translateZ(0);
   backface-visibility: hidden;
@@ -162,8 +162,8 @@ export default {
 
 /* 계단식 (픽셀) 원형 형태의 카메라 인증 버튼 */
 .circle-camera-btn {
-  width: 54px;
-  height: 54px;
+  width: 58px;
+  height: 58px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -172,36 +172,7 @@ export default {
   padding: 0;
   background-color: #2d1f4f;
   border: none;
-  clip-path: polygon(
-    14px 0,
-    calc(100% - 14px) 0,
-    calc(100% - 14px) 3px,
-    calc(100% - 8px) 3px,
-    calc(100% - 8px) 8px,
-    calc(100% - 3px) 8px,
-    calc(100% - 3px) 14px,
-    100% 14px,
-    100% calc(100% - 14px),
-    calc(100% - 3px) calc(100% - 14px),
-    calc(100% - 3px) calc(100% - 8px),
-    calc(100% - 8px) calc(100% - 8px),
-    calc(100% - 8px) calc(100% - 3px),
-    calc(100% - 14px) calc(100% - 3px),
-    calc(100% - 14px) 100%,
-    14px 100%,
-    14px calc(100% - 3px),
-    8px calc(100% - 3px),
-    8px calc(100% - 8px),
-    3px calc(100% - 8px),
-    3px calc(100% - 14px),
-    0 calc(100% - 14px),
-    0 14px,
-    3px 14px,
-    3px 8px,
-    8px 8px,
-    8px 3px,
-    14px 3px
-  );
+  border-radius: 50%;
   transition: transform 0.15s ease;
 }
 
@@ -210,42 +181,13 @@ export default {
 }
 
 .circle-inner {
-  width: 52px;
-  height: 52px;
+  width: 54px;
+  height: 54px;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: #ffffff;
-  clip-path: polygon(
-    13px 0,
-    calc(100% - 13px) 0,
-    calc(100% - 13px) 3px,
-    calc(100% - 7px) 3px,
-    calc(100% - 7px) 7px,
-    calc(100% - 3px) 7px,
-    calc(100% - 3px) 13px,
-    100% 13px,
-    100% calc(100% - 13px),
-    calc(100% - 3px) calc(100% - 13px),
-    calc(100% - 3px) calc(100% - 7px),
-    calc(100% - 7px) calc(100% - 7px),
-    calc(100% - 7px) calc(100% - 3px),
-    calc(100% - 13px) calc(100% - 3px),
-    calc(100% - 13px) 100%,
-    13px 100%,
-    13px calc(100% - 3px),
-    7px calc(100% - 3px),
-    7px calc(100% - 7px),
-    3px calc(100% - 7px),
-    3px calc(100% - 13px),
-    0 calc(100% - 13px),
-    0 13px,
-    3px 13px,
-    3px 7px,
-    7px 7px,
-    7px 3px,
-    13px 3px
-  );
+  border-radius: 50%;
 }
 
 .highlight-label {

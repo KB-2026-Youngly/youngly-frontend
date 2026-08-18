@@ -3,6 +3,22 @@
     <div v-if="loading" class="detail-state">모임통장 정보를 불러오고 있어요.</div>
     <div v-else-if="error" class="detail-state error">{{ error }}</div>
     <template v-else-if="account">
+      <div class="account-sync-row">
+        <span>{{ formatSyncedAt(account.syncedAt) }}</span>
+        <div class="account-sync-button-shadow">
+          <button
+            class="account-sync-button pixel-step-button pixel-step-button--compact pixel-step-solid"
+            type="button"
+            :disabled="syncingAccount"
+            @click="refreshAccount"
+          >
+            <span class="account-sync-button-surface pixel-step-surface">
+              <span aria-hidden="true" :class="{ spinning: syncingAccount }">↻</span>
+              <span>새로고침</span>
+            </span>
+          </button>
+        </div>
+      </div>
       <div class="detail-card-shadow yl-stepped-card-shadow">
       <article class="account-summary yl-card-frame pixel-step-card pixel-step-solid">
         <div class="account-summary-surface pixel-step-surface">
@@ -92,8 +108,64 @@
       </section>
       </div>
 
+      <div v-if="group && account.owner" class="detail-card-shadow yl-stepped-card-shadow">
+        <section class="settlement-result-section yl-card-frame pixel-step-card pixel-step-solid">
+          <div class="settlement-result-surface pixel-step-surface">
+            <div class="section-heading settlement-heading">
+              <div>
+                <small>{{ latestSettlementRound ? `${latestSettlementRound.roundNo}라운드` : '최근 라운드' }}</small>
+                <h2>최근 라운드 정산 결과</h2>
+              </div>
+              <strong v-if="settlementRequests.length">{{ successfulSettlementCount }}/{{ settlementRequests.length }} 완료</strong>
+            </div>
+
+            <div v-if="settlementLoading" class="settlement-state">정산 결과를 확인하고 있어요.</div>
+            <div v-else-if="settlementError" class="settlement-state error">
+              <span>{{ settlementError }}</span>
+              <button type="button" @click="loadLatestSettlementResults">다시 조회</button>
+            </div>
+            <div v-else-if="!latestSettlementRound" class="settlement-state">확인할 지난 라운드가 없습니다.</div>
+            <div v-else-if="!settlementRequests.length" class="settlement-state">아직 생성된 정산 요청이 없습니다.</div>
+            <ul v-else class="settlement-request-list">
+              <li v-for="request in settlementRequests" :key="request.transferRequestId">
+                <div class="settlement-user">
+                  <span>{{ settlementReceiverName(request.settlementReceiverId).slice(0, 1) }}</span>
+                  <div>
+                    <strong>{{ settlementReceiverName(request.settlementReceiverId) }}</strong>
+                    <small>{{ formatDateTime(request.completedAt || request.updatedAt || request.requestedAt) }}</small>
+                  </div>
+                </div>
+                <div class="settlement-amount">
+                  <strong class="yl-money">{{ formatCurrency(request.amount) }}원</strong>
+                  <span class="transfer-status" :class="transferStatusClass(request.transferStatus)">
+                    {{ transferStatusLabel(request.transferStatus) }}
+                  </span>
+                </div>
+                <p v-if="request.transferStatus === 'FAILED' && request.failureMessage" class="settlement-failure-message">
+                  {{ request.failureMessage }}
+                </p>
+                <button
+                  v-if="request.transferStatus === 'FAILED'"
+                  class="retry-transfer-button"
+                  type="button"
+                  :disabled="retryingTransferId === request.transferRequestId"
+                  @click="retrySettlementTransfer(request)"
+                >
+                  {{ retryingTransferId === request.transferRequestId ? '재전송 중...' : '재전송' }}
+                </button>
+              </li>
+            </ul>
+          </div>
+        </section>
+      </div>
+
       <div class="detail-card-shadow yl-stepped-card-shadow">
-        <TransactionHistory account-type="MOIM" :account-id="account.moimAccountId" :initial-limit="6" />
+        <TransactionHistory
+          :key="historyRefreshKey"
+          account-type="MOIM"
+          :account-id="account.moimAccountId"
+          :initial-limit="6"
+        />
       </div>
     </template>
 
@@ -121,7 +193,16 @@
         <div class="amount-action-row">
           <label class="amount-field">
             <span>채울 금액</span>
-            <div class="yl-money"><input v-model.number="depositAmount" type="number" min="0" step="1000" /><em>원</em></div>
+            <div class="yl-money">
+              <input
+                :value="formattedDepositAmount"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                @input="handleDepositAmountInput"
+              />
+              <em>원</em>
+            </div>
           </label>
           <button class="modal-primary" type="button" :disabled="!canRequestDeposit" @click="openDepositConfirm">
             채우기
@@ -155,8 +236,13 @@ import { useRoute } from 'vue-router'
 import BaseModal from '@/components/base/BaseModal.vue'
 import TransactionHistory from '@/components/asset/TransactionHistory.vue'
 import kbIcon from '@/assets/icons/kb_icon.png'
-import { getAccount, getMoimAccounts } from '@/api/account'
+import { getAccount, getMoimAccounts, syncMoimAccount } from '@/api/account'
 import { depositToGroup, getGroups, getMemberDepositStatuses, getMyDepositStatus } from '@/api/group'
+import {
+  getGroupRounds,
+  getRoundTransferRequests,
+  retryRoundTransferRequest,
+} from '@/api/round'
 
 const route = useRoute()
 const account = ref(null)
@@ -174,7 +260,14 @@ const depositError = ref('')
 const personalAccount = ref(null)
 const myDeposit = ref(null)
 const depositAmount = ref(0)
+const syncingAccount = ref(false)
+const historyRefreshKey = ref(0)
 const toast = ref('')
+const latestSettlementRound = ref(null)
+const settlementRequests = ref([])
+const settlementLoading = ref(false)
+const settlementError = ref('')
+const retryingTransferId = ref(null)
 let toastTimer
 
 const completedMemberCount = computed(() => members.value.filter(isDepositComplete).length)
@@ -191,6 +284,12 @@ const myDepositProgress = computed(() => {
 })
 const canRequestDeposit = computed(() =>
   Boolean(personalAccount.value?.accountId) && Number(depositAmount.value) > 0 && !depositSubmitting.value,
+)
+const formattedDepositAmount = computed(() =>
+  Number(depositAmount.value || 0).toLocaleString('ko-KR'),
+)
+const successfulSettlementCount = computed(
+  () => settlementRequests.value.filter((request) => request.transferStatus === 'SUCCESS').length,
 )
 
 onMounted(loadDetail)
@@ -211,6 +310,25 @@ async function loadDetail() {
   }
 }
 
+async function refreshAccount() {
+  if (!account.value?.moimAccountId || syncingAccount.value) return
+  syncingAccount.value = true
+  try {
+    const { data } = await syncMoimAccount(account.value.moimAccountId)
+    account.value = {
+      ...account.value,
+      balance: data?.balance ?? account.value.balance,
+      syncedAt: data?.syncedAt ?? account.value.syncedAt,
+    }
+    historyRefreshKey.value += 1
+    showToast('계좌 정보를 새로고침했습니다.')
+  } catch (requestError) {
+    showToast(apiError(requestError, '계좌 정보를 새로고침하지 못했습니다.'))
+  } finally {
+    syncingAccount.value = false
+  }
+}
+
 async function loadMemberDeposits() {
   membersLoading.value = true
   membersError.value = ''
@@ -226,12 +344,92 @@ async function loadMemberDeposits() {
     ])
     members.value = Array.isArray(membersResponse.data) ? membersResponse.data : []
     myDeposit.value = myDepositResponse.data
+    if (account.value?.owner) {
+      await loadLatestSettlementResults()
+    }
   } catch (requestError) {
     members.value = []
     membersError.value = apiError(requestError, '예치금 현황을 불러오지 못했습니다.')
   } finally {
     membersLoading.value = false
   }
+}
+
+async function loadLatestSettlementResults() {
+  if (!group.value?.groupId) return
+  settlementLoading.value = true
+  settlementError.value = ''
+  try {
+    const { data: roundsData } = await getGroupRounds(group.value.groupId)
+    const rounds = Array.isArray(roundsData) ? roundsData : []
+    latestSettlementRound.value = [...rounds]
+      .filter((round) => round.roundStatus !== 'ONGOING')
+      .sort((a, b) => Number(b.roundNo || 0) - Number(a.roundNo || 0))[0] || null
+
+    if (!latestSettlementRound.value) {
+      settlementRequests.value = []
+      return
+    }
+
+    const { data } = await getRoundTransferRequests(latestSettlementRound.value.roundId)
+    settlementRequests.value = Array.isArray(data) ? data : []
+  } catch (requestError) {
+    settlementRequests.value = []
+    settlementError.value = apiError(requestError, '최근 라운드 정산 결과를 불러오지 못했습니다.')
+  } finally {
+    settlementLoading.value = false
+  }
+}
+
+async function retrySettlementTransfer(request) {
+  if (!latestSettlementRound.value?.roundId || request.transferStatus !== 'FAILED') return
+  retryingTransferId.value = request.transferRequestId
+  settlementError.value = ''
+  try {
+    const { data } = await retryRoundTransferRequest(
+      latestSettlementRound.value.roundId,
+      request.transferRequestId,
+    )
+    const index = settlementRequests.value.findIndex(
+      (item) => item.transferRequestId === request.transferRequestId,
+    )
+    if (index >= 0) settlementRequests.value.splice(index, 1, data)
+    showToast('정산 재전송 요청이 처리되었습니다.')
+  } catch (requestError) {
+    showToast(apiError(requestError, '정산을 재전송하지 못했습니다.'))
+  } finally {
+    retryingTransferId.value = null
+  }
+}
+
+function settlementReceiverName(userId) {
+  const member = members.value.find((item) => item.userId === userId)
+  return member?.nickname || userId || '참여자'
+}
+
+function transferStatusLabel(status) {
+  return ({
+    SUCCESS: '정산 완료',
+    FAILED: '정산 실패',
+    PENDING: '요청 중',
+    UNKNOWN: '처리 중',
+  })[status] || '상태 확인 중'
+}
+
+function transferStatusClass(status) {
+  return String(status || 'UNKNOWN').toLowerCase()
+}
+
+function formatDateTime(value) {
+  if (!value) return '처리 시각 확인 중'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value).replace('T', ' ')
+  return new Intl.DateTimeFormat('ko-KR', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
 }
 
 async function openDepositModal() {
@@ -262,6 +460,12 @@ function openDepositConfirm() {
     return
   }
   confirmModalOpen.value = true
+}
+
+function handleDepositAmountInput(event) {
+  const digits = event.target.value.replace(/[^\d]/g, '')
+  depositAmount.value = digits ? Number(digits) : 0
+  event.target.value = formattedDepositAmount.value
 }
 
 async function submitDeposit() {
@@ -325,15 +529,37 @@ function showToast(message) {
 function formatCurrency(value) {
   return Number(value || 0).toLocaleString('ko-KR')
 }
+
+function formatSyncedAt(value) {
+  if (!value) return '아직 새로고침하지 않았어요'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '최근 업데이트 시각을 확인할 수 없어요'
+  return `${new Intl.DateTimeFormat('ko-KR', {
+    year: '2-digit',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)} 기준`
+}
 </script>
 
 <style scoped>
 .detail-page { width: calc(100% + 40px); min-height: calc(100vh - 80px); margin: -20px; padding: 12px 20px 70px; background: #e6dcf6; box-sizing: border-box; }
 .detail-page * { box-sizing: border-box; }
 .detail-page > * { width: 100%; margin-left: auto; margin-right: auto; }
-.account-summary, .deposit-status-section { border: 1px solid rgba(105,82,159,.14); border-radius: 20px; background: #fff; box-shadow: 0 10px 28px rgba(49,37,72,.07); }
+.account-sync-row { min-height: 34px; margin-bottom: 8px; display: flex; align-items: center; justify-content: flex-end; gap: 10px; color: #746b7d; font-size: 11px; }
+.account-sync-button-shadow { width: 76px; height: 29px; position: relative; flex: 0 0 76px; }
+.account-sync-button-shadow::before { content: ''; position: absolute; inset: 0; z-index: 0; background: #c8b7e5; transform: translate(3px, 3px); clip-path: polygon(7px 0, calc(100% - 7px) 0, calc(100% - 7px) 2px, calc(100% - 3px) 2px, calc(100% - 3px) 7px, 100% 7px, 100% calc(100% - 7px), calc(100% - 3px) calc(100% - 7px), calc(100% - 3px) calc(100% - 2px), calc(100% - 7px) calc(100% - 2px), calc(100% - 7px) 100%, 7px 100%, 7px calc(100% - 2px), 3px calc(100% - 2px), 3px calc(100% - 7px), 0 calc(100% - 7px), 0 7px, 3px 7px, 3px 2px, 7px 2px); }
+.account-sync-row .account-sync-button { width: 76px; min-height: 29px; position: relative; z-index: 1; padding: 2px !important; --pixel-outline-width: 2px; --pixel-outline-color: #ac99d2; --pixel-fill: #fff; color: #5e428c; font: inherit; font-weight: 800; cursor: pointer; filter: none !important; }
+.account-sync-button-surface { width: 100%; min-height: 25px; padding: 0 5px; display: inline-flex; align-items: center; justify-content: center; gap: 3px; }
+.account-sync-row button:disabled { cursor: wait; opacity: .6; }
+.account-sync-button-surface > span:first-child { font-size: 15px; line-height: 1; }
+.account-sync-button-surface > span:last-child { transform: translateX(-2px); }
+.account-sync-button-surface > span.spinning { animation: account-sync-spin .75s linear infinite; }
+.account-summary, .deposit-status-section, .settlement-result-section { border: 1px solid rgba(105,82,159,.14); border-radius: 20px; background: #fff; box-shadow: 0 10px 28px rgba(49,37,72,.07); }
 .detail-card-shadow { --yl-stepped-shadow-color: #c8b7e5; --yl-stepped-shadow-offset: 5px; margin-bottom: 20px; }
-.account-summary.pixel-step-solid,.deposit-status-section.pixel-step-solid { width: 100%; margin: 0; --pixel-outline-width: 2px; --pixel-outline-color: #ac99d2; filter: none !important; }
+.account-summary.pixel-step-solid,.deposit-status-section.pixel-step-solid,.settlement-result-section.pixel-step-solid { width: 100%; margin: 0; --pixel-outline-width: 2px; --pixel-outline-color: #ac99d2; filter: none !important; }
 .account-summary-surface { padding: 22px 26px; }
 .summary-main-row { display: flex; align-items: center; gap: 13px; }
 .kb-icon { width: 48px; height: 48px; flex: 0 0 48px; object-fit: contain; }
@@ -343,6 +569,27 @@ function formatCurrency(value) {
 .account-balance { display: block; margin-top: 25px; color: #30293a; font-size: 30px; letter-spacing: -.7px; }
 .deposit-status-section { margin-top: 0; padding: 0; }
 .deposit-status-surface { padding: 22px 26px; }
+.settlement-result-surface { padding: 22px 26px; }
+.settlement-heading { margin-bottom: 16px; }
+.settlement-state { display: grid; justify-items: center; gap: 10px; padding: 30px 16px; color: #8b8195; text-align: center; }
+.settlement-state button { min-height: 36px; padding: 0 13px; border: 1px solid #cfc4dd; border-radius: 9px; color: #60418f; background: #fff; font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; }
+.settlement-request-list { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.settlement-request-list li { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 9px 14px; padding: 14px; border: 1px solid #e8e1ee; border-radius: 14px; background: #fbf9fd; }
+.settlement-user { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.settlement-user > span { width: 38px; height: 38px; display: grid; place-items: center; flex: 0 0 38px; border-radius: 50%; color: #fff; background: #755a9c; font-weight: 800; }
+.settlement-user > div { min-width: 0; display: grid; gap: 4px; }
+.settlement-user strong { overflow: hidden; color: #393141; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.settlement-user small { color: #958c9d; font-size: 10px; }
+.settlement-amount { display: grid; justify-items: end; gap: 6px; }
+.settlement-amount > strong { color: #49366d; font-size: 14px; }
+.transfer-status { padding: 4px 8px; border: 1px solid; border-radius: 999px; font-size: 10px; font-weight: 800; }
+.transfer-status.success { border-color: #b9dfce; color: #28745a; background: #effaf5; }
+.transfer-status.failed { border-color: #e7b8b8; color: #a94444; background: #fff1f1; }
+.transfer-status.pending { border-color: #efd19f; color: #9a641d; background: #fff8eb; }
+.transfer-status.unknown { border-color: #cfc5de; color: #675779; background: #f4f0f8; }
+.settlement-failure-message { grid-column: 1 / -1; margin: 0; padding: 9px 10px; border-radius: 8px; color: #a14f4f; background: #fff3f3; font-size: 10px; line-height: 1.5; }
+.retry-transfer-button { grid-column: 1 / -1; min-height: 40px; border: 0; border-radius: 10px; color: #fff; background: #69529f; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.retry-transfer-button:disabled { cursor: wait; opacity: .55; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .section-heading small { color: #8b8195; }
 .section-heading h2 { margin: 3px 0 0; color: #30293a; font-size: 19px; }
@@ -419,8 +666,12 @@ function formatCurrency(value) {
 .confirm-copy strong {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
 }
+.settlement-amount > strong {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+}
 .toast { position: fixed; left: 50%; bottom: 30px; z-index: 20; width: auto; padding: 13px 20px; border-radius: 10px; color: #fff; background: rgba(35,32,40,.94); text-align: center; transform: translateX(-50%); }
 .toast-enter-active,.toast-leave-active { transition: .2s; }.toast-enter-from,.toast-leave-to { opacity: 0; transform: translate(-50%,8px); }
+@keyframes account-sync-spin { to { transform: rotate(360deg); } }
 @media (max-width: 767px) {
   .detail-page { width: 100%; min-height: calc(100dvh - 68px); margin: 0; padding: 8px 14px 110px; }
   .account-summary-surface { padding: 18px 16px; }
@@ -429,10 +680,12 @@ function formatCurrency(value) {
   .account-heading p { font-size: 12px; }
   .account-balance { margin-top: 22px; font-size: 27px; }
   .deposit-status-surface { padding: 18px 14px; }
+  .settlement-result-surface { padding: 18px 14px; }
   .deposit-overview { grid-template-columns: 1fr; }
   .member-list li { gap: 10px; }
   .member-deposit strong,.member-deposit span { display: block; }
   .deposit-actions { grid-template-columns: 1fr; }
+  .settlement-request-list li { grid-template-columns: minmax(0,1fr) auto; padding: 13px 11px; }
   .primary-action { grid-row: 1; }
   .toast { bottom: 92px; width: calc(100% - 40px); }
 }

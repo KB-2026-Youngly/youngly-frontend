@@ -48,6 +48,10 @@ export function updateMoimAccountName(moimAccountId, accountName) {
   return apiClient.patch(`/group-accounts/${moimAccountId}/name`, { accountName })
 }
 
+export function syncMoimAccount(moimAccountId) {
+  return apiClient.patch(`/group-accounts/${moimAccountId}/sync`)
+}
+
 export function getAccountTransactions(
   accountType,
   accountId,

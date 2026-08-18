@@ -20,17 +20,17 @@
           <span class="user-name">{{ nickname }}님</span>
 
           <!-- 알림 종 아이콘 -->
-          <button class="icon-btn" type="button" aria-label="알림">
+          <button class="icon-btn" type="button" aria-label="알림" @click="openNotifications">
             <span class="bell-wrapper">
               <img :src="bellIconUrl" class="bell-icon" alt="" />
-              <span class="notification-badge"></span>
+              <span v-if="unreadNotificationCount" class="notification-badge"></span>
             </span>
           </button>
 
           <!-- 프로필 드롭다운 메뉴 -->
           <div ref="profileMenu" class="profile-menu">
             <button
-              class="profile-button pixel-step-circle"
+              class="profile-button"
               type="button"
               aria-label="프로필 메뉴 열기"
               aria-haspopup="menu"
@@ -44,8 +44,12 @@
             </button>
 
             <div v-if="isMenuOpen" class="profile-dropdown" role="menu">
+              <div class="profile-dropdown__user">{{ nickname }}님</div>
               <RouterLink to="/mypage" role="menuitem" @click="closeMenu">마이페이지</RouterLink>
               <button type="button" role="menuitem" @click="logout">로그아웃</button>
+              <button class="bank-home-link" type="button" role="menuitem" @click="goToBankHome">
+                KB스타뱅킹
+              </button>
             </div>
           </div>
         </div>
@@ -86,6 +90,14 @@
         </div>
       </div>
     </div>
+    <NotificationSheet
+      v-model="notificationSheetOpen"
+      :notifications="notifications"
+      :loading="notificationsLoading"
+      :error="notificationsError"
+      @read="markNotificationAsRead"
+      @retry="loadNotifications"
+    />
   </header>
 </template>
 
@@ -95,6 +107,8 @@ import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
 import bellIconUrl from '@/assets/icons/bell.svg'
 import UserProfileAvatar from '@/components/common/UserProfileAvatar.vue'
+import NotificationSheet from '@/components/common/NotificationSheet.vue'
+import { getNotifications, readNotification } from '@/api/notification'
 import { useCollectibleStore } from '@/stores/collectible'
 import { useUserStore } from '@/stores/user'
 
@@ -107,8 +121,16 @@ const userStore = useUserStore()
 const { user } = storeToRefs(userStore)
 const profileMenu = ref(null)
 const isMenuOpen = ref(false)
+const notificationSheetOpen = ref(false)
+const notifications = ref([])
+const notificationsLoading = ref(false)
+const notificationsError = ref('')
+let notificationPollTimer = null
 const groupTitle = ref('30일 매일 운동 챌린지')
 const nickname = computed(() => user.value?.nickname || user.value?.loginId || '회원')
+const unreadNotificationCount = computed(
+  () => notifications.value.filter((notification) => !notification.isRead).length,
+)
 
 // 현재 경로가 그룹 상세 페이지인지 판별 (Composition API 방식)
 const isGroupDetail = computed(() => route.name === 'GroupDetail')
@@ -128,12 +150,57 @@ const goBackToHome = () => {
   router.push('/home')
 }
 
+const goToBankHome = () => {
+  closeMenu()
+  router.push('/bank-home')
+}
+
+const loadNotifications = async (silent = false) => {
+  if (!localStorage.getItem('youngly_access_token')) return
+  if (!silent) {
+    notificationsLoading.value = true
+    notificationsError.value = ''
+  }
+  try {
+    const { data } = await getNotifications()
+    notifications.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    if (!silent) {
+      notificationsError.value = error.response?.data?.message || '알림을 불러오지 못했습니다.'
+    }
+  } finally {
+    if (!silent) notificationsLoading.value = false
+  }
+}
+
+const openNotifications = async () => {
+  closeMenu()
+  notificationSheetOpen.value = true
+  await loadNotifications()
+}
+
+const markNotificationAsRead = async (notification) => {
+  if (!notification?.notificationId || notification.isRead) return
+  try {
+    await readNotification(notification.notificationId)
+    notifications.value = notifications.value.map((item) =>
+      item.notificationId === notification.notificationId ? { ...item, isRead: true } : item,
+    )
+  } catch (error) {
+    notificationsError.value = error.response?.data?.message || '알림을 읽음 처리하지 못했습니다.'
+  }
+}
+
 const handleOutsideClick = (event) => {
   if (isMenuOpen.value && !profileMenu.value?.contains(event.target)) closeMenu()
 }
 
 const handleKeydown = (event) => {
   if (event.key === 'Escape') closeMenu()
+}
+
+const refreshNotificationsWhenVisible = () => {
+  if (document.visibilityState === 'visible') loadNotifications(true)
 }
 
 // 로컬스토리지에서 그룹 정보 로드
@@ -163,15 +230,22 @@ const logout = () => {
 
 onMounted(() => {
   loadGroupInfo()
+  loadNotifications()
+  notificationPollTimer = window.setInterval(() => {
+    if (document.visibilityState === 'visible') loadNotifications(true)
+  }, 15000)
   window.addEventListener('youngly-group-info-updated', loadGroupInfo)
   document.addEventListener('pointerdown', handleOutsideClick)
   document.addEventListener('keydown', handleKeydown)
+  document.addEventListener('visibilitychange', refreshNotificationsWhenVisible)
 })
 
 onBeforeUnmount(() => {
+  if (notificationPollTimer) window.clearInterval(notificationPollTimer)
   window.removeEventListener('youngly-group-info-updated', loadGroupInfo)
   document.removeEventListener('pointerdown', handleOutsideClick)
   document.removeEventListener('keydown', handleKeydown)
+  document.removeEventListener('visibilitychange', refreshNotificationsWhenVisible)
 })
 </script>
 
@@ -312,9 +386,12 @@ onBeforeUnmount(() => {
 .profile-button {
   width: 44px;
   height: 44px;
-  border: 0;
-  border-radius: 0;
-  filter: drop-shadow(2px 2px 0 #222222) !important;
+  padding: 2px;
+  overflow: hidden;
+  border: 1px solid #222222;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: none;
   transition:
     transform 0.15s ease,
     border-color 0.15s ease;
@@ -326,11 +403,11 @@ onBeforeUnmount(() => {
 }
 
 .profile-button__avatar {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   overflow: hidden;
-  border-radius: 0;
-  clip-path: polygon(37.5% 0, 62.5% 0, 62.5% 6.25%, 75% 6.25%, 75% 12.5%, 87.5% 12.5%, 87.5% 25%, 93.75% 25%, 93.75% 37.5%, 100% 37.5%, 100% 62.5%, 93.75% 62.5%, 93.75% 75%, 87.5% 75%, 87.5% 87.5%, 75% 87.5%, 75% 93.75%, 62.5% 93.75%, 62.5% 100%, 37.5% 100%, 37.5% 93.75%, 25% 93.75%, 25% 87.5%, 12.5% 87.5%, 12.5% 75%, 6.25% 75%, 6.25% 62.5%, 0 62.5%, 0 37.5%, 6.25% 37.5%, 6.25% 25%, 12.5% 25%, 12.5% 12.5%, 25% 12.5%, 25% 6.25%, 37.5% 6.25%);
+  border-radius: 50%;
+  clip-path: none;
 }
 
 .profile-button__avatar :deep(img) {
@@ -348,7 +425,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
   border: 1px solid #d8d2e4;
   border-radius: 10px;
-  background: #ffffff;
+  background: #fcaf17;
   box-shadow: 0 10px 28px rgba(45, 31, 79, 0.16);
 }
 
@@ -366,9 +443,31 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
+.profile-dropdown__user {
+  padding: 13px 14px 11px;
+  border-bottom: 1px solid #ece7f2;
+  color: #403554;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+}
+
 .profile-dropdown a:hover,
 .profile-dropdown button:hover {
   background: #f4effa;
+}
+
+.profile-dropdown .bank-home-link {
+  width: 100%;
+  border-top: 1px solid #ece7f2;
+  border-radius: 0 0 9px 9px;
+  color: #332500;
+  background: #fcaf17;
+}
+
+.profile-dropdown .bank-home-link:hover {
+  background: #f5a900;
 }
 
 /* 그룹 상세 헤더 커스텀 스타일 */

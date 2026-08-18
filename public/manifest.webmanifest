@@ -1,0 +1,18 @@
+{
+  "name": "Youngly",
+  "short_name": "Youngly",
+  "description": "Youngly 챌린지 금융 서비스",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#e6dcf6",
+  "theme_color": "#7156ad",
+  "icons": [
+    {
+      "src": "/main_logo.png",
+      "sizes": "140x140",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
