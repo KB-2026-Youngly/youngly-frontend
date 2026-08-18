@@ -7,7 +7,10 @@
       </div>
 
       <div class="detail-card-shadow detail-card-shadow--summary yl-stepped-card-shadow">
-        <section class="challenge-summary yl-card-frame pixel-step-card pixel-step-solid" aria-label="챌린지 안내">
+        <section
+          class="challenge-summary yl-card-frame pixel-step-card pixel-step-solid"
+          aria-label="챌린지 안내"
+        >
           <div class="challenge-summary-surface pixel-step-surface">
             <div class="summary-top-row">
               <div class="summary-copy">
@@ -17,7 +20,9 @@
                 </div>
                 <p class="status-message" :class="{ 'is-waiting': !challengeStarted }">
                   <strong>{{ challengeStarted ? `${challengeDay}일째` : '시작 전' }}</strong>
-                  <span>{{ challengeStarted ? `전체 ${challengeDuration}일` : '시작 일정을 기다리고 있어요' }}</span>
+                  <span>{{
+                    challengeStarted ? `전체 ${challengeDuration}일` : '시작 일정을 기다리고 있어요'
+                  }}</span>
                 </p>
               </div>
               <button class="account-button" type="button" @click="router.push('/asset')">
@@ -37,30 +42,50 @@
         </section>
       </div>
 
-      <div class="detail-card-shadow yl-stepped-card-shadow">
-        <section class="ranking-panel pixel-frame yl-card-frame pixel-step-card pixel-step-solid" aria-label="현재 랭킹">
+      <div v-if="currentRound && currentRoundStarted" class="detail-card-shadow yl-stepped-card-shadow">
+        <section
+          class="ranking-panel pixel-frame yl-card-frame pixel-step-card pixel-step-solid"
+          aria-label="현재 라운드 현황"
+        >
           <div class="ranking-panel-surface pixel-step-surface">
-          <div class="ranking-heading">
-            <span>랭킹</span>
-            <button class="expand-button" type="button" aria-label="랭킹 크게 보기" @click="rankingModalOpen = true">↗</button>
-          </div>
-          <div class="ranking-track-wrap">
-            <div class="ranking-track" aria-label="진행률 0%">
-              <span v-for="segment in rankingSegments" :key="segment" class="track-segment"></span>
+            <div class="round-overview-heading">
+              <div>
+                <span>{{ currentRound.roundNo }}라운드</span>
+                <strong>{{ currentRoundPhaseLabel }}</strong>
+              </div>
+              <button
+                class="expand-button account-button"
+                type="button"
+                aria-label="라운드 랭킹 자세히 보기"
+                @click="openRankingSheet"
+              >
+                <span>전체 랭킹 보기</span>
+                <ArrowRight :size="15" :stroke-width="2.4" aria-hidden="true" />
+              </button>
             </div>
-            <div
-              v-for="member in members"
-              :key="`${member.name}-rank`"
-              class="rank-marker pixel-step-circle"
-              :class="{ 'is-me': member.isMe }"
-              :style="{ left: `${member.progress}%` }"
-              :aria-label="`${member.name} 진행률 ${member.progress}%`"
-            >
-              {{ member.initial }}
+            <div class="round-overview-progress">
+              <div>
+                <span>{{ formatRoundPeriod(currentRound) }}</span>
+                <strong>{{ currentRoundRemainingLabel }}</strong>
+              </div>
+              <div class="round-overview-progress__bar" aria-hidden="true">
+                <i :style="{ width: `${currentRoundProgress}%` }"></i>
+              </div>
             </div>
-            <span class="goal-flag" aria-hidden="true">⚑</span>
-          </div>
-          <span class="ranking-percent">내 진행률 {{ myProgress }}%</span>
+            <div class="round-overview-stats">
+              <div>
+                <span>현재 등수</span>
+                <strong>{{ currentUserRank ? `${currentUserRank}위` : '-' }}</strong>
+              </div>
+              <div>
+                <span>이번 주 인증</span>
+                <strong>{{ currentWeekPostCount }}회</strong>
+              </div>
+              <div>
+                <span>이번 주 승인</span>
+                <strong>{{ currentWeekApprovedCount }}회/{{ groupEditForm.weeklyCount }}회</strong>
+              </div>
+            </div>
           </div>
         </section>
       </div>
@@ -80,7 +105,12 @@
           <article
             :data-feed-member="member.name"
             class="feed-card pixel-frame pixel-step-card pixel-step-solid my-feed-card"
-            :class="{ 'is-started': challengeStarted, 'has-verification': challengeStarted && member.isVerified, 'is-reordering': draggingFeedName === member.name, [`review-${getReviewState(member)}`]: challengeStarted && member.isVerified }"
+            :class="{
+              'is-started': challengeStarted,
+              'has-verification': challengeStarted && member.isVerified,
+              'is-reordering': draggingFeedName === member.name,
+              [`review-${getReviewState(member)}`]: challengeStarted && member.isVerified,
+            }"
             draggable="true"
             @click="handleFeedCardClick(member)"
             @dragstart="handleFeedDesktopDragStart(member.name, $event)"
@@ -92,55 +122,116 @@
               <div class="feed-owner">
                 <span class="avatar">{{ member.initial }}</span>
                 <span class="feed-owner__info">
-                  <span class="feed-owner__name">{{ member.name }} <em v-if="member.isMe" class="me-label">나</em></span>
-                  <small v-if="member.reviewStatus === 'approved'" class="feed-review-badge is-approved">승인</small>
-                  <small v-else-if="member.reviewStatus === 'rejected'" class="feed-review-badge is-rejected">반려</small>
+                  <span class="feed-owner__name"
+                    >{{ member.name }} <em v-if="member.isMe" class="me-label">나</em></span
+                  >
+                  <small
+                    v-if="member.reviewStatus === 'approved'"
+                    class="feed-review-badge is-approved"
+                    >승인</small
+                  >
+                  <small
+                    v-else-if="member.reviewStatus === 'rejected'"
+                    class="feed-review-badge is-rejected"
+                    >반려</small
+                  >
                 </span>
               </div>
               <template v-if="challengeStarted">
                 <div v-if="member.isVerified" class="verification-content">
-                  <img :src="member.image" :alt="`${member.name} 인증 사진`" class="verification-image" />
+                  <img
+                    :src="member.image"
+                    :alt="`${member.name} 인증 사진`"
+                    class="verification-image"
+                  />
                   <div class="verification-shade"></div>
                   <p class="verification-message">{{ member.message }}</p>
                   <div v-if="!member.isMe && !member.reviewStatus" class="review-actions">
-                    <button type="button" class="reject-button" @click.stop="openRejectModal(member)">
+                    <button
+                      type="button"
+                      class="reject-button"
+                      @click.stop="openRejectModal(member)"
+                    >
                       <X :size="14" :stroke-width="2.5" aria-hidden="true" />
                       <span>반려</span>
                     </button>
-                    <button type="button" class="approve-button" @click.stop="reviewVerification(member, 'approved')">
+                    <button
+                      type="button"
+                      class="approve-button"
+                      @click.stop="reviewVerification(member, 'approved')"
+                    >
                       <Check :size="14" :stroke-width="2.5" aria-hidden="true" />
                       <span>승인</span>
                     </button>
-                </div>
-                <div v-if="member.reviewStatus" class="post-engagement" aria-label="게시글 반응">
-                  <button class="engagement-item" type="button" :aria-label="`댓글 ${member.commentCount}개, 상세 보기`" @click.stop="openPostDetail(member)">
-                    <span class="engagement-icon"><MessageCircle :size="23" :stroke-width="2.2" aria-hidden="true" /></span>
-                    <b>{{ member.commentCount }}</b>
-                  </button>
-                  <button class="engagement-item" :class="{ 'is-active': member.myReaction === 'like' }" type="button" :aria-pressed="member.myReaction === 'like'" :aria-label="`좋아요 ${member.likeCount}개`" @click.stop="toggleFeedReaction(member, 'like')">
-                    <span class="engagement-icon"><ThumbsUp :size="23" :stroke-width="2.2" aria-hidden="true" /></span>
-                    <b>{{ member.likeCount }}</b>
-                  </button>
-                  <button class="engagement-item" :class="{ 'is-active': member.myReaction === 'dislike' }" type="button" :aria-pressed="member.myReaction === 'dislike'" :aria-label="`싫어요 ${member.dislikeCount}개`" @click.stop="toggleFeedReaction(member, 'dislike')">
-                    <span class="engagement-icon"><ThumbsDown :size="23" :stroke-width="2.2" aria-hidden="true" /></span>
-                    <b>{{ member.dislikeCount }}</b>
-                  </button>
-                </div>
+                  </div>
+                  <div v-if="member.reviewStatus" class="post-engagement" aria-label="게시글 반응">
+                    <button
+                      class="engagement-item"
+                      type="button"
+                      :aria-label="`댓글 ${member.commentCount}개, 상세 보기`"
+                      @click.stop="openPostDetail(member)"
+                    >
+                      <span class="engagement-icon"
+                        ><MessageCircle :size="23" :stroke-width="2.2" aria-hidden="true"
+                      /></span>
+                      <b>{{ member.commentCount }}</b>
+                    </button>
+                    <button
+                      class="engagement-item"
+                      :class="{ 'is-active': member.myReaction === 'like' }"
+                      type="button"
+                      :aria-pressed="member.myReaction === 'like'"
+                      :aria-label="`좋아요 ${member.likeCount}개`"
+                      @click.stop="toggleFeedReaction(member, 'like')"
+                    >
+                      <span class="engagement-icon"
+                        ><ThumbsUp :size="23" :stroke-width="2.2" aria-hidden="true"
+                      /></span>
+                      <b>{{ member.likeCount }}</b>
+                    </button>
+                    <button
+                      class="engagement-item"
+                      :class="{ 'is-active': member.myReaction === 'dislike' }"
+                      type="button"
+                      :aria-pressed="member.myReaction === 'dislike'"
+                      :aria-label="`싫어요 ${member.dislikeCount}개`"
+                      @click.stop="toggleFeedReaction(member, 'dislike')"
+                    >
+                      <span class="engagement-icon"
+                        ><ThumbsDown :size="23" :stroke-width="2.2" aria-hidden="true"
+                      /></span>
+                      <b>{{ member.dislikeCount }}</b>
+                    </button>
+                  </div>
                   <div v-if="member.reviewStatus" class="latest-comment-row">
                     <span
                       class="latest-comment-avatar"
                       :title="member.latestCommentAuthor || '김민준'"
                       aria-hidden="true"
-                    >{{ member.latestCommentInitial || '김' }}</span>
+                      >{{ member.latestCommentInitial || '김' }}</span
+                    >
                     <p class="latest-comment">{{ member.latestComment }}</p>
                   </div>
-                  <span v-if="member.reviewStatus && member.reviewStatus !== 'pending-rejection'" class="review-status" :class="member.reviewStatus">
+                  <span
+                    v-if="member.reviewStatus && member.reviewStatus !== 'pending-rejection'"
+                    class="review-status"
+                    :class="member.reviewStatus"
+                  >
                     {{ member.reviewStatus === 'approved' ? '승인 완료' : '반려 처리' }}
                   </span>
                 </div>
-                <button v-else type="button" class="pending-verification" @click="handlePendingCard(member)">
-                  <strong>{{ member.isMe ? '눌러서 인증하러 가기 📷 ›' : '눌러서 깨우기 ⏰ ›' }}</strong>
-                  <span :class="{ 'deadline-text': member.isMe }">{{ member.isMe ? '23:14:32' : 'ZZZ...' }}</span>
+                <button
+                  v-else
+                  type="button"
+                  class="pending-verification"
+                  @click="handlePendingCard(member)"
+                >
+                  <strong>{{
+                    member.isMe ? '눌러서 인증하러 가기 📷 ›' : '눌러서 깨우기 ⏰ ›'
+                  }}</strong>
+                  <span :class="{ 'deadline-text': member.isMe }">{{
+                    member.isMe ? '23:14:32' : 'ZZZ...'
+                  }}</span>
                 </button>
               </template>
               <p v-else class="sleep-message">ZZZ...</p>
@@ -151,7 +242,8 @@
                 @pointerdown.stop="handleFeedPointerDown(member.name, $event)"
                 @click.stop
                 @contextmenu.prevent
-              ><span aria-hidden="true">⠿</span></span>
+                ><span aria-hidden="true">⠿</span></span
+              >
             </div>
           </article>
         </div>
@@ -189,7 +281,9 @@
         <button class="invite-code-button" type="button" @click="copyInviteCode">
           {{ inviteCode }}
         </button>
-        <button class="invite-share-button" type="button" @click="shareInviteLink">↗ 링크 공유</button>
+        <button class="invite-share-button" type="button" @click="shareInviteLink">
+          ↗ 링크 공유
+        </button>
         <p v-if="copyComplete" class="copy-complete-message" role="status" aria-live="polite">
           {{ copyComplete }}
         </p>
@@ -218,40 +312,101 @@
       v-model="rankingModalOpen"
       modal-class="youngly-modal group-ranking-modal"
       title="랭킹"
-      size="medium"
+      size="large"
+      :show-close-button="false"
+      :auto-focus="false"
+      drag-from-anywhere
     >
+      <template #header>
+        <div class="ranking-sheet-header">
+          <span>라운드 랭킹</span>
+        </div>
+      </template>
       <div class="ranking-modal-content">
         <div class="ranking-period">
-          <button type="button" aria-label="이전 라운드">‹</button>
-          <strong>이번 달</strong>
-          <button type="button" aria-label="다음 라운드">›</button>
+          <button
+            type="button"
+            aria-label="이전 라운드"
+            :disabled="selectedRoundIndex === 0"
+            @click="selectRankingRound(-1)"
+          >
+            ‹
+          </button>
+          <div v-if="selectedRankingRound" class="ranking-period-copy">
+            <strong>{{ selectedRankingRound.roundNo }}라운드</strong>
+            <small>{{ formatRoundPeriod(selectedRankingRound) }}</small>
+          </div>
+          <strong v-else>라운드 정보 없음</strong>
+          <button
+            type="button"
+            aria-label="다음 라운드"
+            :disabled="selectedRoundIndex >= rankingRounds.length - 1"
+            @click="selectRankingRound(1)"
+          >
+            ›
+          </button>
         </div>
 
-        <div class="ranking-round-summary">
-          <span>현재 라운드</span>
-          <strong>{{ challengeDay }}/{{ challengeDuration }}일</strong>
-          <div class="ranking-modal-track"><i :style="{ width: `${myProgress}%` }"></i></div>
+        <div v-if="rankingLoading" class="ranking-api-state">랭킹을 불러오고 있어요.</div>
+        <div v-else-if="rankingError" class="ranking-api-state error">
+          <span>{{ rankingError }}</span>
+          <button type="button" @click="loadSelectedRoundData">다시 조회</button>
         </div>
-
-        <ol class="ranking-list">
-          <li v-for="(member, index) in rankedMembers" :key="`ranking-${member.name}`" :class="{ 'is-me': member.isMe }">
-            <strong class="ranking-position">{{ index + 1 }}등</strong>
-            <span class="ranking-avatar pixel-step-circle" :class="{ 'is-me': member.isMe, 'is-first': index === 0 }">
-              <span v-if="index === 0" class="ranking-crown" aria-hidden="true">♛</span>
-              {{ member.initial }}
-            </span>
-            <div class="ranking-member-info">
-              <b>{{ member.name }}<em v-if="member.isMe">나</em></b>
-              <span>완료 횟수 {{ member.completedCount }}개 | 평균 달성률 {{ member.averageRate }}%</span>
+        <template v-else-if="selectedRankingRound">
+          <div class="ranking-round-summary">
+            <span>{{ isSelectedRoundOngoing ? '랭킹 종료까지' : '라운드 상태' }}</span>
+            <strong>{{
+              isSelectedRoundOngoing
+                ? rankingRemainingLabel
+                : roundStatusLabel(selectedRankingRound.roundStatus)
+            }}</strong>
+            <div class="ranking-modal-track">
+              <i :style="{ width: `${selectedRoundProgress}%` }"></i>
             </div>
-          </li>
-        </ol>
+          </div>
+
+          <ol class="ranking-list">
+            <li
+              v-for="ranking in roundRankings"
+              :key="`ranking-${ranking.userId}`"
+              :class="{ 'is-me': ranking.userId === currentUserId }"
+            >
+              <strong class="ranking-position">{{ ranking.rankNo }}등</strong>
+              <span
+                class="ranking-avatar"
+                :class="{
+                  'is-me': ranking.userId === currentUserId,
+                  'is-first': ranking.rankNo === 1,
+                }"
+              >
+                <span v-if="ranking.rankNo === 1" class="ranking-crown" aria-hidden="true">♛</span>
+                {{ ranking.nickname?.slice(0, 1) || '?' }}
+              </span>
+              <div class="ranking-member-info">
+                <b
+                  >{{ ranking.nickname || ranking.userId
+                  }}<em v-if="ranking.userId === currentUserId">나</em></b
+                >
+                <span>주간 챌린지 성공 {{ ranking.successCount ?? 0 }}회</span>
+                <small v-if="settlementByUser(ranking.userId)" class="ranking-settlement">
+                  정산 {{ formatMoney(settlementByUser(ranking.userId).settlementAmount) }}원 ·
+                  {{ settlementAccountLabel(settlementByUser(ranking.userId)) }}
+                </small>
+              </div>
+            </li>
+          </ol>
+          <div v-if="!roundRankings.length" class="ranking-api-state">표시할 랭킹이 없습니다.</div>
+        </template>
       </div>
     </BaseModal>
 
     <BaseModal
       v-model="groupEditOpen"
-      :modal-class="['youngly-modal', 'group-edit-modal', { 'is-expanded': groupEditSheetExpanded }]"
+      :modal-class="[
+        'youngly-modal',
+        'group-edit-modal',
+        { 'is-expanded': groupEditSheetExpanded },
+      ]"
       :title="groupInfo.title"
       size="large"
       :show-close-button="false"
@@ -260,17 +415,12 @@
       @close="closeGroupEdit"
     >
       <template #header>
-        <div
-          class="group-edit-sheet-header"
-        >
+        <div class="group-edit-sheet-header">
           <span class="group-edit-sheet-handle" aria-hidden="true"></span>
           <span class="group-edit-sheet-title">{{ groupInfo.title }}</span>
         </div>
       </template>
-      <form
-        class="group-edit-form"
-        @submit.prevent="saveGroupEdit"
-      >
+      <form class="group-edit-form" @submit.prevent="saveGroupEdit">
         <label class="group-edit-field">
           <span>그룹 이름</span>
           <input v-model.trim="groupEditForm.title" required maxlength="20" />
@@ -331,22 +481,38 @@
           <span class="group-edit-field-label">
             실패 면제권
             <span class="group-edit-tooltip-wrap">
-              <button class="group-edit-tooltip-trigger" type="button" aria-label="실패 면제권 안내">?</button>
-              <span class="group-edit-tooltip" role="tooltip">하루 챌린지를 하지 못했을 때 해당 날짜를 면제합니다.</span>
+              <button
+                class="group-edit-tooltip-trigger"
+                type="button"
+                aria-label="실패 면제권 안내"
+              >
+                ?
+              </button>
+              <span class="group-edit-tooltip" role="tooltip"
+                >하루 챌린지를 하지 못했을 때 해당 날짜를 면제합니다.</span
+              >
             </span>
           </span>
           <select v-model.number="groupEditForm.failurePassCount">
-            <option v-for="count in 9" :key="count - 1" :value="count - 1">{{ count - 1 }}개</option>
+            <option v-for="count in 9" :key="count - 1" :value="count - 1">
+              {{ count - 1 }}개
+            </option>
           </select>
         </label>
 
         <label class="group-edit-field">
           <span>추가 규칙 <em>(선택)</em></span>
-          <textarea v-model.trim="groupEditForm.additionalRule" maxlength="120" placeholder="예: 이번 달 꼴찌가 모든 참여자에게 커피 쏘기"></textarea>
+          <textarea
+            v-model.trim="groupEditForm.additionalRule"
+            maxlength="120"
+            placeholder="예: 이번 달 꼴찌가 모든 참여자에게 커피 쏘기"
+          ></textarea>
         </label>
 
         <button class="group-edit-submit" type="submit">수정완료</button>
-        <p v-if="groupEditComplete" class="group-edit-complete" role="status">! 수정 완료. 다음달부터 적용 !</p>
+        <p v-if="groupEditComplete" class="group-edit-complete" role="status">
+          ! 수정 완료. 다음달부터 적용 !
+        </p>
       </form>
     </BaseModal>
 
@@ -376,18 +542,34 @@
         <div class="post-detail-image-wrap">
           <img :src="selectedPost.image" :alt="`${selectedPost.name} 인증 사진`" />
           <div></div>
-          <p><span class="post-detail-avatar">{{ selectedPost.initial }}</span><b>{{ selectedPost.name }}</b></p>
+          <p>
+            <span class="post-detail-avatar">{{ selectedPost.initial }}</span
+            ><b>{{ selectedPost.name }}</b>
+          </p>
           <strong>{{ selectedPost.message }}</strong>
         </div>
         <div class="post-reaction-info">
-          <span class="post-approval-status">승인 {{ selectedPost.approvalCount }}/6명 · 과반수 승인 완료</span>
-          <p><b>좋아요 {{ postLikes.length }}</b>{{ postLikes.join(', ') }}</p>
-          <p><b>싫어요 {{ postDislikes.length }}</b>{{ postDislikes.join(', ') }}</p>
+          <span class="post-approval-status"
+            >승인 {{ selectedPost.approvalCount }}/6명 · 과반수 승인 완료</span
+          >
+          <p>
+            <b>좋아요 {{ postLikes.length }}</b
+            >{{ postLikes.join(', ') }}
+          </p>
+          <p>
+            <b>싫어요 {{ postDislikes.length }}</b
+            >{{ postDislikes.join(', ') }}
+          </p>
         </div>
         <section class="post-comments" aria-label="댓글">
-          <h3>댓글 <small>{{ postComments.length }}</small></h3>
+          <h3>
+            댓글 <small>{{ postComments.length }}</small>
+          </h3>
           <ul>
-            <li v-for="commentItem in postComments" :key="commentItem.id"><b>{{ commentItem.author }}</b>{{ commentItem.text }}</li>
+            <li v-for="commentItem in postComments" :key="commentItem.id">
+              <b>{{ commentItem.author }}</b
+              >{{ commentItem.text }}
+            </li>
           </ul>
           <form @submit.prevent="addPostComment">
             <input v-model.trim="newPostComment" maxlength="100" placeholder="댓글을 입력하세요" />
@@ -407,8 +589,15 @@
       <form class="reject-form" @submit.prevent="submitRejection">
         <p>인증 사진이 기준에 맞지 않는 이유를 작성해 주세요.</p>
         <div class="reject-input-wrap">
-          <textarea v-model.trim="rejectReason" required maxlength="30" placeholder="반려 사유를 입력해 주세요"></textarea>
-          <span class="reject-character-count" aria-live="polite">{{ rejectReason.length }} / 30</span>
+          <textarea
+            v-model.trim="rejectReason"
+            required
+            maxlength="30"
+            placeholder="반려 사유를 입력해 주세요"
+          ></textarea>
+          <span class="reject-character-count" aria-live="polite"
+            >{{ rejectReason.length }} / 30</span
+          >
         </div>
         <button type="submit">반려 사유 등록</button>
       </form>
@@ -419,41 +608,126 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowRight, BookOpen, CalendarCheck2, Check, CircleCheck, Dumbbell, Flag, GraduationCap, Landmark, MessageCircle, Shapes, ThumbsDown, ThumbsUp, X } from 'lucide-vue-next'
+import {
+  ArrowRight,
+  BookOpen,
+  CalendarCheck2,
+  Check,
+  CircleCheck,
+  Dumbbell,
+  Flag,
+  GraduationCap,
+  Landmark,
+  MessageCircle,
+  Shapes,
+  ThumbsDown,
+  ThumbsUp,
+  X,
+} from 'lucide-vue-next'
 import BaseModal from '@/components/base/BaseModal.vue'
 import { getGroupDetail } from '@/api/group'
+import { getGroupRounds, getRoundRanking, getRoundSettlements } from '@/api/round'
+import { getMyCertificationPosts } from '@/api/post'
+import { useUserStore } from '@/stores/user'
 import verificationImageOne from '@/assets/photos/excercise/KakaoTalk_Photo_2026-08-08-01-50-24.jpeg'
 import verificationImageTwo from '@/assets/photos/excercise/KakaoTalk_Photo_2026-08-08-01-49-38.jpeg'
 import verificationImageThree from '@/assets/photos/excercise/KakaoTalk_Photo_2026-08-08-01-49-11.jpeg'
-
 const members = reactive([
-  { name: '김민준', initial: '김', isMe: true, progress: 72, completedCount: 4, averageRate: 72, isVerified: false },
-  { name: '허경민', initial: '허', isMe: false, progress: 68, completedCount: 5, averageRate: 68, isVerified: true, image: verificationImageOne, message: '운오완', commentCount: 4, likeCount: 3, dislikeCount: 1, latestComment: '꾸준함이 최고입니다!', latestCommentAuthor: '신성욱', latestCommentInitial: '신' },
-  { name: '신성욱', initial: '신', isMe: false, progress: 55, completedCount: 5, averageRate: 78, isVerified: true, image: verificationImageTwo, message: '오운완. 돈줘 빼액~', commentCount: 4, likeCount: 3, dislikeCount: 1, latestComment: '도웅하지마라.', latestCommentAuthor: '김민준', latestCommentInitial: '김' },
-  { name: '김상우', initial: '김', isMe: false, progress: 45, completedCount: 3, averageRate: 45, isVerified: false },
-  { name: '여강휘', initial: '여', isMe: false, progress: 72, completedCount: 2, averageRate: 40, isVerified: true, image: verificationImageThree, message: '^^b', commentCount: 2, likeCount: 2, dislikeCount: 0, latestComment: '오늘도 수고했어요!', latestCommentAuthor: '김효민', latestCommentInitial: '김' },
-  { name: '김효민', initial: '김', isMe: false, progress: 35, completedCount: 1, averageRate: 28, isVerified: false },
+  {
+    name: '김민준',
+    initial: '김',
+    isMe: true,
+    progress: 72,
+    completedCount: 4,
+    averageRate: 72,
+    isVerified: false,
+  },
+  {
+    name: '허경민',
+    initial: '허',
+    isMe: false,
+    progress: 68,
+    completedCount: 5,
+    averageRate: 68,
+    isVerified: true,
+    image: verificationImageOne,
+    message: '운오완',
+    commentCount: 4,
+    likeCount: 3,
+    dislikeCount: 1,
+    latestComment: '꾸준함이 최고입니다!',
+    latestCommentAuthor: '신성욱',
+    latestCommentInitial: '신',
+  },
+  {
+    name: '신성욱',
+    initial: '신',
+    isMe: false,
+    progress: 55,
+    completedCount: 5,
+    averageRate: 78,
+    isVerified: true,
+    image: verificationImageTwo,
+    message: '오운완. 돈줘 빼액~',
+    commentCount: 4,
+    likeCount: 3,
+    dislikeCount: 1,
+    latestComment: '도웅하지마라.',
+    latestCommentAuthor: '김민준',
+    latestCommentInitial: '김',
+  },
+  {
+    name: '김상우',
+    initial: '김',
+    isMe: false,
+    progress: 45,
+    completedCount: 3,
+    averageRate: 45,
+    isVerified: false,
+  },
+  {
+    name: '여강휘',
+    initial: '여',
+    isMe: false,
+    progress: 72,
+    completedCount: 2,
+    averageRate: 40,
+    isVerified: true,
+    image: verificationImageThree,
+    message: '^^b',
+    commentCount: 2,
+    likeCount: 2,
+    dislikeCount: 0,
+    latestComment: '오늘도 수고했어요!',
+    latestCommentAuthor: '김효민',
+    latestCommentInitial: '김',
+  },
+  {
+    name: '김효민',
+    initial: '김',
+    isMe: false,
+    progress: 35,
+    completedCount: 1,
+    averageRate: 28,
+    isVerified: false,
+  },
 ])
 const router = useRouter()
 const route = useRoute()
-
+const userStore = useUserStore()
 
 const challengeStarted = computed(() => groupInfo.status === 'ONGOING')
 const challengeDay = 20
 const challengeDuration = computed(() => groupInfo.roundCycleDays || 30)
 const postMajorityApproved = true
-const displayedMembers = computed(() =>
-  allMembersJoined.value ? members : members.slice(0, 1)
-)
+const displayedMembers = computed(() => (allMembersJoined.value ? members : members.slice(0, 1)))
 
-const rankingSegments = computed(() =>
-  allMembersJoined.value ? members.length : 4
-)
-
-
+const rankingSegments = computed(() => (allMembersJoined.value ? members.length : 4))
 
 const myProgress = computed(() => members.find((member) => member.isMe)?.progress ?? 0)
-const rankedMembers = computed(() => [...members].sort((a, b) => b.completedCount - a.completedCount || b.averageRate - a.averageRate))
+const rankedMembers = computed(() =>
+  [...members].sort((a, b) => b.completedCount - a.completedCount || b.averageRate - a.averageRate),
+)
 const inviteCode = ref('A7K2P9')
 const inviteModalOpen = ref(false)
 const copyComplete = ref(false)
@@ -462,6 +736,99 @@ const startDateModalOpen = ref(false)
 const startDate = ref('2026-07-24')
 const startDateConfigured = ref(false)
 const rankingModalOpen = ref(false)
+const rankingRounds = ref([])
+const selectedRoundIndex = ref(0)
+const roundRankings = ref([])
+const roundSettlements = ref([])
+const rankingLoading = ref(false)
+const rankingError = ref('')
+const currentRoundPosts = ref([])
+const currentUserId = computed(() => userStore.user?.userId || '')
+const currentRound = computed(() => {
+  const rounds = [...rankingRounds.value]
+  const ongoingRound = [...rounds].reverse().find((round) => round.roundStatus === 'ONGOING')
+  const latestStartedRound = [...rounds].reverse().find(
+    (round) => round.startDate && Date.now() >= new Date(`${round.startDate}T00:00:00`).getTime(),
+  )
+  return ongoingRound || latestStartedRound || null
+})
+const currentRoundStarted = computed(() => {
+  if (!currentRound.value?.startDate) return false
+  return Date.now() >= new Date(`${currentRound.value.startDate}T00:00:00`).getTime()
+})
+const currentRoundProgress = computed(() => {
+  const round = currentRound.value
+  if (!round?.startDate || !round?.endDate) return 0
+  const start = new Date(`${round.startDate}T00:00:00`)
+  const end = new Date(`${round.endDate}T23:59:59`)
+  return Math.max(0, Math.min(100, ((Date.now() - start) / Math.max(end - start, 1)) * 100))
+})
+const currentRoundWeek = computed(() => {
+  const startDate = currentRound.value?.startDate
+  if (!startDate) return 1
+  const elapsedDays = Math.max(
+    0,
+    Math.floor((Date.now() - new Date(`${startDate}T00:00:00`).getTime()) / 86400000),
+  )
+  return Math.floor(elapsedDays / 7) + 1
+})
+const currentRoundPhaseLabel = computed(() =>
+  currentRound.value?.roundStatus === 'ONGOING'
+    ? `${currentRoundWeek.value}주차 진행 중`
+    : '라운드 종료',
+)
+const currentRoundRemainingLabel = computed(() => {
+  if (currentRound.value?.roundStatus !== 'ONGOING') return '종료된 라운드'
+  const endDate = currentRound.value?.endDate
+  if (!endDate) return '기간 확인 중'
+  const remaining = Math.max(
+    0,
+    Math.ceil((new Date(`${endDate}T23:59:59`).getTime() - Date.now()) / 86400000),
+  )
+  return remaining === 0 ? '오늘 종료' : `${remaining}일 남음`
+})
+const currentWeekPosts = computed(() => {
+  const startDate = currentRound.value?.startDate
+  if (!startDate) return []
+
+  const weekStart = new Date(`${startDate}T00:00:00`)
+  weekStart.setDate(weekStart.getDate() + (currentRoundWeek.value - 1) * 7)
+  const weekEnd = new Date(weekStart)
+  weekEnd.setDate(weekEnd.getDate() + 7)
+
+  return currentRoundPosts.value.filter((post) => {
+    const postedAt = new Date(post.postedAt || post.createdAt)
+    return !Number.isNaN(postedAt.getTime()) && postedAt >= weekStart && postedAt < weekEnd
+  })
+})
+const currentWeekPostCount = computed(() => currentWeekPosts.value.length)
+const currentWeekApprovedCount = computed(
+  () => currentWeekPosts.value.filter((post) => post.postStatus === 'APPROVED').length,
+)
+const currentUserRank = computed(
+  () => roundRankings.value.find((ranking) => ranking.userId === currentUserId.value)?.rankNo,
+)
+const selectedRankingRound = computed(() => rankingRounds.value[selectedRoundIndex.value] || null)
+const isSelectedRoundOngoing = computed(() => selectedRankingRound.value?.roundStatus === 'ONGOING')
+const selectedRoundProgress = computed(() => {
+  const round = selectedRankingRound.value
+  if (!round?.startDate || !round?.endDate) return 0
+  const start = new Date(`${round.startDate}T00:00:00`)
+  const end = new Date(`${round.endDate}T23:59:59`)
+  return Math.max(
+    0,
+    Math.min(100, ((Date.now() - start.getTime()) / Math.max(end - start, 1)) * 100),
+  )
+})
+const rankingRemainingLabel = computed(() => {
+  const endDate = selectedRankingRound.value?.endDate
+  if (!endDate) return '기간 확인 중'
+  const remaining = Math.max(
+    0,
+    Math.ceil((new Date(`${endDate}T23:59:59`).getTime() - Date.now()) / 86400000),
+  )
+  return remaining === 0 ? '오늘 종료' : `${remaining}일 남음`
+})
 const postDetailOpen = ref(false)
 const selectedPost = ref(null)
 const postLikes = ['김민준', '신성욱', '여강휘', '김효민']
@@ -571,8 +938,7 @@ const applyGroupDetail = (detail) => {
   groupInfo.status = detail.groupStatus || 'RECRUITING'
   groupInfo.memberLimit = Number(detail.groupCount) || groupInfo.memberLimit
 
-  groupInfo.memberCount =
-  Number(detail.memberCount) || 0
+  groupInfo.memberCount = Number(detail.memberCount) || 0
 
   groupInfo.durationDays = Number(detail.durationDays) || groupInfo.durationDays
   groupInfo.roundCycleDays = Number(detail.roundCycleDays) || groupInfo.roundCycleDays
@@ -586,10 +952,7 @@ const applyGroupDetail = (detail) => {
 
   inviteCode.value = detail.inviteCode || ''
   isOwner.value = Boolean(detail.inviteCode)
-  startDateModalOpen.value =
-  isOwner.value &&
-  allMembersJoined.value &&
-  !challengeStarted.value
+  startDateModalOpen.value = isOwner.value && allMembersJoined.value && !challengeStarted.value
   syncGroupHeader()
 }
 
@@ -629,7 +992,11 @@ const shareInviteLink = async () => {
   const shareUrl = `${window.location.origin}/groups/join?code=${inviteCode.value}`
   if (typeof navigator.share === 'function') {
     try {
-      await navigator.share({ title: 'CHALLENGE PIXEL 그룹 초대', text: `초대 코드: ${inviteCode.value}`, url: shareUrl })
+      await navigator.share({
+        title: 'CHALLENGE PIXEL 그룹 초대',
+        text: `초대 코드: ${inviteCode.value}`,
+        url: shareUrl,
+      })
       return
     } catch (error) {
       if (error?.name === 'AbortError') return
@@ -648,7 +1015,125 @@ const handleInvite = () => {
   inviteModalOpen.value = true
 }
 
+const loadCurrentRoundOverview = async () => {
+  try {
+    const { data } = await getGroupRounds(route.params.id)
+    rankingRounds.value = (Array.isArray(data) ? data : []).sort(
+      (first, second) => Number(first.roundNo || 0) - Number(second.roundNo || 0),
+    )
 
+    const ongoingIndex = rankingRounds.value.findIndex((round) => round.roundStatus === 'ONGOING')
+    const latestStartedIndex = rankingRounds.value.findLastIndex(
+      (round) => round.startDate && Date.now() >= new Date(`${round.startDate}T00:00:00`).getTime(),
+    )
+    const overviewIndex = ongoingIndex >= 0 ? ongoingIndex : latestStartedIndex
+    if (overviewIndex < 0) {
+      roundRankings.value = []
+      currentRoundPosts.value = []
+      return
+    }
+
+    selectedRoundIndex.value = overviewIndex
+    const round = rankingRounds.value[overviewIndex]
+    const [rankingResponse, postsResponse] = await Promise.all([
+      getRoundRanking(round.roundId),
+      getMyCertificationPosts({
+        from: round.startDate,
+        to: round.endDate,
+        groupId: String(route.params.id || ''),
+      }),
+    ])
+
+    roundRankings.value = Array.isArray(rankingResponse.data) ? rankingResponse.data : []
+    currentRoundPosts.value = (Array.isArray(postsResponse.data) ? postsResponse.data : []).filter(
+      (post) => Number(post.roundId) === Number(round.roundId),
+    )
+  } catch (error) {
+    console.error('현재 라운드 현황 조회 실패:', error)
+    rankingRounds.value = []
+    roundRankings.value = []
+    currentRoundPosts.value = []
+  }
+}
+
+const openRankingSheet = async () => {
+  rankingModalOpen.value = true
+  rankingError.value = ''
+  if (rankingRounds.value.length) {
+    await loadSelectedRoundData()
+    return
+  }
+  rankingLoading.value = true
+  try {
+    const { data } = await getGroupRounds(route.params.id)
+    rankingRounds.value = (Array.isArray(data) ? data : []).sort(
+      (first, second) => Number(first.roundNo || 0) - Number(second.roundNo || 0),
+    )
+    selectedRoundIndex.value = Math.max(0, rankingRounds.value.length - 1)
+    await loadSelectedRoundData()
+  } catch (error) {
+    rankingError.value = error.response?.data?.message || '라운드 목록을 불러오지 못했습니다.'
+  } finally {
+    rankingLoading.value = false
+  }
+}
+
+const loadSelectedRoundData = async () => {
+  const roundId = selectedRankingRound.value?.roundId
+  if (!roundId) return
+  rankingLoading.value = true
+  rankingError.value = ''
+  try {
+    const [rankingResponse, settlementResponse] = await Promise.all([
+      getRoundRanking(roundId),
+      getRoundSettlements(roundId),
+    ])
+    roundRankings.value = Array.isArray(rankingResponse.data) ? rankingResponse.data : []
+    roundSettlements.value = Array.isArray(settlementResponse.data) ? settlementResponse.data : []
+  } catch (error) {
+    roundRankings.value = []
+    roundSettlements.value = []
+    rankingError.value = error.response?.data?.message || '라운드 랭킹을 불러오지 못했습니다.'
+  } finally {
+    rankingLoading.value = false
+  }
+}
+
+const selectRankingRound = async (offset) => {
+  const nextIndex = selectedRoundIndex.value + offset
+  if (nextIndex < 0 || nextIndex >= rankingRounds.value.length) return
+  selectedRoundIndex.value = nextIndex
+  await loadSelectedRoundData()
+}
+
+const settlementByUser = (userId) =>
+  roundSettlements.value.find((settlement) => settlement.userId === userId)
+
+const settlementAccountLabel = (settlement) => {
+  if (Number(settlement?.settlementAmount || 0) === 0) return '지급 금액 없음'
+  if (!settlement?.bankName || !settlement?.maskedAccountNumber) return '입금 계좌 정보 미제공'
+  return `${settlement.bankName} ${settlement.maskedAccountNumber}`
+}
+
+const formatMoney = (value) => Number(value || 0).toLocaleString('ko-KR')
+
+const formatRoundPeriod = (round) => {
+  const shortDate = (value) => {
+    if (!value) return '--.--.--'
+    const [year, month, day] = String(value).split('-')
+    return `${year?.slice(-2)}.${month}.${day}`
+  }
+  return `(${shortDate(round.startDate)}~${shortDate(round.endDate)})`
+}
+
+const roundStatusLabel = (status) =>
+  ({
+    ONGOING: '진행 중',
+    WAITING_SETTLEMENT: '정산 대기',
+    SETTLED: '정산 완료',
+  })[status] ||
+  status ||
+  '상태 확인 중'
 
 const setStartDate = () => {
   startDateConfigured.value = true
@@ -802,7 +1287,9 @@ const finishFeedDrag = () => {
   if (draggingFeedName.value) saveFeedOrder()
   if (draggingFeedName.value) {
     draggingFeedName.value = null
-    window.setTimeout(() => { preventNextFeedClick = false }, 0)
+    window.setTimeout(() => {
+      preventNextFeedClick = false
+    }, 0)
   }
 }
 
@@ -854,7 +1341,9 @@ const handleMobileFeedDragMove = (event) => {
   const edgeSize = 72
   if (event.clientY < edgeSize) window.scrollBy({ top: -12, behavior: 'auto' })
   if (event.clientY > window.innerHeight - edgeSize) window.scrollBy({ top: 12, behavior: 'auto' })
-  const targetCard = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-feed-member]')
+  const targetCard = document
+    .elementFromPoint(event.clientX, event.clientY)
+    ?.closest('[data-feed-member]')
   moveFeedMember(targetCard?.dataset.feedMember)
 }
 
@@ -962,7 +1451,8 @@ const moveGroupEditSwipe = (event) => {
   const delta = touch.clientY - state.startY
 
   if (!state.direction && Math.abs(delta) > 8) {
-    state.direction = delta < 0 && !groupEditSheetExpanded.value ? 'expand' : delta > 0 ? 'dismiss' : 'scroll'
+    state.direction =
+      delta < 0 && !groupEditSheetExpanded.value ? 'expand' : delta > 0 ? 'dismiss' : 'scroll'
   }
   if (!state.direction || state.direction === 'scroll') return
 
@@ -1048,8 +1538,11 @@ watch(
 
 watch(
   () => route.params.id,
-  (groupId, previousGroupId) => {
-    if (groupId && groupId !== previousGroupId) loadGroupInfo()
+  async (groupId, previousGroupId) => {
+    if (groupId && groupId !== previousGroupId) {
+      await loadGroupInfo()
+      await loadCurrentRoundOverview()
+    }
   },
 )
 
@@ -1068,17 +1561,24 @@ onMounted(async () => {
     if (savedGroupInfo?.goal) groupEditForm.goal = savedGroupInfo.goal
     if (savedGroupInfo?.weeklyCount) groupEditForm.weeklyCount = savedGroupInfo.weeklyCount
     if (savedGroupInfo?.deposit !== undefined) groupEditForm.deposit = savedGroupInfo.deposit
-    if (savedGroupInfo?.failurePassCount !== undefined) groupEditForm.failurePassCount = savedGroupInfo.failurePassCount
-    if (savedGroupInfo?.additionalRule !== undefined) groupEditForm.additionalRule = savedGroupInfo.additionalRule
+    if (savedGroupInfo?.failurePassCount !== undefined)
+      groupEditForm.failurePassCount = savedGroupInfo.failurePassCount
+    if (savedGroupInfo?.additionalRule !== undefined)
+      groupEditForm.additionalRule = savedGroupInfo.additionalRule
 
     const savedFeedOrder = getFeedOrderCookie()
     if (Array.isArray(savedFeedOrder) && savedFeedOrder.length) {
       const orderIndex = new Map(savedFeedOrder.map((name, index) => [name, index]))
-      members.sort((first, second) => (orderIndex.get(first.name) ?? Infinity) - (orderIndex.get(second.name) ?? Infinity))
+      members.sort(
+        (first, second) =>
+          (orderIndex.get(first.name) ?? Infinity) - (orderIndex.get(second.name) ?? Infinity),
+      )
       editMembers.splice(0, editMembers.length, ...members.map((member) => ({ ...member })))
     }
 
-    const savedVerification = JSON.parse(localStorage.getItem('youngly_group_verification') || 'null')
+    const savedVerification = JSON.parse(
+      localStorage.getItem('youngly_group_verification') || 'null',
+    )
     const myPost = members.find((member) => member.isMe)
     if (savedVerification?.groupId === '1' && myPost) {
       myPost.isVerified = true
@@ -1090,6 +1590,7 @@ onMounted(async () => {
   }
 
   await loadGroupInfo()
+  await loadCurrentRoundOverview()
 })
 
 onBeforeUnmount(() => {
@@ -1139,7 +1640,9 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-button { font: inherit; }
+button {
+  font: inherit;
+}
 
 .challenge-summary {
   display: flex;
@@ -1153,8 +1656,12 @@ button { font: inherit; }
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
 
-.summary-copy { min-width: 0; }
-.summary-copy p { margin: 0; }
+.summary-copy {
+  min-width: 0;
+}
+.summary-copy p {
+  margin: 0;
+}
 .summary-top-row {
   display: flex;
   align-items: flex-start;
@@ -1170,7 +1677,9 @@ button { font: inherit; }
   font-size: 11px;
   font-weight: 800;
 }
-.goal-block { margin-top: 14px; }
+.goal-block {
+  margin-top: 14px;
+}
 .goal-heading {
   display: flex;
   align-items: center;
@@ -1180,10 +1689,24 @@ button { font: inherit; }
   font-size: 11px;
   font-weight: 800;
 }
-.status-message { display: flex; align-items: baseline; gap: 7px; }
-.status-message strong { color: #222; font-size: 20px; line-height: 1.15; }
-.status-message span { color: #8b8493; font-size: 11px; font-weight: 700; }
-.status-message.is-waiting strong { font-size: 17px; }
+.status-message {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.status-message strong {
+  color: #222;
+  font-size: 20px;
+  line-height: 1.15;
+}
+.status-message span {
+  color: #8b8493;
+  font-size: 11px;
+  font-weight: 700;
+}
+.status-message.is-waiting strong {
+  font-size: 17px;
+}
 .goal-message {
   margin: 0;
   color: #222;
@@ -1192,7 +1715,9 @@ button { font: inherit; }
   line-height: 1.35;
   white-space: nowrap;
 }
-.mobile-break { display: none; }
+.mobile-break {
+  display: none;
+}
 
 .pixel-button,
 .pixel-frame {
@@ -1218,45 +1743,305 @@ button { font: inherit; }
   font-weight: 800;
   cursor: pointer;
 }
-.account-button:active { transform: scale(0.97); }
+.account-button:active {
+  transform: scale(0.97);
+}
 
 .ranking-panel {
   padding: 18px 20px 16px;
   background: #fff;
 }
-.ranking-heading { display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: 700; }
-.expand-button { border: 0; padding: 0; background: transparent; color: #999; cursor: pointer; font-size: 20px; line-height: 1; }
-.ranking-track-wrap { position: relative; margin: 30px 5px 6px; }
-.ranking-track { display: flex; height: 8px; overflow: hidden; border-radius: 999px; background: #f1f3f5; }
-.track-segment { flex: 1; border-right: 1px solid #dfe3e8; }
-.track-segment:last-child { border-right: 0; }
-.rank-marker { position: absolute; bottom: 15px; display: grid; width: 23px; height: 23px; place-items: center; transform: translateX(-50%); border: 2px solid #71717a; border-radius: 50%; background: #fff; color: #555; font-size: 10px; font-weight: 800; line-height: 1; }
-.rank-marker.is-me { border-color: #7156ad; background: #7156ad; color: #fff; box-shadow: 0 0 0 3px rgba(113, 86, 173, 0.16); }
-.goal-flag { position: absolute; right: -5px; bottom: 13px; color: #ef4444; font-size: 19px; line-height: 1; }
-.ranking-percent { color: #888; font-size: 11px; }
+.ranking-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 15px;
+  font-weight: 700;
+}
+.round-overview-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.round-overview-heading > div {
+  display: grid;
+  gap: 4px;
+}
+.round-overview-heading span {
+  color: #7156ad;
+  font-size: 13px;
+  font-weight: 800;
+}
+.round-overview-heading strong {
+  font-size: 19px;
+  line-height: 1.3;
+}
+.round-overview-progress {
+  display: grid;
+  gap: 9px;
+  margin-top: 18px;
+}
+.round-overview-progress > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #77717f;
+  font-size: 12px;
+  font-weight: 700;
+}
+.round-overview-progress > div:first-child strong {
+  color: #60418f;
+  font-size: 13px;
+}
+.round-overview-progress__bar {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eeeaf5;
+}
+.round-overview-progress__bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #9d83d2, #7156ad);
+}
+.round-overview-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+.round-overview-stats > div {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 11px 6px;
+  border: 1px solid #ded5ec;
+  border-radius: 10px;
+  background: #faf8fd;
+}
+.round-overview-stats span {
+  color: #77717f;
+  font-size: 11px;
+  font-weight: 700;
+}
+.round-overview-stats strong {
+  color: #2f2838;
+  font-size: 17px;
+}
+.expand-button {
+  flex: 0 0 auto;
+  min-width: 0;
+  font-size: 12px;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+.ranking-track-wrap {
+  position: relative;
+  margin: 30px 5px 6px;
+}
+.ranking-track {
+  display: flex;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #f1f3f5;
+}
+.track-segment {
+  flex: 1;
+  border-right: 1px solid #dfe3e8;
+}
+.track-segment:last-child {
+  border-right: 0;
+}
+.rank-marker {
+  position: absolute;
+  bottom: 15px;
+  display: grid;
+  width: 23px;
+  height: 23px;
+  place-items: center;
+  transform: translateX(-50%);
+  border: 2px solid #71717a;
+  border-radius: 50%;
+  background: #fff;
+  color: #555;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+.rank-marker.is-me {
+  border-color: #7156ad;
+  background: #7156ad;
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(113, 86, 173, 0.16);
+}
+.goal-flag {
+  position: absolute;
+  right: -5px;
+  bottom: 13px;
+  color: #ef4444;
+  font-size: 19px;
+  line-height: 1;
+}
+.ranking-percent {
+  color: #888;
+  font-size: 11px;
+}
 
-.day-selector { display: flex; justify-content: center; align-items: center; gap: 40px; margin: 26px 0 16px; color: #111; }
-.day-selector button { border: 0; background: transparent; padding: 0; color: #999; font-size: 25px; line-height: 1; cursor: pointer; }
-.day-selector strong { font-size: 16px; }
+.day-selector {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  margin: 26px 0 16px;
+  color: #111;
+}
+.day-selector button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #999;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+}
+.day-selector strong {
+  font-size: 16px;
+}
 
-.feed-list { display: grid; gap: 14px; }
-.feed-card { min-height: 196px; box-sizing: border-box; background: #fff; color: #111; }
-.my-feed-card { position: relative; min-height: 340px; padding: 16px 20px; }
-.my-feed-card.is-reordering { opacity: .72; outline: 4px dashed #a78bdf; outline-offset: 3px; cursor: grabbing; }
-.feed-drag-handle { position: absolute; right: 0; bottom: 0; z-index: 8; width: 64px; height: 64px; cursor: grab; touch-action: none; -webkit-touch-callout: none; }
-.feed-drag-handle:active { cursor: grabbing; }
-.feed-owner { display: flex; align-items: center; gap: 6px; color: #444; font-size: 12px; font-weight: 700; }
-.avatar { display: grid; width: 30px; height: 30px; place-items: center; border: 2px solid #fff; border-radius: 50%; background: #d1c4e9; color: #444; font-size: 11px; }
-.me-label { padding: 2px 6px; border-radius: 6px; background: rgba(113, 86, 173, 0.1); color: #7156ad; font-size: 10px; }
-.sleep-message { position: absolute; top: 55%; left: 50%; margin: 0; transform: translate(-50%, -50%); color: #888; font-size: 20px; font-weight: 700; letter-spacing: 2px; }
-.feed-card.is-started { display: flex; flex-direction: column; min-height: 340px; overflow: hidden; border: 3px solid #222; border-radius: 18px; background: #000; color: #fff; box-shadow: none; }
-.feed-card.is-started .feed-owner { position: relative; z-index: 2; color: #fff; }
-.feed-card.is-started .avatar { border-color: #27272a; background: #65529d; color: #fff; }
-.feed-card.has-verification { padding: 16px 20px; }
-.verification-content { position: absolute; inset: 0; }
-.verification-image { width: 100%; height: 100%; object-fit: cover; background: #27272a; }
-.verification-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.52) 0%, rgba(0, 0, 0, 0.06) 42%, rgba(0, 0, 0, 0.72) 100%); }
-.verification-message { position: absolute; right: 20px; bottom: 65px; left: 20px; z-index: 2; margin: 0; color: #fff; font-size: 17px; font-weight: 800; line-height: 1.4; text-align: center; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.72); }
+.feed-list {
+  display: grid;
+  gap: 14px;
+}
+.feed-card {
+  min-height: 196px;
+  box-sizing: border-box;
+  background: #fff;
+  color: #111;
+}
+.my-feed-card {
+  position: relative;
+  min-height: 340px;
+  padding: 16px 20px;
+}
+.my-feed-card.is-reordering {
+  opacity: 0.72;
+  outline: 4px dashed #a78bdf;
+  outline-offset: 3px;
+  cursor: grabbing;
+}
+.feed-drag-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 8;
+  width: 64px;
+  height: 64px;
+  cursor: grab;
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+.feed-drag-handle:active {
+  cursor: grabbing;
+}
+.feed-owner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #444;
+  font-size: 12px;
+  font-weight: 700;
+}
+.avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #d1c4e9;
+  color: #444;
+  font-size: 11px;
+}
+.me-label {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(113, 86, 173, 0.1);
+  color: #7156ad;
+  font-size: 10px;
+}
+.sleep-message {
+  position: absolute;
+  top: 55%;
+  left: 50%;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  color: #888;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+.feed-card.is-started {
+  display: flex;
+  flex-direction: column;
+  min-height: 340px;
+  overflow: hidden;
+  border: 3px solid #222;
+  border-radius: 18px;
+  background: #000;
+  color: #fff;
+  box-shadow: none;
+}
+.feed-card.is-started .feed-owner {
+  position: relative;
+  z-index: 2;
+  color: #fff;
+}
+.feed-card.is-started .avatar {
+  border-color: #27272a;
+  background: #65529d;
+  color: #fff;
+}
+.feed-card.has-verification {
+  padding: 16px 20px;
+}
+.verification-content {
+  position: absolute;
+  inset: 0;
+}
+.verification-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #27272a;
+}
+.verification-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.52) 0%,
+    rgba(0, 0, 0, 0.06) 42%,
+    rgba(0, 0, 0, 0.72) 100%
+  );
+}
+.verification-message {
+  position: absolute;
+  right: 20px;
+  bottom: 65px;
+  left: 20px;
+  z-index: 2;
+  margin: 0;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.4;
+  text-align: center;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.72);
+}
 .review-actions {
   position: absolute;
   bottom: 16px;
@@ -1281,12 +2066,37 @@ button { font: inherit; }
   font-weight: 800;
   cursor: pointer;
 }
-.review-actions button:active { transform: scale(0.97); }
-.approve-button { border: 1.5px solid #7156ad; background: #7156ad; color: #fff; }
-.reject-button { border: 1.5px solid rgba(213, 91, 91, 0.75); background: rgba(255, 255, 255, 0.94); color: #bd4646; }
-.review-status { position: absolute; top: 54px; left: 20px; z-index: 2; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
-.review-status.approved { background: rgba(105, 82, 159, 0.32); color: #e5e2fa; }
-.review-status.rejected { background: rgba(239, 68, 68, 0.24); color: #fecaca; }
+.review-actions button:active {
+  transform: scale(0.97);
+}
+.approve-button {
+  border: 1.5px solid #7156ad;
+  background: #7156ad;
+  color: #fff;
+}
+.reject-button {
+  border: 1.5px solid rgba(213, 91, 91, 0.75);
+  background: rgba(255, 255, 255, 0.94);
+  color: #bd4646;
+}
+.review-status {
+  position: absolute;
+  top: 54px;
+  left: 20px;
+  z-index: 2;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.review-status.approved {
+  background: rgba(105, 82, 159, 0.32);
+  color: #e5e2fa;
+}
+.review-status.rejected {
+  background: rgba(239, 68, 68, 0.24);
+  color: #fecaca;
+}
 .post-engagement {
   position: absolute;
   right: 5px;
@@ -1294,7 +2104,7 @@ button { font: inherit; }
   z-index: 4;
   display: grid;
   gap: 8px;
-  color: #FFFFFFA8;
+  color: #ffffffa8;
   text-align: center;
   text-shadow: none;
 }
@@ -1306,28 +2116,36 @@ button { font: inherit; }
   padding: 2px;
   border: 0;
   background: transparent;
-  color: #FFFFFFA8;
+  color: #ffffffa8;
   cursor: pointer;
   text-shadow: none;
 }
 .engagement-icon {
   display: grid;
   place-items: center;
-  color: #FFFFFFA8;
+  color: #ffffffa8;
   filter: none;
   text-shadow: none;
 }
 .engagement-item b {
-  color: #FFFFFFA8;
+  color: #ffffffa8;
   font-size: 11px;
   font-weight: 800;
   line-height: 1;
   filter: none;
   text-shadow: none;
 }
-.engagement-item.is-active { color: #c8afff; }
-.engagement-item:active { transform: scale(0.9); }
-.engagement-item:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 5px; }
+.engagement-item.is-active {
+  color: #c8afff;
+}
+.engagement-item:active {
+  transform: scale(0.9);
+}
+.engagement-item:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+  border-radius: 5px;
+}
 .latest-comment-row {
   position: absolute;
   right: 45px;
@@ -1397,16 +2215,68 @@ button { font: inherit; }
   white-space: nowrap;
   backdrop-filter: blur(4px);
 }
-.pending-verification { display: grid; place-content: center; gap: 7px; flex: 1; width: 100%; border: 0; background: transparent; color: #fff; text-align: center; cursor: pointer; }
-.pending-verification strong { font-size: 21px; font-weight: 800; }
-.pending-verification span { color: #fff; font-size: 20px; font-weight: 700; letter-spacing: 1px; }
-.pending-verification .deadline-text { color: #ef4444; }
-.invite-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; cursor: pointer; }
-.invite-card span:last-child { color: #888; font-size: 15px; font-weight: 600; }
-.plus { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 50%; background: rgba(113, 86, 173, 0.1); color: #7156ad; font-size: 27px; font-weight: 300; line-height: 1; }
+.pending-verification {
+  display: grid;
+  place-content: center;
+  gap: 7px;
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  text-align: center;
+  cursor: pointer;
+}
+.pending-verification strong {
+  font-size: 21px;
+  font-weight: 800;
+}
+.pending-verification span {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.pending-verification .deadline-text {
+  color: #ef4444;
+}
+.invite-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.invite-card span:last-child {
+  color: #888;
+  font-size: 15px;
+  font-weight: 600;
+}
+.plus {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(113, 86, 173, 0.1);
+  color: #7156ad;
+  font-size: 27px;
+  font-weight: 300;
+  line-height: 1;
+}
 
-.invite-card:hover { background: #f9f7fc; }
-.invite-card:focus-visible, .pixel-button:focus-visible, .account-button:focus-visible, .day-selector button:focus-visible, .expand-button:focus-visible { outline: 3px solid #7156ad; outline-offset: 3px; }
+.invite-card:hover {
+  background: #f9f7fc;
+}
+.invite-card:focus-visible,
+.pixel-button:focus-visible,
+.account-button:focus-visible,
+.day-selector button:focus-visible,
+.expand-button:focus-visible {
+  outline: 3px solid #7156ad;
+  outline-offset: 3px;
+}
 
 /* 친구 초대 코드 모달 */
 :global(.group-invite-modal) {
@@ -1436,8 +2306,15 @@ button { font: inherit; }
   padding: 14px 32px 30px;
 }
 
-.invite-modal-content { display: grid; gap: 13px; }
-.invite-code-label { color: #222; font-size: 14px; font-weight: 700; }
+.invite-modal-content {
+  display: grid;
+  gap: 13px;
+}
+.invite-code-label {
+  color: #222;
+  font-size: 14px;
+  font-weight: 700;
+}
 
 .invite-code-button {
   min-height: 76px;
@@ -1451,9 +2328,24 @@ button { font: inherit; }
   cursor: pointer;
 }
 
-.invite-code-button:hover { background: #e9e4dd; }
-.invite-code-button:focus-visible { outline: 3px solid #7156ad; outline-offset: 3px; }
-.invite-share-button { min-height: 42px; border: 2px solid var(--yl-ink); background: var(--yl-purple); color: #fff; box-shadow: 3px 3px 0 var(--yl-ink); font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+.invite-code-button:hover {
+  background: #e9e4dd;
+}
+.invite-code-button:focus-visible {
+  outline: 3px solid #7156ad;
+  outline-offset: 3px;
+}
+.invite-share-button {
+  min-height: 42px;
+  border: 2px solid var(--yl-ink);
+  background: var(--yl-purple);
+  color: #fff;
+  box-shadow: 3px 3px 0 var(--yl-ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
 
 .copy-complete-message {
   margin: 14px 0 0;
@@ -1476,12 +2368,27 @@ button { font: inherit; }
   font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
 }
 
-:global(.group-start-date-modal .base-modal__header) { padding: 26px 32px 14px; }
-:global(.group-start-date-modal .base-modal__title) { color: #222; font-size: 23px; font-weight: 800; }
-:global(.group-start-date-modal .base-modal__body) { padding: 14px 32px 30px; }
+:global(.group-start-date-modal .base-modal__header) {
+  padding: 26px 32px 14px;
+}
+:global(.group-start-date-modal .base-modal__title) {
+  color: #222;
+  font-size: 23px;
+  font-weight: 800;
+}
+:global(.group-start-date-modal .base-modal__body) {
+  padding: 14px 32px 30px;
+}
 
-.start-date-modal-content { display: grid; gap: 15px; }
-.start-date-label { color: #222; font-size: 14px; font-weight: 700; }
+.start-date-modal-content {
+  display: grid;
+  gap: 15px;
+}
+.start-date-label {
+  color: #222;
+  font-size: 14px;
+  font-weight: 700;
+}
 
 .start-date-input {
   width: 100%;
@@ -1497,7 +2404,10 @@ button { font: inherit; }
   text-align: center;
 }
 
-.start-date-input:focus { outline: 3px solid rgba(105, 82, 159, 0.28); border-color: #69529f; }
+.start-date-input:focus {
+  outline: 3px solid rgba(105, 82, 159, 0.28);
+  border-color: #69529f;
+}
 
 .start-date-submit {
   min-height: 54px;
@@ -1532,109 +2442,804 @@ button { font: inherit; }
   color: #222;
   font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
 }
-:global(.group-ranking-modal .base-modal__header) { padding: 22px 28px 8px; }
-:global(.group-ranking-modal .base-modal__title) { color: #222; font-size: 22px; font-weight: 800; }
-:global(.group-ranking-modal .base-modal__body) { padding: 6px 28px 28px; }
-.ranking-modal-content { display: grid; gap: 18px; }
-.ranking-period { display: flex; align-items: center; justify-content: center; gap: 30px; }
-.ranking-period button { border: 0; background: transparent; color: #222; font-size: 27px; font-weight: 800; line-height: 1; cursor: pointer; }
-.ranking-period strong { font-size: 17px; }
-.ranking-round-summary { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 14px 16px; border: 2px solid #222; background: #f0ede8; }
-.ranking-round-summary span { font-size: 12px; font-weight: 700; }
-.ranking-round-summary strong { font-size: 14px; text-align: right; }
-.ranking-modal-track { grid-column: 1 / -1; height: 9px; overflow: hidden; border: 2px solid #222; background: #fff; }
-.ranking-modal-track i { display: block; height: 100%; background: #7156ad; }
-.ranking-list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; border-top: 1px solid #d6d2dc; }
-.ranking-list li { display: grid; grid-template-columns: 44px 42px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 62px; border-bottom: 1px solid #d6d2dc; }
-.ranking-list li.is-me { background: #f4f0fb; }
-.ranking-position { font-size: 14px; text-align: center; }
-.ranking-avatar { position: relative; display: grid; width: 30px; height: 30px; place-items: center; border: 2px solid #555; border-radius: 50%; background: #fff; color: #222; font-size: 12px; font-weight: 800; }
-.ranking-avatar.is-me { border-color: #7156ad; background: #7156ad; color: #fff; }
-.ranking-crown { position: absolute; top: -19px; color: #e9ae22; font-size: 22px; line-height: 1; text-shadow: 1px 1px 0 #222; }
-.ranking-member-info { display: grid; gap: 3px; min-width: 0; }
-.ranking-member-info b { font-size: 14px; }
-.ranking-member-info b em { margin-left: 5px; color: #7156ad; font-size: 11px; font-style: normal; }
-.ranking-member-info span { color: #555; font-size: 12px; font-weight: 600; }
+:global(.group-ranking-modal .base-modal__header) {
+  padding: 22px 28px 8px;
+}
+:global(.group-ranking-modal .base-modal__title) {
+  color: #222;
+  font-size: 22px;
+  font-weight: 800;
+}
+:global(.group-ranking-modal .base-modal__body) {
+  padding: 6px 28px 28px;
+}
+.ranking-modal-content {
+  display: grid;
+  gap: 18px;
+}
+.ranking-period {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+}
+.ranking-period button {
+  border: 0;
+  background: transparent;
+  color: #222;
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+.ranking-period button:disabled {
+  cursor: default;
+  opacity: 0.25;
+}
+.ranking-period strong {
+  font-size: 17px;
+}
+.ranking-period-copy {
+  min-width: 190px;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+.ranking-period-copy small {
+  color: #746d7d;
+  font-size: 12px;
+  font-weight: 700;
+}
+.ranking-sheet-header {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  text-align: center;
+}
+.ranking-sheet-handle {
+  display: none;
+  width: 42px;
+  height: 5px;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: #b4adbd;
+}
+.ranking-api-state {
+  min-height: 140px;
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  color: #77707f;
+  text-align: center;
+}
+.ranking-api-state.error {
+  color: #a44e4e;
+}
+.ranking-api-state button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #cfc5dc;
+  border-radius: 9px;
+  color: #5f438b;
+  background: #fff;
+  font: inherit;
+  font-weight: 800;
+}
+.ranking-round-summary {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 2px solid #222;
+  background: #f0ede8;
+}
+.ranking-round-summary span {
+  font-size: 12px;
+  font-weight: 700;
+}
+.ranking-round-summary strong {
+  font-size: 14px;
+  text-align: right;
+}
+.ranking-modal-track {
+  grid-column: 1 / -1;
+  height: 9px;
+  overflow: hidden;
+  border: 2px solid #222;
+  background: #fff;
+}
+.ranking-modal-track i {
+  display: block;
+  height: 100%;
+  background: #7156ad;
+}
+.ranking-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid #d6d2dc;
+}
+.ranking-list li {
+  display: grid;
+  grid-template-columns: 44px 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 62px;
+  border-bottom: 1px solid #d6d2dc;
+}
+.ranking-list li.is-me {
+  background: #f4f0fb;
+}
+.ranking-position {
+  font-size: 14px;
+  text-align: center;
+}
+.ranking-avatar {
+  position: relative;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 2px solid #555;
+  border-radius: 50%;
+  background: #fff;
+  color: #222;
+  font-size: 12px;
+  font-weight: 800;
+}
+.ranking-avatar.is-me {
+  border-color: #7156ad;
+  background: #7156ad;
+  color: #fff;
+}
+.ranking-crown {
+  position: absolute;
+  top: -19px;
+  color: #e9ae22;
+  font-size: 22px;
+  line-height: 1;
+  text-shadow: 1px 1px 0 #222;
+}
+.ranking-member-info {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.ranking-member-info b {
+  font-size: 14px;
+}
+.ranking-member-info b em {
+  margin-left: 5px;
+  color: #7156ad;
+  font-size: 11px;
+  font-style: normal;
+}
+.ranking-member-info span {
+  color: #555;
+  font-size: 12px;
+  font-weight: 600;
+}
+.ranking-member-info .ranking-settlement {
+  color: #675083;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.current-round-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.current-round-stats > div {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 12px 8px;
+  border-radius: 10px;
+  background: #f4f0fa;
+}
+.current-round-stats small {
+  color: #756d7d;
+  font-size: 11px;
+}
+.current-round-stats strong {
+  color: #4f3977;
+  font-size: 18px;
+}
+.current-round-stats p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #8a8292;
+  font-size: 10px;
+  text-align: center;
+}
 
 /* 그룹 정보 수정 모달 */
-:global(.group-edit-modal) { max-width: 760px; max-height: 760px; border: 4px solid #222; border-radius: 0; color: #222; font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif; }
-:global(.group-edit-modal .base-modal__header) { padding: 22px 28px 10px; }
-:global(.group-edit-modal .base-modal__title) { color: #222; font-size: 23px; font-weight: 800; }
-:global(.group-edit-modal .base-modal__body) { padding: 8px 28px 28px; }
-.group-edit-form { display: grid; gap: 19px; }
-.group-edit-field, .group-edit-category { display: grid; gap: 9px; min-width: 0; margin: 0; padding: 0; border: 0; }
-.group-edit-field > span, .group-edit-category legend, .group-member-editor h3 { padding: 0; margin: 0; color: #222; font-size: 15px; font-weight: 800; }
-.group-edit-field input, .group-edit-field select, .group-edit-field textarea { width: 100%; min-height: 48px; box-sizing: border-box; border: 2px solid #222; border-radius: 12px; background: #f0ede8; padding: 0 14px; color: #222; font: inherit; font-size: 15px; }
-.group-edit-field textarea { height: 84px; padding-top: 12px; padding-bottom: 12px; line-height: 1.45; resize: vertical; }
-.group-edit-field em { color: #85808b; font-size: 12px; font-style: normal; font-weight: 600; }
-.group-edit-category > div { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 9px; }
-.group-edit-category button { min-height: 40px; border: 2px solid #222; border-radius: 9px; background: #f0ede8; color: #71717a; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
-.group-edit-category button.active { background: #7156ad; color: #fff; }
-.group-member-editor { display: grid; gap: 9px; }.group-member-editor ul { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
-.group-member-editor li { display: grid; grid-template-columns: 32px minmax(0, 1fr) 86px; gap: 10px; align-items: center; }.member-editor-avatar { display: grid; width: 28px; height: 28px; place-items: center; border: 2px solid #222; border-radius: 50%; background: #f0ede8; font-size: 11px; font-weight: 800; }.group-member-editor strong { font-size: 14px; }.group-member-editor li button { min-height: 32px; border: 2px solid #222; border-radius: 8px; background: #f0ede8; color: #71717a; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
-.group-edit-submit { min-height: 54px; margin-top: 6px; border: 3px solid #222; border-radius: 14px; background: #7156ad; color: #fff; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer; }.group-edit-complete { margin: 0; padding: 11px 14px; border: 2px solid #69529f; border-radius: 10px; background: #e5e2fa; color: #533b85; font-size: 14px; font-weight: 700; text-align: center; }
+:global(.group-edit-modal) {
+  max-width: 760px;
+  max-height: 760px;
+  border: 4px solid #222;
+  border-radius: 0;
+  color: #222;
+  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
+}
+:global(.group-edit-modal .base-modal__header) {
+  padding: 22px 28px 10px;
+}
+:global(.group-edit-modal .base-modal__title) {
+  color: #222;
+  font-size: 23px;
+  font-weight: 800;
+}
+:global(.group-edit-modal .base-modal__body) {
+  padding: 8px 28px 28px;
+}
+.group-edit-form {
+  display: grid;
+  gap: 19px;
+}
+.group-edit-field,
+.group-edit-category {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.group-edit-field > span,
+.group-edit-category legend,
+.group-member-editor h3 {
+  padding: 0;
+  margin: 0;
+  color: #222;
+  font-size: 15px;
+  font-weight: 800;
+}
+.group-edit-field input,
+.group-edit-field select,
+.group-edit-field textarea {
+  width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  border: 2px solid #222;
+  border-radius: 12px;
+  background: #f0ede8;
+  padding: 0 14px;
+  color: #222;
+  font: inherit;
+  font-size: 15px;
+}
+.group-edit-field textarea {
+  height: 84px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  line-height: 1.45;
+  resize: vertical;
+}
+.group-edit-field em {
+  color: #85808b;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+}
+.group-edit-category > div {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 9px;
+}
+.group-edit-category button {
+  min-height: 40px;
+  border: 2px solid #222;
+  border-radius: 9px;
+  background: #f0ede8;
+  color: #71717a;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.group-edit-category button.active {
+  background: #7156ad;
+  color: #fff;
+}
+.group-member-editor {
+  display: grid;
+  gap: 9px;
+}
+.group-member-editor ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.group-member-editor li {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 86px;
+  gap: 10px;
+  align-items: center;
+}
+.member-editor-avatar {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 2px solid #222;
+  border-radius: 50%;
+  background: #f0ede8;
+  font-size: 11px;
+  font-weight: 800;
+}
+.group-member-editor strong {
+  font-size: 14px;
+}
+.group-member-editor li button {
+  min-height: 32px;
+  border: 2px solid #222;
+  border-radius: 8px;
+  background: #f0ede8;
+  color: #71717a;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.group-edit-submit {
+  min-height: 54px;
+  margin-top: 6px;
+  border: 3px solid #222;
+  border-radius: 14px;
+  background: #7156ad;
+  color: #fff;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.group-edit-complete {
+  margin: 0;
+  padding: 11px 14px;
+  border: 2px solid #69529f;
+  border-radius: 10px;
+  background: #e5e2fa;
+  color: #533b85;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
 
 /* 승인 완료 게시글 상세 모달 */
-:global(.group-post-detail-modal) { max-width: 560px; overflow: hidden; border-radius: 22px; font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif; }
-:global(.group-post-detail-modal .base-modal__header) { padding: 18px 22px 12px; }
-:global(.group-post-detail-modal .base-modal__title) { color: #222; font-size: 19px; font-weight: 800; }
-:global(.group-post-detail-modal .base-modal__body) { padding: 0; }
-.post-detail-modal-header { position: relative; display: flex; width: 100%; align-items: center; justify-content: center; gap: 9px; text-align: center; }
-.post-detail-modal-header .post-delete-button { position: absolute; right: 0; }
-.post-delete-button { display: grid; width: 30px; height: 30px; padding: 0; border: 1px solid #e4dce9; border-radius: 9px; place-items: center; background: #fff; font-size: 15px; cursor: pointer; }
-.post-delete-button:hover { background: #fff2f2; }
-.post-detail-image-wrap { position: relative; height: min(75vw, 390px); min-height: 290px; background: #222; }.post-detail-image-wrap img { width: 100%; height: 100%; object-fit: cover; }.post-detail-image-wrap > div { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.55), transparent 45%, rgba(0,0,0,.73)); }.post-detail-image-wrap p { position: absolute; top: 16px; left: 18px; z-index: 1; display: flex; align-items: center; gap: 8px; margin: 0; color: #fff; }.post-detail-avatar { display: grid; width: 34px; height: 34px; place-items: center; border: 2px solid rgba(255,255,255,.9); border-radius: 50%; background: #7156ad; box-shadow: 0 2px 7px rgba(0,0,0,.25); color: #fff; font-size: 11px; font-weight: 800; }.post-detail-image-wrap p b { font-size: 15px; }.post-detail-image-wrap > strong { position: absolute; right: 20px; bottom: 18px; left: 20px; z-index: 1; color: #fff; font-size: 21px; text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,.75); }
-.post-reaction-info { display: grid; gap: 10px; padding: 16px 20px 14px; }.post-reaction-info p { display: grid; gap: 3px; margin: 0; color: #666; font-size: 13px; }.post-reaction-info p b { color: #222; font-size: 14px; }.post-approval-status { margin-bottom: 2px; padding: 0 0 12px; border-bottom: 1px solid #e4dced; color: #7156ad; font-size: 13px; font-weight: 800; }
-.post-comments { padding: 0 20px 20px; }.post-comments h3 { margin: 0 0 12px; color: #222; font-size: 17px; }.post-comments h3 small { color: #7156ad; font-size: 13px; }.post-comments ul { display: grid; gap: 9px; max-height: 160px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }.post-comments li { color: #555; font-size: 13px; line-height: 1.4; }.post-comments li b { margin-right: 7px; color: #222; }.post-comments form { display: flex; align-items: center; gap: 8px; margin-top: 15px; padding-top: 14px; border-top: 1px solid #ece8f2; }.post-comments input { flex: 1; min-width: 0; height: 44px; box-sizing: border-box; border: 1.5px solid #d9cdea; border-radius: 12px; background: #f8f5fc; padding: 0 13px; color: #2f2935; outline: none; font: inherit; font-size: 13px; box-shadow: none; }.post-comments input:focus { border-color: #8e6bc5; box-shadow: 0 0 0 3px rgba(113,86,173,.12); }.post-comments button { min-width: 58px; height: 44px; border: 0; border-radius: 12px; background: #7156ad; box-shadow: none; color: #fff; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }.post-comments button:active { transform: scale(.97); }.post-comments button:disabled { cursor: not-allowed; opacity: .45; }
+:global(.group-post-detail-modal) {
+  max-width: 560px;
+  overflow: hidden;
+  border-radius: 22px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
+}
+:global(.group-post-detail-modal .base-modal__header) {
+  padding: 18px 22px 12px;
+}
+:global(.group-post-detail-modal .base-modal__title) {
+  color: #222;
+  font-size: 19px;
+  font-weight: 800;
+}
+:global(.group-post-detail-modal .base-modal__body) {
+  padding: 0;
+}
+.post-detail-modal-header {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  text-align: center;
+}
+.post-detail-modal-header .post-delete-button {
+  position: absolute;
+  right: 0;
+}
+.post-delete-button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid #e4dce9;
+  border-radius: 9px;
+  place-items: center;
+  background: #fff;
+  font-size: 15px;
+  cursor: pointer;
+}
+.post-delete-button:hover {
+  background: #fff2f2;
+}
+.post-detail-image-wrap {
+  position: relative;
+  height: min(75vw, 390px);
+  min-height: 290px;
+  background: #222;
+}
+.post-detail-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.post-detail-image-wrap > div {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 45%, rgba(0, 0, 0, 0.73));
+}
+.post-detail-image-wrap p {
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #fff;
+}
+.post-detail-avatar {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  background: #7156ad;
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+.post-detail-image-wrap p b {
+  font-size: 15px;
+}
+.post-detail-image-wrap > strong {
+  position: absolute;
+  right: 20px;
+  bottom: 18px;
+  left: 20px;
+  z-index: 1;
+  color: #fff;
+  font-size: 21px;
+  text-align: center;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75);
+}
+.post-reaction-info {
+  display: grid;
+  gap: 10px;
+  padding: 16px 20px 14px;
+}
+.post-reaction-info p {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  color: #666;
+  font-size: 13px;
+}
+.post-reaction-info p b {
+  color: #222;
+  font-size: 14px;
+}
+.post-approval-status {
+  margin-bottom: 2px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid #e4dced;
+  color: #7156ad;
+  font-size: 13px;
+  font-weight: 800;
+}
+.post-comments {
+  padding: 0 20px 20px;
+}
+.post-comments h3 {
+  margin: 0 0 12px;
+  color: #222;
+  font-size: 17px;
+}
+.post-comments h3 small {
+  color: #7156ad;
+  font-size: 13px;
+}
+.post-comments ul {
+  display: grid;
+  gap: 9px;
+  max-height: 160px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.post-comments li {
+  color: #555;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.post-comments li b {
+  margin-right: 7px;
+  color: #222;
+}
+.post-comments form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+  padding-top: 14px;
+  border-top: 1px solid #ece8f2;
+}
+.post-comments input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  box-sizing: border-box;
+  border: 1.5px solid #d9cdea;
+  border-radius: 12px;
+  background: #f8f5fc;
+  padding: 0 13px;
+  color: #2f2935;
+  outline: none;
+  font: inherit;
+  font-size: 13px;
+  box-shadow: none;
+}
+.post-comments input:focus {
+  border-color: #8e6bc5;
+  box-shadow: 0 0 0 3px rgba(113, 86, 173, 0.12);
+}
+.post-comments button {
+  min-width: 58px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #7156ad;
+  box-shadow: none;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.post-comments button:active {
+  transform: scale(0.97);
+}
+.post-comments button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
 
 /* 반려 사유 모달 */
-:global(.group-reject-modal) { max-width: 410px; border: 3px solid #222; border-radius: 18px; font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif; }
-:global(.group-reject-modal .base-modal__title) { font-weight: 800; }
-:global(.group-reject-modal .base-modal__body) { padding-top: 4px; }
-.reject-form { display: grid; gap: 13px; }.reject-form p { margin: 0; color: #555; font-size: 13px; line-height: 1.5; }.reject-form textarea { min-height: 105px; resize: vertical; border: 2px solid #222; border-radius: 12px; padding: 12px; color: #222; font: inherit; font-size: 14px; }.reject-form button { min-height: 43px; border: 0; border-radius: 11px; background: #7156ad; color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+:global(.group-reject-modal) {
+  max-width: 410px;
+  border: 3px solid #222;
+  border-radius: 18px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
+}
+:global(.group-reject-modal .base-modal__title) {
+  font-weight: 800;
+}
+:global(.group-reject-modal .base-modal__body) {
+  padding-top: 4px;
+}
+.reject-form {
+  display: grid;
+  gap: 13px;
+}
+.reject-form p {
+  margin: 0;
+  color: #555;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.reject-form textarea {
+  min-height: 105px;
+  resize: vertical;
+  border: 2px solid #222;
+  border-radius: 12px;
+  padding: 12px;
+  color: #222;
+  font: inherit;
+  font-size: 14px;
+}
+.reject-form button {
+  min-height: 43px;
+  border: 0;
+  border-radius: 11px;
+  background: #7156ad;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
 
 @media (max-width: 767px) {
-  .group-detail-content { padding-inline: 20px; }
-  .mobile-break { display: block; }
+  .group-detail-content {
+    padding-inline: 20px;
+  }
+  .mobile-break {
+    display: block;
+  }
 
-  :global(.youngly-modal) { width: 100vw; max-width: 100vw !important; max-height: min(88dvh, 760px); margin: 0; border-width: 3px 0 0; box-shadow: none !important; }
+  :global(.youngly-modal) {
+    width: 100vw;
+    max-width: 100vw !important;
+    max-height: min(88dvh, 760px);
+    margin: 0;
+    border-width: 3px 0 0;
+    box-shadow: none !important;
+  }
 
   :global(.group-invite-modal),
   :global(.group-start-date-modal),
   :global(.group-ranking-modal),
   :global(.group-post-detail-modal),
-  :global(.group-reject-modal) { width: 100vw; max-width: 100vw !important; max-height: min(88dvh, 760px); margin: 0; }
+  :global(.group-reject-modal) {
+    width: 100vw;
+    max-width: 100vw !important;
+    max-height: min(88dvh, 760px);
+    margin: 0;
+  }
 
-  :global(.group-invite-modal .base-modal__header) { padding: 22px 20px 10px; }
-  :global(.group-invite-modal .base-modal__body) { padding: 12px 20px 24px; }
-  :global(.group-invite-modal .base-modal__title) { font-size: 20px; }
-  .invite-code-button { min-height: 68px; font-size: 21px; }
+  :global(.group-invite-modal .base-modal__header) {
+    padding: 22px 20px 10px;
+  }
+  :global(.group-invite-modal .base-modal__body) {
+    padding: 12px 20px 24px;
+  }
+  :global(.group-invite-modal .base-modal__title) {
+    font-size: 20px;
+  }
+  .invite-code-button {
+    min-height: 68px;
+    font-size: 21px;
+  }
 
-  :global(.group-start-date-modal .base-modal__header) { padding: 22px 20px 10px; }
-  :global(.group-start-date-modal .base-modal__body) { padding: 12px 20px 24px; }
-  :global(.group-start-date-modal .base-modal__title) { font-size: 20px; }
-  .start-date-input { min-height: 64px; font-size: 18px; }
+  :global(.group-start-date-modal .base-modal__header) {
+    padding: 22px 20px 10px;
+  }
+  :global(.group-start-date-modal .base-modal__body) {
+    padding: 12px 20px 24px;
+  }
+  :global(.group-start-date-modal .base-modal__title) {
+    font-size: 20px;
+  }
+  .start-date-input {
+    min-height: 64px;
+    font-size: 18px;
+  }
 
-  :global(.base-modal__overlay:has(.group-edit-modal)) { z-index: 2000 !important; align-items: end; padding: 0; }
-  :global(.group-edit-modal) { position: relative; width: 100%; height: 56dvh; max-height: 88dvh; overflow: hidden; overscroll-behavior: contain; border-width: 3px 0 0; border-radius: 26px 26px 0 0; transition: height 300ms cubic-bezier(0.22, 1, 0.36, 1); -webkit-overflow-scrolling: touch; }
-  :global(.group-edit-modal.is-expanded) { height: 88dvh; overflow-y: auto; }
-  :global(.group-edit-modal .base-modal__header) { position: sticky; top: 0; z-index: 5; display: block; padding: 14px 20px 8px; background: #fff; }
-  :global(.group-edit-modal .base-modal__body) { padding: 8px 20px calc(22px + env(safe-area-inset-bottom)); }
-  :global(.group-edit-modal .base-modal__title) { display: block; width: 100%; font-size: 20px; }
-  .group-edit-category > div { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  :global(.base-modal__overlay:has(.group-ranking-modal)) {
+    z-index: 20000 !important;
+    align-items: end;
+    padding: 0;
+  }
+  :global(.group-ranking-modal .base-modal__header) {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: block;
+    padding: 34px 20px 10px;
+    background: var(--yl-yellow);
+  }
+  :global(.group-ranking-modal .base-modal__body) {
+    padding: 8px 18px calc(24px + env(safe-area-inset-bottom));
+  }
+  :global(.group-ranking-modal),
+  :global(.group-ranking-modal .base-modal__surface),
+  :global(.group-ranking-modal .base-modal__body) {
+    touch-action: none;
+  }
+  :global(.group-ranking-modal .base-modal__title) {
+    display: block;
+    width: 100%;
+    font-size: 20px;
+  }
+  .ranking-modal-content {
+    touch-action: none;
+  }
+  .ranking-period {
+    gap: 12px;
+  }
+  .ranking-period-copy {
+    min-width: 170px;
+  }
+  .ranking-list li {
+    grid-template-columns: 39px 38px minmax(0, 1fr);
+    gap: 8px;
+    min-height: 68px;
+  }
 
-  .group-edit-sheet-header { display: grid; gap: 8px; width: 100%; color: #222; font-size: 20px; font-weight: 800; text-align: center; touch-action: none; user-select: none; cursor: grab; }
-  .group-edit-form { touch-action: pan-y; }
-  .group-edit-sheet-header:active { cursor: grabbing; }
-  .group-edit-sheet-handle { display: block; width: 42px; height: 5px; margin: 0 auto; border-radius: 999px; background: #b4adbd; }
+  :global(.base-modal__overlay:has(.group-edit-modal)) {
+    z-index: 2000 !important;
+    align-items: end;
+    padding: 0;
+  }
+  :global(.group-edit-modal) {
+    position: relative;
+    width: 100%;
+    height: 56dvh;
+    max-height: 88dvh;
+    overflow: hidden;
+    overscroll-behavior: contain;
+    border-width: 3px 0 0;
+    border-radius: 26px 26px 0 0;
+    transition: height 300ms cubic-bezier(0.22, 1, 0.36, 1);
+    -webkit-overflow-scrolling: touch;
+  }
+  :global(.group-edit-modal.is-expanded) {
+    height: 88dvh;
+    overflow-y: auto;
+  }
+  :global(.group-edit-modal .base-modal__header) {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: block;
+    padding: 14px 20px 8px;
+    background: #fff;
+  }
+  :global(.group-edit-modal .base-modal__body) {
+    padding: 8px 20px calc(22px + env(safe-area-inset-bottom));
+  }
+  :global(.group-edit-modal .base-modal__title) {
+    display: block;
+    width: 100%;
+    font-size: 20px;
+  }
+  .group-edit-category > div {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 
-  :global(.group-post-detail-modal) { overflow-y: auto; }
-  .post-detail-image-wrap { height: 67vw; min-height: 250px; }
+  .group-edit-sheet-header {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+    color: #222;
+    font-size: 20px;
+    font-weight: 800;
+    text-align: center;
+    touch-action: none;
+    user-select: none;
+    cursor: grab;
+  }
+  .group-edit-form {
+    touch-action: pan-y;
+  }
+  .group-edit-sheet-header:active {
+    cursor: grabbing;
+  }
+  .group-edit-sheet-handle {
+    display: block;
+    width: 42px;
+    height: 5px;
+    margin: 0 auto;
+    border-radius: 999px;
+    background: #b4adbd;
+  }
+
+  :global(.group-post-detail-modal) {
+    overflow-y: auto;
+  }
+  .post-detail-image-wrap {
+    height: 67vw;
+    min-height: 250px;
+  }
 }
 
 @media (min-width: 768px) {
-  .group-detail-page { margin: -20px; min-height: calc(100% + 40px); }
-  .group-detail-content { padding-top: 28px; }
+  .group-detail-page {
+    margin: -20px;
+    min-height: calc(100% + 40px);
+  }
+  .group-detail-content {
+    padding-top: 28px;
+  }
 }
 
 /* Youngly pixel design */
@@ -1649,15 +3254,26 @@ button { font: inherit; }
   border-radius: 0;
   box-shadow: var(--yl-pixel-shadow);
   clip-path: polygon(
-    8px 0, calc(100% - 8px) 0,
-    calc(100% - 8px) 3px, calc(100% - 3px) 3px,
-    calc(100% - 3px) 8px, 100% 8px,
-    100% calc(100% - 8px), calc(100% - 3px) calc(100% - 8px),
-    calc(100% - 3px) calc(100% - 3px), calc(100% - 8px) calc(100% - 3px),
-    calc(100% - 8px) 100%, 8px 100%,
-    8px calc(100% - 3px), 3px calc(100% - 3px),
-    3px calc(100% - 8px), 0 calc(100% - 8px),
-    0 8px, 3px 8px, 3px 3px, 8px 3px
+    8px 0,
+    calc(100% - 8px) 0,
+    calc(100% - 8px) 3px,
+    calc(100% - 3px) 3px,
+    calc(100% - 3px) 8px,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 3px) calc(100% - 8px),
+    calc(100% - 3px) calc(100% - 3px),
+    calc(100% - 8px) calc(100% - 3px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    8px calc(100% - 3px),
+    3px calc(100% - 3px),
+    3px calc(100% - 8px),
+    0 calc(100% - 8px),
+    0 8px,
+    3px 8px,
+    3px 3px,
+    8px 3px
   );
 }
 
@@ -1672,15 +3288,26 @@ button { font: inherit; }
   border-radius: 0;
   box-shadow: 4px 4px 0 var(--yl-ink);
   clip-path: polygon(
-    5px 0, calc(100% - 5px) 0,
-    calc(100% - 5px) 2px, calc(100% - 2px) 2px,
-    calc(100% - 2px) 5px, 100% 5px,
-    100% calc(100% - 5px), calc(100% - 2px) calc(100% - 5px),
-    calc(100% - 2px) calc(100% - 2px), calc(100% - 5px) calc(100% - 2px),
-    calc(100% - 5px) 100%, 5px 100%,
-    5px calc(100% - 2px), 2px calc(100% - 2px),
-    2px calc(100% - 5px), 0 calc(100% - 5px),
-    0 5px, 2px 5px, 2px 2px, 5px 2px
+    5px 0,
+    calc(100% - 5px) 0,
+    calc(100% - 5px) 2px,
+    calc(100% - 2px) 2px,
+    calc(100% - 2px) 5px,
+    100% 5px,
+    100% calc(100% - 5px),
+    calc(100% - 2px) calc(100% - 5px),
+    calc(100% - 2px) calc(100% - 2px),
+    calc(100% - 5px) calc(100% - 2px),
+    calc(100% - 5px) 100%,
+    5px 100%,
+    5px calc(100% - 2px),
+    2px calc(100% - 2px),
+    2px calc(100% - 5px),
+    0 calc(100% - 5px),
+    0 5px,
+    2px 5px,
+    2px 2px,
+    5px 2px
   );
 }
 
@@ -1700,13 +3327,25 @@ button { font: inherit; }
   color: #fff;
 }
 
-.approve-button { --pixel-fill: var(--yl-purple); }
-.feed-card.is-started { --pixel-fill: #000; }
-.avatar { --pixel-fill: #d1c4e9; }
-.feed-card.is-started .avatar { --pixel-fill: #65529d; }
+.approve-button {
+  --pixel-fill: var(--yl-purple);
+}
+.feed-card.is-started {
+  --pixel-fill: #000;
+}
+.avatar {
+  --pixel-fill: #d1c4e9;
+}
+.feed-card.is-started .avatar {
+  --pixel-fill: #65529d;
+}
 .rank-marker.is-me,
-.ranking-avatar.is-me { --pixel-fill: var(--yl-purple); }
-.plus { --pixel-fill: var(--yl-purple-light); }
+.ranking-avatar.is-me {
+  --pixel-fill: var(--yl-purple);
+}
+.plus {
+  --pixel-fill: var(--yl-purple-light);
+}
 
 .ranking-track,
 .ranking-modal-track {
@@ -1716,7 +3355,9 @@ button { font: inherit; }
   background: var(--yl-paper);
 }
 
-.track-segment { border-right: 2px solid var(--yl-ink); }
+.track-segment {
+  border-right: 2px solid var(--yl-ink);
+}
 
 .rank-marker,
 .ranking-avatar,
@@ -1724,12 +3365,34 @@ button { font: inherit; }
 .plus {
   border-radius: 0;
   clip-path: polygon(
-    33% 0, 67% 0, 67% 7%, 80% 7%, 80% 13%,
-    93% 13%, 93% 33%, 100% 33%, 100% 67%,
-    93% 67%, 93% 87%, 80% 87%, 80% 93%,
-    67% 93%, 67% 100%, 33% 100%, 33% 93%,
-    20% 93%, 20% 87%, 7% 87%, 7% 67%, 0 67%,
-    0 33%, 7% 33%, 7% 13%, 20% 13%, 20% 7%, 33% 7%
+    33% 0,
+    67% 0,
+    67% 7%,
+    80% 7%,
+    80% 13%,
+    93% 13%,
+    93% 33%,
+    100% 33%,
+    100% 67%,
+    93% 67%,
+    93% 87%,
+    80% 87%,
+    80% 93%,
+    67% 93%,
+    67% 100%,
+    33% 100%,
+    33% 93%,
+    20% 93%,
+    20% 87%,
+    7% 87%,
+    7% 67%,
+    0 67%,
+    0 33%,
+    7% 33%,
+    7% 13%,
+    20% 13%,
+    20% 7%,
+    33% 7%
   );
 }
 
@@ -1760,7 +3423,10 @@ button { font: inherit; }
   font-size: 19px;
   font-weight: 700;
 }
-.expand-button { width: 30px; height: 30px; }
+.expand-button {
+  width: 30px;
+  height: 30px;
+}
 
 .me-label,
 .review-status,
@@ -1869,6 +3535,14 @@ button { font: inherit; }
   padding: 16px 18px 14px;
 }
 
+/* 랭킹 프로필은 공통 헤더 프로필처럼 매끄러운 원형으로 표시합니다. */
+.ranking-avatar {
+  border: 1px solid #2d1f4f;
+  border-radius: 50%;
+  clip-path: none;
+  box-shadow: none;
+}
+
 .feed-card-surface {
   position: relative;
   display: flex;
@@ -1896,9 +3570,16 @@ button { font: inherit; }
 }
 
 @media (max-width: 767px) {
-  .group-detail-content { padding: 8px 14px 112px; }
-  .challenge-summary-surface { align-items: stretch; padding: 16px 20px; }
-  .day-selector { gap: 24px; }
+  .group-detail-content {
+    padding: 8px 14px 112px;
+  }
+  .challenge-summary-surface {
+    align-items: stretch;
+    padding: 16px 20px;
+  }
+  .day-selector {
+    gap: 24px;
+  }
 
   :global(.group-edit-modal) {
     border: var(--yl-pixel-border);
@@ -1909,12 +3590,29 @@ button { font: inherit; }
 }
 
 /* 피드 검토 상태와 순서 변경 안내 */
-.feed-card-surface { padding: 7px 9px; }
-.feed-card.has-verification { padding: 0; }
-.feed-owner { gap: 8px; }
-.feed-card.is-started .avatar { width: 36px; height: 36px; font-size: 12px; }
-.feed-owner__info { display: grid; gap: 2px; }
-.feed-owner__name { display: flex; align-items: center; gap: 5px; }
+.feed-card-surface {
+  padding: 7px 9px;
+}
+.feed-card.has-verification {
+  padding: 0;
+}
+.feed-owner {
+  gap: 8px;
+}
+.feed-card.is-started .avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 12px;
+}
+.feed-owner__info {
+  display: grid;
+  gap: 2px;
+}
+.feed-owner__name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
 .feed-review-badge {
   display: inline-flex;
   width: fit-content;
@@ -1929,15 +3627,46 @@ button { font: inherit; }
   line-height: 1;
   backdrop-filter: blur(4px);
 }
-.feed-review-badge.is-approved { border-color: rgba(132, 221, 174, 0.72); background: rgba(21, 105, 63, 0.72); color: #e4fff0; }
-.feed-review-badge.is-rejected { border-color: rgba(255, 167, 167, 0.72); background: rgba(139, 38, 38, 0.72); color: #fff0f0; }
-.feed-card.has-verification.review-pending { --pixel-outline-color: #a7a0ae; }
-.feed-card.has-verification.review-approved { --pixel-outline-color: #2fa36b; }
-.feed-card.has-verification.review-rejected { --pixel-outline-color: #e25353; }
-.review-status { display: none; }
-.feed-drag-handle { right: 11px; bottom: 10px; display: grid; width: 25px; height: 25px; place-items: center; background: transparent; color: rgba(255,255,255,.66); }
-.feed-drag-handle span { font-size: 21px; font-weight: 800; line-height: 1; }
-.feed-card:not(.has-verification) .feed-drag-handle { color: rgba(105,82,159,.7); }
+.feed-review-badge.is-approved {
+  border-color: rgba(132, 221, 174, 0.72);
+  background: rgba(21, 105, 63, 0.72);
+  color: #e4fff0;
+}
+.feed-review-badge.is-rejected {
+  border-color: rgba(255, 167, 167, 0.72);
+  background: rgba(139, 38, 38, 0.72);
+  color: #fff0f0;
+}
+.feed-card.has-verification.review-pending {
+  --pixel-outline-color: #a7a0ae;
+}
+.feed-card.has-verification.review-approved {
+  --pixel-outline-color: #2fa36b;
+}
+.feed-card.has-verification.review-rejected {
+  --pixel-outline-color: #e25353;
+}
+.review-status {
+  display: none;
+}
+.feed-drag-handle {
+  right: 11px;
+  bottom: 10px;
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.66);
+}
+.feed-drag-handle span {
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1;
+}
+.feed-card:not(.has-verification) .feed-drag-handle {
+  color: rgba(105, 82, 159, 0.7);
+}
 
 /* 그룹 생성 바텀시트와 동일한 그룹 수정 폼 */
 :global(.group-edit-modal .base-modal__header) {
@@ -2207,6 +3936,33 @@ button { font: inherit; }
   font-size: 11px;
   font-weight: 700;
   pointer-events: none;
+}
+
+/* 상단 모임통장 버튼과 동일한 형태로 유지합니다. */
+.round-overview-heading .expand-button.account-button {
+  display: inline-flex;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 11px;
+  border: 1.5px solid #7156ad;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: none;
+  clip-path: none;
+  color: #60418f;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.round-overview-heading .expand-button.account-button:active {
+  box-shadow: none;
+  transform: scale(0.97);
 }
 
 @media (max-width: 767px) {

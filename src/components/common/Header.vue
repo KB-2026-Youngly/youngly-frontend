@@ -79,14 +79,6 @@
               <h1 v-else class="group-title">{{ groupTitle }}</h1>
             </div>
           </div>
-          <div v-if="isGroupOwner" class="group-actions">
-            <button class="group-profile pixel-step-circle" type="button" aria-label="내 프로필">
-              <UserProfileAvatar
-                class="group-profile__avatar"
-                :image-url="user?.profileImageUrl"
-              />
-            </button>
-          </div>
         </div>
       </div>
     </div>

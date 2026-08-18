@@ -12,15 +12,15 @@
           :aria-labelledby="hasTitle ? titleId : undefined"
           :aria-label="hasTitle ? undefined : ariaLabel"
           tabindex="-1"
+          @pointerdown="handleSheetPointerDown"
+          @pointermove="handleSheetPointerMove"
+          @pointerup="handleSheetPointerUp"
+          @pointercancel="handleSheetPointerCancel"
         >
           <div class="base-modal__surface">
             <header
               v-if="hasTitle || showCloseButton"
               class="base-modal__header"
-              @pointerdown="startSheetPull"
-              @pointermove="moveSheetPull"
-              @pointerup="endSheetPull"
-              @pointercancel="cancelSheetPull"
             >
               <span v-if="showSheetHandle" class="base-modal__handle" aria-hidden="true"></span>
               <div :id="titleId" class="base-modal__title">
@@ -99,6 +99,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  dragFromAnywhere: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'close'])
@@ -132,6 +136,29 @@ const handleOverlayClick = () => {
 }
 
 const isMobileSheet = () => typeof window !== 'undefined' && window.innerWidth < 768
+
+const isInteractiveTarget = (target) =>
+  target instanceof Element && Boolean(target.closest('button, a, input, select, textarea, [role="button"]'))
+
+const handleSheetPointerDown = (event) => {
+  const startedInHeader =
+    event.target instanceof Element && Boolean(event.target.closest('.base-modal__header'))
+  if (!startedInHeader && !props.dragFromAnywhere) return
+  if (!startedInHeader && isInteractiveTarget(event.target)) return
+  startSheetPull(event)
+}
+
+const handleSheetPointerMove = (event) => {
+  if (sheetPullStartY.value !== null) moveSheetPull(event)
+}
+
+const handleSheetPointerUp = (event) => {
+  if (sheetPullStartY.value !== null) endSheetPull(event)
+}
+
+const handleSheetPointerCancel = () => {
+  if (sheetPullStartY.value !== null) cancelSheetPull()
+}
 
 const startSheetPull = (event) => {
   if (!isMobileSheet() || event.isPrimary === false) return
@@ -287,7 +314,7 @@ onBeforeUnmount(() => {
 .base-modal__overlay {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 10000;
   display: grid;
   place-items: center;
   padding: 20px;
@@ -433,8 +460,8 @@ onBeforeUnmount(() => {
     border: 0 !important;
     border-radius: 0 !important;
     padding: 0;
-    background: #222 !important;
-    box-shadow: none;
+    background: var(--sheet-fill) !important;
+    box-shadow: none !important;
     clip-path: polygon(
       8px 0,
       calc(100% - 8px) 0,
@@ -453,14 +480,32 @@ onBeforeUnmount(() => {
     -webkit-overflow-scrolling: touch;
   }
   .base-modal::before {
-    display: none;
+    content: '';
+    position: absolute;
+    z-index: 20;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 10px;
+    background:
+      linear-gradient(#d6cbe2, #d6cbe2) 8px 0 / calc(100% - 16px) 2px no-repeat,
+      linear-gradient(#d6cbe2, #d6cbe2) 6px 0 / 2px 5px no-repeat,
+      linear-gradient(#d6cbe2, #d6cbe2) 3px 3px / 5px 2px no-repeat,
+      linear-gradient(#d6cbe2, #d6cbe2) 3px 3px / 2px 7px no-repeat,
+      linear-gradient(#d6cbe2, #d6cbe2) 0 8px / 5px 2px no-repeat,
+      linear-gradient(#d6cbe2, #d6cbe2) right 6px top 0 / 2px 5px no-repeat,
+      linear-gradient(#d6cbe2, #d6cbe2) right 3px top 3px / 5px 2px no-repeat,
+      linear-gradient(#d6cbe2, #d6cbe2) right 3px top 3px / 2px 7px no-repeat,
+      linear-gradient(#d6cbe2, #d6cbe2) right 0 top 8px / 5px 2px no-repeat;
+    pointer-events: none;
   }
   .base-modal__surface {
     position: relative;
     z-index: 1;
-    width: calc(100% - 6px);
-    max-height: calc(min(88dvh, 760px) - 6px);
-    margin: 3px;
+    width: 100%;
+    max-height: min(88dvh, 760px);
+    margin: 0;
     box-sizing: border-box;
     overflow-y: auto;
     background: #fff !important;
