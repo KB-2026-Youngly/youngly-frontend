@@ -1,14 +1,10 @@
 <template>
   <div class="activity-summary" role="list" aria-label="활동 요약">
-    <div
-      v-for="item in items"
-      :key="item.label"
-      class="activity-summary__shadow yl-stepped-card-shadow"
-    >
+    <div v-for="item in items" :key="item.label" class="activity-summary__shadow">
       <component
         :is="item.to ? RouterLink : 'div'"
         :to="item.to || undefined"
-        class="activity-summary__item pixel-step-card pixel-step-solid"
+        class="activity-summary__item"
         :class="{
           'activity-summary__item--link': item.to,
           'activity-summary__item--point': item.isPoint,
@@ -16,10 +12,17 @@
         role="listitem"
         :aria-label="item.to ? `${item.label} ${item.value}, 포인트 내역 보기` : undefined"
       >
-        <span class="activity-summary__surface pixel-step-surface">
+        <span class="activity-summary__surface">
           <span class="activity-summary__label">{{ item.label }}</span>
-          <strong :class="{ 'activity-summary__value--point': item.isPoint }">{{ item.value }}</strong>
-          <ChevronRight v-if="item.to" class="activity-summary__arrow" :size="17" aria-hidden="true" />
+          <strong :class="{ 'activity-summary__value--point': item.isPoint }">{{
+            item.value
+          }}</strong>
+          <ChevronRight
+            v-if="item.to"
+            class="activity-summary__arrow"
+            :size="17"
+            aria-hidden="true"
+          />
         </span>
       </component>
     </div>
@@ -53,28 +56,25 @@ defineProps({
 }
 
 .activity-summary__item {
-  --pixel-outline-color: #ac99d2;
-  --pixel-fill: rgba(255, 255, 255, 0.11);
   position: relative;
   display: block;
   min-width: 0;
   margin: 0;
   min-height: 76px;
-  padding: 2px;
-  border: 0;
-  border-radius: 0;
+  padding: 1px;
+  border: 1px solid #ffffff;
+  border-radius: 14px;
   color: inherit;
   text-align: center;
   text-decoration: none;
   box-sizing: border-box;
-  background: #ac99d2;
-  filter: none !important;
+  background: #ffffff;
 }
 
 .activity-summary__shadow {
-  --yl-stepped-shadow-color: rgba(64, 42, 94, 0.3);
-  --yl-stepped-shadow-offset: 3px;
   min-width: 0;
+  border-radius: 14px;
+  box-shadow: 0 3px 6px rgba(64, 42, 94, 0.24);
 }
 
 .activity-summary__surface {
@@ -84,36 +84,36 @@ defineProps({
   align-content: center;
   min-height: 72px;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.11);
+  border-radius: 12px;
+  background: transparent;
   box-sizing: border-box;
 }
 
 .activity-summary__label {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 11px;
+  color: #51367f;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
   white-space: nowrap;
 }
 
-.activity-summary__item > strong {
-  color: #ffffff;
-  font-size: 21px;
-  font-weight: 800;
+.activity-summary__item strong {
+  color: #51367f;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.15;
 }
 
 .activity-summary .activity-summary__value--point {
-  color: #ffffff;
-}
-
-.activity-summary__item--point {
-  background: transparent;
+  color: #60418f;
 }
 
 .activity-summary__item--link {
   cursor: pointer;
-  transition:
-    border-color 0.18s ease,
-    background-color 0.18s ease,
-    color 0.18s ease;
+}
+
+.activity-summary__item--link .activity-summary__surface {
+  padding-right: 24px;
 }
 
 .activity-summary__item--link:last-child {
@@ -121,8 +121,7 @@ defineProps({
 }
 
 .activity-summary__item--link:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
+  background: #ffffff;
 }
 
 .activity-summary__item--link:focus-visible {
@@ -134,7 +133,7 @@ defineProps({
   position: absolute;
   top: 50%;
   right: 8px;
-  color: #ffffff;
+  color: #60418f;
   transform: translateY(-50%);
   transition: transform 0.18s ease;
 }
@@ -153,7 +152,7 @@ defineProps({
 
   .activity-summary__item {
     min-height: 68px;
-    padding: 2px;
+    padding: 1px;
   }
 
   .activity-summary__surface {
@@ -162,11 +161,11 @@ defineProps({
   }
 
   .activity-summary__label {
-    font-size: 11px;
+    font-size: 12px;
   }
 
-  .activity-summary__item > strong {
-    font-size: clamp(16px, 5vw, 18px);
+  .activity-summary__item strong {
+    font-size: 18px;
   }
 
   .activity-summary__item--link {

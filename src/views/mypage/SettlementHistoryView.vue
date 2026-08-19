@@ -1,9 +1,18 @@
 <template>
   <div class="settlement-page">
     <header class="settlement-header">
-      <div class="settlement-back-shadow mypage-back-shadow yl-stepped-card-shadow"><button type="button" class="back-button mypage-back-button pixel-step-button pixel-step-solid" aria-label="마이페이지로 돌아가기" @click="goBack">
-        <span class="settlement-back-surface mypage-back-surface pixel-step-surface"><ArrowLeft :size="18" aria-hidden="true" /></span>
-      </button></div>
+      <div class="settlement-back-shadow mypage-back-shadow yl-stepped-card-shadow">
+        <button
+          type="button"
+          class="back-button mypage-back-button pixel-step-button pixel-step-solid"
+          aria-label="마이페이지로 돌아가기"
+          @click="goBack"
+        >
+          <span class="settlement-back-surface mypage-back-surface pixel-step-surface"
+            ><ArrowLeft :size="18" aria-hidden="true"
+          /></span>
+        </button>
+      </div>
       <h1>정산 내역</h1>
     </header>
 
@@ -16,7 +25,7 @@
         title="정산 내역을 불러오지 못했어요"
         :description="error"
         action-text="다시 불러오기"
-        @action="fetchSettlements"
+        @action="retrySettlements"
       >
         <template #icon>
           <AlertTriangle />
@@ -25,13 +34,20 @@
     </section>
 
     <template v-else>
+      <p v-if="warning" class="partial-warning" role="status">
+        <AlertTriangle :size="17" aria-hidden="true" />
+        {{ warning }}
+      </p>
+
       <section class="summary-card settlement-stepped-panel" aria-label="전체 정산 완료 금액">
         <span class="summary-card__icon" aria-hidden="true">
           <CircleDollarSign :size="25" />
         </span>
         <div>
           <span>전체 정산 완료 금액</span>
-          <strong class="summary-card__value yl-money">{{ formatAmount(totalCompletedAmount) }}</strong>
+          <strong class="summary-card__value yl-money">{{
+            formatAmount(totalCompletedAmount)
+          }}</strong>
         </div>
       </section>
 
@@ -55,9 +71,9 @@
             <span class="group-dropdown__name">{{ selectedGroup?.groupName }}</span>
             <span
               class="group-status"
-              :class="`group-status--${selectedGroup?.status.toLowerCase()}`"
+              :class="`group-status--${selectedGroup?.groupStatus?.toLowerCase() || 'unknown'}`"
             >
-              {{ getGroupStatusLabel(selectedGroup?.status) }}
+              {{ getGroupStatusLabel(selectedGroup?.groupStatus) }}
             </span>
             <ChevronDown class="group-dropdown__chevron" :size="19" aria-hidden="true" />
           </button>
@@ -79,8 +95,11 @@
                 @click="selectGroup(group.groupId)"
               >
                 <span>{{ group.groupName }}</span>
-                <span class="group-status" :class="`group-status--${group.status.toLowerCase()}`">
-                  {{ getGroupStatusLabel(group.status) }}
+                <span
+                  class="group-status"
+                  :class="`group-status--${group.groupStatus?.toLowerCase() || 'unknown'}`"
+                >
+                  {{ getGroupStatusLabel(group.groupStatus) }}
                 </span>
               </button>
             </div>
@@ -94,7 +113,11 @@
         />
       </section>
 
-      <section v-if="selectedGroup" class="history-section settlement-stepped-panel" aria-labelledby="settlement-list-title">
+      <section
+        v-if="selectedGroup"
+        class="history-section settlement-stepped-panel"
+        aria-labelledby="settlement-list-title"
+      >
         <div class="section-heading">
           <div>
             <span>SETTLEMENT</span>
@@ -108,19 +131,15 @@
             v-for="settlement in sortedSettlements"
             :key="settlement.settlementId"
             class="settlement-card settlement-stepped-panel settlement-stepped-panel--small"
-            :class="`settlement-card--${settlement.status.toLowerCase()}`"
           >
             <div class="settlement-card__heading">
-              <strong class="settlement-card__round">
-                <span>{{ settlement.round }}</span>
+              <strong v-if="settlement.roundNo != null" class="settlement-card__round">
+                <span>{{ settlement.roundNo }}</span>
                 라운드
               </strong>
-              <span
-                class="settlement-status"
-                :class="`settlement-status--${settlement.status.toLowerCase()}`"
-              >
-                {{ getSettlementStatusLabel(settlement.status) }}
-              </span>
+              <time :datetime="settlement.createdAt">
+                {{ formatDateTime(settlement.createdAt) }}
+              </time>
             </div>
 
             <div class="settlement-card__body">
@@ -129,13 +148,13 @@
                   <ReceiptText :size="18" />
                 </span>
                 <div>
-                  <strong>{{ settlement.accountName }}</strong>
-                  <span>{{ settlement.accountNumber }}</span>
+                  <strong>{{ settlement.bankName || '—' }}</strong>
+                  <span>{{ settlement.maskedAccountNumber || '—' }}</span>
                 </div>
               </div>
               <div class="settlement-amount">
                 <span>정산 금액</span>
-                <strong class="yl-money">{{ formatAmount(settlement.amount) }}</strong>
+                <strong class="yl-money">{{ formatAmount(settlement.settlementAmount) }}</strong>
               </div>
             </div>
           </article>
@@ -153,6 +172,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import {
   AlertTriangle,
@@ -163,13 +183,19 @@ import {
 } from 'lucide-vue-next'
 import BaseEmptyState from '@/components/base/BaseEmptyState.vue'
 import BaseSpinner from '@/components/base/BaseSpinner.vue'
-import { getMockSettlementOverview } from '@/mocks/settlements'
+import { useMyPageStore } from '@/stores/mypage'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
-const groups = ref([])
+const myPageStore = useMyPageStore()
+const userStore = useUserStore()
+const {
+  settlementGroups: groups,
+  isSettlementLoading: isLoading,
+  settlementError: error,
+  settlementWarning: warning,
+} = storeToRefs(myPageStore)
 const selectedGroupId = ref(null)
-const isLoading = ref(false)
-const error = ref('')
 const isDropdownOpen = ref(false)
 const dropdownRef = ref(null)
 
@@ -178,16 +204,19 @@ const selectedGroup = computed(() =>
 )
 
 const sortedSettlements = computed(() =>
-  [...(selectedGroup.value?.settlements || [])].sort((a, b) => Number(b.round) - Number(a.round)),
+  [...(selectedGroup.value?.settlements || [])].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  ),
 )
 
 const totalCompletedAmount = computed(() =>
   groups.value.reduce(
     (total, group) =>
       total +
-      group.settlements
-        .filter((settlement) => settlement.status === 'COMPLETED')
-        .reduce((groupTotal, settlement) => groupTotal + Number(settlement.amount || 0), 0),
+      group.settlements.reduce(
+        (groupTotal, settlement) => groupTotal + Number(settlement.settlementAmount || 0),
+        0,
+      ),
     0,
   ),
 )
@@ -195,10 +224,20 @@ const totalCompletedAmount = computed(() =>
 const formatAmount = (amount) => `${new Intl.NumberFormat('ko-KR').format(amount || 0)}원`
 
 const getGroupStatusLabel = (status) =>
-  ({ IN_PROGRESS: '진행 중', ENDED: '종료' })[status] || '상태 미정'
+  ({ RECRUITING: '모집 중', ONGOING: '진행 중', FINISHED: '종료' })[status] || '상태 미정'
 
-const getSettlementStatusLabel = (status) =>
-  ({ COMPLETED: '정산 완료', PROCESSING: '처리 중', PENDING: '정산 예정' })[status] || '상태 미정'
+const formatDateTime = (value) => {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
+}
 
 const selectGroup = (groupId) => {
   selectedGroupId.value = groupId
@@ -209,26 +248,17 @@ const closeDropdown = (event) => {
   if (!dropdownRef.value?.contains(event.target)) isDropdownOpen.value = false
 }
 
-const fetchSettlements = async () => {
-  isLoading.value = true
-  error.value = ''
+const fetchSettlements = async (force = false) => {
   isDropdownOpen.value = false
-
-  try {
-    // TODO: 정산 조회 API가 확정되면 getMockSettlementOverview를 실제 API 함수로 교체하세요.
-    const data = await getMockSettlementOverview()
-    groups.value = Array.isArray(data?.groups) ? data.groups : []
-    selectedGroupId.value = groups.value[0]?.groupId ?? null
-  } catch (fetchError) {
-    groups.value = []
-    selectedGroupId.value = null
-    error.value =
-      fetchError?.response?.data?.message ||
-      '정산 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'
-  } finally {
-    isLoading.value = false
-  }
+  const user = await userStore.ensureMyInfo()
+  await myPageStore.fetchSettlementOverview(user?.userId, force)
+  const hasSelectedGroup = groups.value.some(
+    (group) => String(group.groupId) === String(selectedGroupId.value),
+  )
+  if (!hasSelectedGroup) selectedGroupId.value = groups.value[0]?.groupId ?? null
 }
+
+const retrySettlements = () => fetchSettlements(true)
 
 const goBack = () => router.push('/mypage')
 
@@ -309,6 +339,20 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   min-height: 320px;
   display: grid;
   place-items: center;
+}
+
+.partial-warning {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #cdbfe6;
+  border-radius: 8px;
+  color: #51367f;
+  background: #f7f3fc;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .summary-card {
@@ -488,12 +532,18 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   white-space: nowrap;
 }
 
-.group-status--in_progress {
+.group-status--recruiting {
+  color: #7156ad;
+  background: #eee7f8;
+}
+
+.group-status--ongoing {
   color: #34705a;
   background: #e6f4ed;
 }
 
-.group-status--ended {
+.group-status--finished,
+.group-status--unknown {
   color: #756d7d;
   background: #efedf1;
 }
@@ -539,7 +589,35 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   background: #7658b5;
   font-size: 12px;
   line-height: 1;
-  clip-path: polygon(5px 0, calc(100% - 5px) 0, calc(100% - 5px) 2px, calc(100% - 2px) 2px, calc(100% - 2px) 5px, 100% 5px, 100% calc(100% - 5px), calc(100% - 2px) calc(100% - 5px), calc(100% - 2px) calc(100% - 2px), calc(100% - 5px) calc(100% - 2px), calc(100% - 5px) 100%, 5px 100%, 5px calc(100% - 2px), 2px calc(100% - 2px), 2px calc(100% - 5px), 0 calc(100% - 5px), 0 5px, 2px 5px, 2px 2px, 5px 2px);
+  clip-path: polygon(
+    5px 0,
+    calc(100% - 5px) 0,
+    calc(100% - 5px) 2px,
+    calc(100% - 2px) 2px,
+    calc(100% - 2px) 5px,
+    100% 5px,
+    100% calc(100% - 5px),
+    calc(100% - 2px) calc(100% - 5px),
+    calc(100% - 2px) calc(100% - 2px),
+    calc(100% - 5px) calc(100% - 2px),
+    calc(100% - 5px) 100%,
+    5px 100%,
+    5px calc(100% - 2px),
+    2px calc(100% - 2px),
+    2px calc(100% - 5px),
+    0 calc(100% - 5px),
+    0 5px,
+    2px 5px,
+    2px 2px,
+    5px 2px
+  );
+}
+
+.settlement-card__heading time {
+  color: #756d7d;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .settlement-status--completed {
@@ -594,7 +672,28 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   border-radius: 0;
   color: var(--color-primary);
   background: var(--color-primary-soft);
-  clip-path: polygon(7px 0, calc(100% - 7px) 0, calc(100% - 7px) 3px, calc(100% - 3px) 3px, calc(100% - 3px) 7px, 100% 7px, 100% calc(100% - 7px), calc(100% - 3px) calc(100% - 7px), calc(100% - 3px) calc(100% - 3px), calc(100% - 7px) calc(100% - 3px), calc(100% - 7px) 100%, 7px 100%, 7px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 7px), 0 calc(100% - 7px), 0 7px, 3px 7px, 3px 3px, 7px 3px);
+  clip-path: polygon(
+    7px 0,
+    calc(100% - 7px) 0,
+    calc(100% - 7px) 3px,
+    calc(100% - 3px) 3px,
+    calc(100% - 3px) 7px,
+    100% 7px,
+    100% calc(100% - 7px),
+    calc(100% - 3px) calc(100% - 7px),
+    calc(100% - 3px) calc(100% - 3px),
+    calc(100% - 7px) calc(100% - 3px),
+    calc(100% - 7px) 100%,
+    7px 100%,
+    7px calc(100% - 3px),
+    3px calc(100% - 3px),
+    3px calc(100% - 7px),
+    0 calc(100% - 7px),
+    0 7px,
+    3px 7px,
+    3px 3px,
+    7px 3px
+  );
 }
 
 .account-info > div {
@@ -685,7 +784,6 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   position: relative;
   z-index: 1;
 }
-
 
 @media (max-width: 420px) {
   .settlement-card__body {
@@ -810,7 +908,36 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
 .settlement-stepped-panel::after {
   content: '';
   position: absolute;
-  clip-path: polygon(11px 0, calc(100% - 11px) 0, calc(100% - 11px) 3px, calc(100% - 7px) 3px, calc(100% - 7px) 6px, calc(100% - 3px) 6px, calc(100% - 3px) 11px, 100% 11px, 100% calc(100% - 11px), calc(100% - 3px) calc(100% - 11px), calc(100% - 3px) calc(100% - 6px), calc(100% - 7px) calc(100% - 6px), calc(100% - 7px) calc(100% - 3px), calc(100% - 11px) calc(100% - 3px), calc(100% - 11px) 100%, 11px 100%, 11px calc(100% - 3px), 7px calc(100% - 3px), 7px calc(100% - 6px), 3px calc(100% - 6px), 3px calc(100% - 11px), 0 calc(100% - 11px), 0 11px, 3px 11px, 3px 6px, 7px 6px, 7px 3px, 11px 3px);
+  clip-path: polygon(
+    11px 0,
+    calc(100% - 11px) 0,
+    calc(100% - 11px) 3px,
+    calc(100% - 7px) 3px,
+    calc(100% - 7px) 6px,
+    calc(100% - 3px) 6px,
+    calc(100% - 3px) 11px,
+    100% 11px,
+    100% calc(100% - 11px),
+    calc(100% - 3px) calc(100% - 11px),
+    calc(100% - 3px) calc(100% - 6px),
+    calc(100% - 7px) calc(100% - 6px),
+    calc(100% - 7px) calc(100% - 3px),
+    calc(100% - 11px) calc(100% - 3px),
+    calc(100% - 11px) 100%,
+    11px 100%,
+    11px calc(100% - 3px),
+    7px calc(100% - 3px),
+    7px calc(100% - 6px),
+    3px calc(100% - 6px),
+    3px calc(100% - 11px),
+    0 calc(100% - 11px),
+    0 11px,
+    3px 11px,
+    3px 6px,
+    7px 6px,
+    7px 3px,
+    11px 3px
+  );
   pointer-events: none;
 }
 

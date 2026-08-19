@@ -13,114 +13,70 @@
       <BaseSpinner size="large" label="사용자 정보를 불러오는 중..." centered />
     </section>
 
-    <ProfileCard v-else :summary="activitySummary" @edit="goToProfileEdit" />
+    <ProfileCard v-else :summary="activitySummary" />
 
     <div class="character-card-shadow yl-stepped-card-shadow">
-    <RouterLink
-      to="/characters"
-      class="character-card yl-stepped-card-shape"
-      aria-labelledby="character-title"
-    >
-      <div class="character-card__surface yl-stepped-card-shape">
-      <span class="character-card__badge">MY CHARACTER</span>
-      <div class="character-card__preview">
-        <BaseSpinner
-          v-if="isCharacterLoading"
-          size="small"
-          :show-label="false"
-          aria-label="캐릭터를 불러오는 중"
-        />
-        <CharacterPreview v-else :character="equippedCharacter" />
-      </div>
-      <div class="character-card__copy">
-        <h2 id="character-title">내 캐릭터</h2>
-        <span class="character-card__action">캐릭터 뽑기 · 선택 및 장착</span>
-      </div>
-      <span
-        class="character-card__button pixel-step-button pixel-step-button--compact pixel-step-solid"
-        aria-hidden="true"
+      <RouterLink
+        to="/characters"
+        class="character-card yl-stepped-card-shape"
+        aria-labelledby="character-title"
       >
-        <span class="character-card__button-surface pixel-step-surface"><ChevronRight :size="20" aria-hidden="true" /></span>
-      </span>
-      </div>
-    </RouterLink></div>
+        <div class="character-card__surface yl-stepped-card-shape">
+          <span class="character-card__badge">MY CHARACTER</span>
+          <div class="character-card__preview">
+            <BaseSpinner
+              v-if="isCharacterLoading"
+              size="small"
+              :show-label="false"
+              aria-label="캐릭터를 불러오는 중"
+            />
+            <CharacterPreview v-else :character="equippedCharacter" />
+          </div>
+          <div class="character-card__copy">
+            <h2 id="character-title">내 캐릭터</h2>
+            <span class="character-card__action">캐릭터 뽑기 · 선택 및 장착</span>
+          </div>
+          <span
+            class="character-card__button pixel-step-button pixel-step-button--compact pixel-step-solid"
+            aria-hidden="true"
+          >
+            <span class="character-card__button-surface pixel-step-surface"
+              ><ChevronRight :size="20" aria-hidden="true"
+            /></span>
+          </span>
+        </div>
+      </RouterLink>
+    </div>
 
     <SettingsMenu :items="settingsItems" @select="handleSettingSelect" />
 
-    <div class="account-exit-bar" role="group" aria-label="계정 종료 메뉴">
+    <div class="account-exit-bar" role="group" aria-label="계정 및 지원 메뉴">
       <button type="button" @click="logout">로그아웃</button>
       <span class="account-exit-bar__divider" aria-hidden="true"></span>
-      <button type="button" @click="openWithdrawalModal">회원 탈퇴</button>
+      <a
+        href="https://obank.kbstar.com/quics?page=osupp#loading"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        고객센터
+      </a>
     </div>
-
-    <BaseModal
-      v-model="isWithdrawalOpen"
-      :title="withdrawalModalTitle"
-      size="small"
-      modal-class="withdrawal-modal"
-      :close-on-overlay="!isWithdrawing"
-      :close-on-esc="!isWithdrawing"
-      :show-close-button="!isWithdrawing"
-      @close="resetWithdrawalModal"
-    >
-      <div class="withdrawal-content">
-        <span class="withdrawal-content__icon" aria-hidden="true">
-          <TriangleAlert :size="26" />
-        </span>
-
-        <template v-if="withdrawalStep === 'warning'">
-          <strong>회원 탈퇴 전 꼭 확인해 주세요.</strong>
-          <ul>
-            <li>탈퇴 후 다시 로그인할 수 없습니다.</li>
-            <li>계정은 비활성화 처리됩니다.</li>
-          </ul>
-        </template>
-
-        <template v-else>
-          <strong>정말 회원 탈퇴를 진행할까요?</strong>
-          <p>이 작업을 완료하면 현재 계정으로 다시 로그인할 수 없습니다.</p>
-        </template>
-
-        <p v-if="withdrawalError" class="withdrawal-content__error" role="alert">
-          {{ withdrawalError }}
-        </p>
-      </div>
-
-      <template #footer>
-        <BaseButton variant="ghost" :disabled="isWithdrawing" @click="closeWithdrawalModal">
-          취소
-        </BaseButton>
-        <BaseButton
-          v-if="withdrawalStep === 'warning'"
-          variant="danger"
-          @click="withdrawalStep = 'final'"
-        >
-          계속
-        </BaseButton>
-        <BaseButton v-else variant="danger" :loading="isWithdrawing" @click="confirmWithdrawal">
-          <template #loading>탈퇴 처리 중...</template>
-          회원 탈퇴
-        </BaseButton>
-      </template>
-    </BaseModal>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { ChevronRight, TriangleAlert } from 'lucide-vue-next'
+import { ChevronRight } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
-import { deactivateMyAccount } from '@/api/user'
-import BaseButton from '@/components/base/BaseButton.vue'
 import BaseEmptyState from '@/components/base/BaseEmptyState.vue'
-import BaseModal from '@/components/base/BaseModal.vue'
 import BaseSpinner from '@/components/base/BaseSpinner.vue'
 import CharacterPreview from '@/components/collectible/CharacterPreview.vue'
 import ProfileCard from '@/components/mypage/ProfileCard.vue'
 import SettingsMenu from '@/components/mypage/SettingsMenu.vue'
 import { useAccountStore } from '@/stores/account'
 import { useCollectibleStore } from '@/stores/collectible'
+import { useMyPageStore } from '@/stores/mypage'
 import { usePointStore } from '@/stores/point'
 import { useUserStore } from '@/stores/user'
 
@@ -129,20 +85,21 @@ const pointStore = usePointStore()
 const collectibleStore = useCollectibleStore()
 const userStore = useUserStore()
 const accountStore = useAccountStore()
+const myPageStore = useMyPageStore()
 const { balance, isLoading: isPointLoading, error: pointError } = storeToRefs(pointStore)
 const { user, isLoading: isUserLoading, error: userError } = storeToRefs(userStore)
 const { equippedCharacter, isLoading: isCharacterLoading } = storeToRefs(collectibleStore)
-const isWithdrawalOpen = ref(false)
-const withdrawalStep = ref('warning')
-const isWithdrawing = ref(false)
-const withdrawalError = ref('')
-const withdrawalModalTitle = computed(() =>
-  withdrawalStep.value === 'warning' ? '회원 탈퇴 안내' : '회원 탈퇴 최종 확인',
-)
+const { approvedCount, rejectedCount, isActivityLoading, activityError } = storeToRefs(myPageStore)
+
+const formatActivityCount = (count) => {
+  if (isActivityLoading.value) return '...'
+  if (activityError.value || count == null) return '—'
+  return new Intl.NumberFormat('ko-KR').format(count)
+}
 
 const activitySummary = computed(() => [
-  { label: '승인 횟수', value: '—' },
-  { label: '반려 횟수', value: '—' },
+  { label: '승인 횟수', value: formatActivityCount(approvedCount.value) },
+  { label: '반려 횟수', value: formatActivityCount(rejectedCount.value) },
   {
     label: '보유 포인트',
     value: isPointLoading.value
@@ -167,21 +124,11 @@ const settingsItems = [
     label: '정산 내역',
   },
   {
-    id: 'customer-support',
-    icon: 'support',
-    label: '고객센터',
-    href: 'https://obank.kbstar.com/quics?page=osupp#loading',
-  },
-  {
     id: 'password',
     icon: 'password',
     label: '비밀번호 변경',
   },
 ]
-
-const goToProfileEdit = () => {
-  router.push('/mypage/profile')
-}
 
 const handleSettingSelect = (settingId) => {
   if (settingId === 'account') router.push('/mypage/accounts')
@@ -189,52 +136,14 @@ const handleSettingSelect = (settingId) => {
   if (settingId === 'password') router.push('/mypage/password')
 }
 
-const openWithdrawalModal = () => {
-  withdrawalStep.value = 'warning'
-  withdrawalError.value = ''
-  isWithdrawalOpen.value = true
-}
-
-const resetWithdrawalModal = () => {
-  if (isWithdrawing.value) return
-  withdrawalStep.value = 'warning'
-  withdrawalError.value = ''
-}
-
-const closeWithdrawalModal = () => {
-  if (isWithdrawing.value) return
-  isWithdrawalOpen.value = false
-  resetWithdrawalModal()
-}
-
 const clearAuthentication = () => {
   accountStore.$reset()
   collectibleStore.$reset()
+  myPageStore.$reset()
   pointStore.$reset()
   userStore.$reset()
   localStorage.removeItem('youngly_access_token')
   localStorage.removeItem('youngly_user')
-}
-
-const confirmWithdrawal = async () => {
-  if (isWithdrawing.value) return
-
-  isWithdrawing.value = true
-  withdrawalError.value = ''
-
-  try {
-    await deactivateMyAccount()
-    clearAuthentication()
-    isWithdrawalOpen.value = false
-    await router.replace({ name: 'Login', query: { notice: 'account-deactivated' } })
-  } catch (error) {
-    withdrawalError.value =
-      error?.response?.data?.message ||
-      error?.response?.data?.error ||
-      '회원 탈퇴를 처리하지 못했어요. 잠시 후 다시 시도해 주세요.'
-  } finally {
-    isWithdrawing.value = false
-  }
 }
 
 const logout = () => {
@@ -246,6 +155,14 @@ onMounted(() => {
   pointStore.fetchPointBalance()
   collectibleStore.ensureOwnedCharacters()
 })
+
+watch(
+  () => user.value?.userId,
+  (userId) => {
+    if (userId) myPageStore.fetchActivitySummary()
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped>
@@ -290,7 +207,28 @@ onMounted(() => {
   color: rgba(80, 69, 91, 0.5);
   background: rgba(172, 153, 210, 0.2);
   filter: drop-shadow(5px 5px 0 rgba(200, 183, 229, 0.18));
-  clip-path: polygon(9px 0, calc(100% - 9px) 0, calc(100% - 9px) 3px, calc(100% - 3px) 3px, calc(100% - 3px) 9px, 100% 9px, 100% calc(100% - 9px), calc(100% - 3px) calc(100% - 9px), calc(100% - 3px) calc(100% - 3px), calc(100% - 9px) calc(100% - 3px), calc(100% - 9px) 100%, 9px 100%, 9px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 9px), 0 calc(100% - 9px), 0 9px, 3px 9px, 3px 3px, 9px 3px);
+  clip-path: polygon(
+    9px 0,
+    calc(100% - 9px) 0,
+    calc(100% - 9px) 3px,
+    calc(100% - 3px) 3px,
+    calc(100% - 3px) 9px,
+    100% 9px,
+    100% calc(100% - 9px),
+    calc(100% - 3px) calc(100% - 9px),
+    calc(100% - 3px) calc(100% - 3px),
+    calc(100% - 9px) calc(100% - 3px),
+    calc(100% - 9px) 100%,
+    9px 100%,
+    9px calc(100% - 3px),
+    3px calc(100% - 3px),
+    3px calc(100% - 9px),
+    0 calc(100% - 9px),
+    0 9px,
+    3px 9px,
+    3px 3px,
+    9px 3px
+  );
   box-sizing: border-box;
 }
 
@@ -306,7 +244,7 @@ onMounted(() => {
   pointer-events: none;
 }
 
-.account-exit-bar button {
+.account-exit-bar :is(button, a) {
   position: relative;
   z-index: 1;
   min-width: 112px;
@@ -317,22 +255,20 @@ onMounted(() => {
   font: inherit;
   font-size: 12px;
   font-weight: 700;
+  text-align: center;
+  text-decoration: none;
   cursor: pointer;
   transition:
     color 0.16s ease,
     background-color 0.16s ease;
 }
 
-.account-exit-bar button:hover {
+.account-exit-bar :is(button, a):hover {
   color: #655b6d;
   background: rgba(255, 255, 255, 0.48);
 }
 
-.account-exit-bar button:last-child:hover {
-  color: #b65d68;
-}
-
-.account-exit-bar button:focus-visible {
+.account-exit-bar :is(button, a):focus-visible {
   outline: 2px solid rgba(113, 86, 173, 0.28);
   outline-offset: 1px;
 }
@@ -386,7 +322,10 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-.character-card-shadow { --yl-stepped-shadow-color: #c8b7e5; --yl-stepped-shadow-offset: 6px; }
+.character-card-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 6px;
+}
 
 .character-card__surface::after {
   position: absolute;
@@ -477,7 +416,14 @@ onMounted(() => {
     transform 0.18s ease;
 }
 
-.character-card__button-surface { display: grid; width: 100%; height: 100%; place-items: center; color: var(--color-primary-dark, #7156ad); background: #eee7fb; }
+.character-card__button-surface {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: var(--color-primary-dark, #7156ad);
+  background: #eee7fb;
+}
 
 .character-card:hover .character-card__button {
   color: #ffffff;
@@ -489,71 +435,6 @@ onMounted(() => {
 .character-card:focus-visible {
   outline: 3px solid var(--color-focus, rgba(124, 104, 215, 0.28));
   outline-offset: 2px;
-}
-
-.withdrawal-content {
-  display: grid;
-  justify-items: center;
-  text-align: center;
-}
-
-.withdrawal-content__icon {
-  display: grid;
-  width: 52px;
-  height: 52px;
-  margin-bottom: 14px;
-  place-items: center;
-  border-radius: 16px;
-  color: #d85353;
-  background: #fff0f1;
-}
-
-.withdrawal-content > strong {
-  color: #493f50;
-  font-size: 16px;
-}
-
-.withdrawal-content ul {
-  display: grid;
-  gap: 7px;
-  width: 100%;
-  margin: 16px 0 0;
-  padding: 14px 16px 14px 34px;
-  border-radius: 12px;
-  color: #766d7d;
-  background: #faf7fb;
-  font-size: 13px;
-  line-height: 1.5;
-  text-align: left;
-  box-sizing: border-box;
-}
-
-.withdrawal-content > p:not(.withdrawal-content__error) {
-  margin: 12px 0 0;
-  color: #766d7d;
-  font-size: 13px;
-  line-height: 1.55;
-}
-
-.withdrawal-content__error {
-  width: 100%;
-  margin: 14px 0 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  color: #a84242;
-  background: #fff0f0;
-  font-size: 12px;
-  box-sizing: border-box;
-}
-
-:global(.withdrawal-modal .base-modal__title) {
-  color: #c64d4d;
-}
-
-@media (max-width: 420px) {
-  :global(.withdrawal-modal) {
-    width: calc(100vw - 32px);
-  }
 }
 
 @media (max-width: 767px) {
@@ -616,7 +497,7 @@ onMounted(() => {
     padding-inline: 10px;
   }
 
-  .account-exit-bar button {
+  .account-exit-bar :is(button, a) {
     min-width: 0;
     flex: 1;
     padding-inline: 10px;
