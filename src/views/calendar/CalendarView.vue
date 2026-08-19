@@ -1,24 +1,25 @@
 <template>
-  <section class="cal" aria-labelledby="title">
-    <div class="head"><small>MY CERTIFICATION</small><h1 id="title">내 인증 캘린더</h1><p>내가 올린 인증만 날짜별로 모아볼 수 있어요.</p></div>
-    <section class="filters" aria-label="그룹 필터"><label for="calendar-group">그룹 선택</label><div class="select-wrap"><select id="calendar-group" v-model="groupId" aria-label="인증 그룹 선택"><option v-for="g in groups" :key="g.groupId" :value="g.groupId">{{g.groupName}}</option></select></div></section>
-    <section class="board pixel-step-card pixel-step-solid"><div class="surface pixel-step-surface"><div class="nav"><button aria-label="이전 달" @click="move(-1)">‹</button><h2>{{label}}</h2><button aria-label="다음 달" @click="move(1)">›</button></div><div class="week"><span v-for="w in week" :key="w">{{w}}</span></div><div class="grid"><i v-for="n in offset" :key="`b${n}`"></i><button v-for="d in lastDay" :key="d" class="day" :class="{has:posts(d).length,selected:key(d)===selected,today:isToday(d)}" :aria-label="aria(d)" @click="open(d)"><span v-if="posts(d).length" class="photo"><img :src="posts(d)[0].photoUrl" :alt="`${d}일 인증 사진`"><em v-if="posts(d).length>1">+{{posts(d).length-1}}</em></span><strong>{{d}}</strong><i v-if="posts(d).length"></i></button></div><p v-if="!monthPosts.length" class="empty">{{groupId==='all'?'이번 달에는 아직 인증 기록이 없어요.':`${groupName}에서 이번 달에 올린 인증이 없어요.`}}</p><p v-else class="hint">사진이 있는 날짜를 선택하면 내 인증 기록을 확인할 수 있어요.</p></div></section>
-    <BaseModal v-model="modal" modal-class="calendar-modal" size="large" title="내 인증 기록" @close="selected=''"><section v-if="selected" class="feeds"><header><div><p>{{dateLabel}}</p><h2>내 인증 {{daily.length}}건</h2></div><span>{{groupName}}</span></header><article v-for="p in daily" :key="p.postId"><div class="image"><img :src="p.photoUrl" :alt="`${p.groupName} 인증 사진`"><b :class="p.postStatus">{{status(p.postStatus)}}</b></div><div><small>{{p.groupName}}</small><p>{{p.content}}</p><time :datetime="p.postedAt">{{datetime(p.postedAt)}}</time><aside v-if="p.postStatus==='REJECTED'&&p.rejectReason"><strong>반려 사유</strong>{{p.rejectReason}}</aside></div></article></section></BaseModal>
+  <section class="cal" aria-label="인증 보관함">
+    <div ref="groupFilterRef" class="calendar-card-shadow calendar-filter-shadow yl-stepped-card-shadow"><section class="filter-frame yl-card-frame pixel-step-card pixel-step-solid" aria-label="그룹 필터"><div class="filters pixel-step-surface"><div class="filter-copy"><span>챌린지 선택</span></div><div class="group-dropdown"><button class="group-trigger" type="button" :aria-expanded="groupMenuOpen" aria-haspopup="listbox" @click="groupMenuOpen=!groupMenuOpen"><strong>{{groupName}}</strong><ChevronDown :size="18" aria-hidden="true" /></button></div></div></section><transition name="group-menu"><div v-if="groupMenuOpen" class="group-menu calendar-filter-menu" role="listbox" aria-label="인증 그룹 선택"><button v-for="g in groups" :key="g.groupId" type="button" role="option" :aria-selected="groupId===g.groupId" :class="{selected:groupId===g.groupId}" @click="selectGroup(g.groupId)"><span>{{g.groupName}}</span><Check v-if="groupId===g.groupId" :size="16" aria-hidden="true" /></button></div></transition></div>
+    <div class="calendar-card-shadow yl-stepped-card-shadow"><section class="board yl-card-frame pixel-step-card pixel-step-solid"><div class="surface pixel-step-surface"><div class="nav"><button aria-label="이전 달" @click="move(-1)"><ChevronLeft :size="22" stroke-width="2.5" aria-hidden="true" /></button><h2>{{label}}</h2><button aria-label="다음 달" @click="move(1)"><ChevronRight :size="22" stroke-width="2.5" aria-hidden="true" /></button></div><div class="week"><span v-for="w in week" :key="w">{{w}}</span></div><div class="grid"><i v-for="n in offset" :key="`b${n}`"></i><button v-for="d in lastDay" :key="d" class="day" :class="{has:posts(d).length,selected:key(d)===selected,today:isToday(d)}" :aria-label="aria(d)" @click="open(d)"><span v-if="posts(d).length" class="photo"><img :src="posts(d)[0].photoUrl" :alt="`${d}일 인증 사진`"><em v-if="posts(d).length>1">+{{posts(d).length-1}}</em></span><strong>{{d}}</strong><i v-if="posts(d).length"></i></button></div><p v-if="!monthPosts.length" class="empty">{{groupId==='all'?'이번 달에는 아직 인증 기록이 없어요.':`${groupName}에서 이번 달에 올린 인증이 없어요.`}}</p><p v-else class="hint">사진이 있는 날짜를 선택하면 내 인증 기록을 확인할 수 있어요.</p></div></section></div>
+    <BaseModal v-model="modal" modal-class="calendar-modal" size="large" :title="dateLabel" @close="selected=''"><section v-if="selected" class="feeds daily-feed"><header class="sheet-summary"><p>인증 기록 <strong>{{daily.length}}건</strong></p><div class="sheet-status-summary"><span class="approved">승인 {{dailySummary.APPROVED}}건</span><span class="rejected">반려 {{dailySummary.REJECTED}}건</span><span class="pending">심사중 {{dailySummary.PENDING}}건</span></div></header><article v-for="p in daily" :key="p.postId" :class="p.postStatus" :aria-label="`${p.groupName} ${status(p.postStatus)} 인증 기록`"><div class="image"><img :src="p.photoUrl" :alt="`${p.groupName} 인증 사진`"><div class="feed-photo-copy"><strong>{{p.content}}</strong></div></div><div class="feed-meta"><strong class="challenge-name">{{p.groupName}}</strong><div class="reaction-counts" :aria-label="`좋아요 ${p.likeCount ?? 0}개, 싫어요 ${p.dislikeCount ?? 0}개`"><span><ThumbsUp :size="15" :stroke-width="2.2" aria-hidden="true" /><b>{{p.likeCount ?? 0}}</b></span><span><ThumbsDown :size="15" :stroke-width="2.2" aria-hidden="true" /><b>{{p.dislikeCount ?? 0}}</b></span></div><aside v-if="p.postStatus==='REJECTED'&&p.rejectReason"><strong>반려 사유</strong>{{p.rejectReason}}</aside></div></article></section></BaseModal>
   </section>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { Check, ChevronDown, ChevronLeft, ChevronRight, ThumbsDown, ThumbsUp } from 'lucide-vue-next'
 import BaseModal from '@/components/base/BaseModal.vue'
 import { getMyCertificationPosts } from '@/api/post'
 import { getGroups } from '@/api/group'
 
 const calendarGroups=ref([])
 const today=new Date()
-const week=['일','월','화','수','목','금','토'],groupId=ref('all'),current=ref(new Date(today.getFullYear(),today.getMonth(),1)),selected=ref(''),modal=ref(false)
+const week=['일','월','화','수','목','금','토'],groupId=ref('all'),current=ref(new Date(today.getFullYear(),today.getMonth(),1)),selected=ref(''),modal=ref(false),groupMenuOpen=ref(false),groupFilterRef=ref(null)
 const groups=computed(()=>[{groupId:'all',groupName:'전체'},...calendarGroups.value]),groupName=computed(()=>groups.value.find(g=>g.groupId===groupId.value)?.groupName??'전체')
 const apiPosts=ref([]),monthPosts=computed(()=>apiPosts.value.filter(p=>groupId.value==='all'||p.groupId===groupId.value)),label=computed(()=>`${current.value.getFullYear()}년 ${current.value.getMonth()+1}월`),offset=computed(()=>new Date(current.value.getFullYear(),current.value.getMonth(),1).getDay()),lastDay=computed(()=>new Date(current.value.getFullYear(),current.value.getMonth()+1,0).getDate()),daily=computed(()=>monthPosts.value.filter(p=>p.postedAt.slice(0,10)===selected.value).sort((a,b)=>a.postedAt.localeCompare(b.postedAt))),dateLabel=computed(()=>selected.value?`${Number(selected.value.slice(5,7))}월 ${Number(selected.value.slice(8))}일`:'')
-const key=d=>`${current.value.getFullYear()}-${String(current.value.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,posts=d=>monthPosts.value.filter(p=>p.postedAt.slice(0,10)===key(d)),isToday=d=>{const n=new Date();return n.getFullYear()===current.value.getFullYear()&&n.getMonth()===current.value.getMonth()&&n.getDate()===d},aria=d=>`${label.value} ${d}일${posts(d).length?`, 내 인증 ${posts(d).length}건`:', 인증 없음'}`,move=n=>{current.value=new Date(current.value.getFullYear(),current.value.getMonth()+n,1);selected.value=''},open=d=>{if(!posts(d).length)return;selected.value=key(d);modal.value=true},status=s=>({APPROVED:'승인됨',REJECTED:'반려됨',PENDING:'심사중'})[s],datetime=v=>new Intl.DateTimeFormat('ko-KR',{month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(v))
+const dailySummary=computed(()=>daily.value.reduce((summary,post)=>{summary[post.postStatus]=(summary[post.postStatus]??0)+1;return summary},{APPROVED:0,REJECTED:0,PENDING:0}))
+const key=d=>`${current.value.getFullYear()}-${String(current.value.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,posts=d=>monthPosts.value.filter(p=>p.postedAt.slice(0,10)===key(d)),isToday=d=>{const n=new Date();return n.getFullYear()===current.value.getFullYear()&&n.getMonth()===current.value.getMonth()&&n.getDate()===d},aria=d=>`${label.value} ${d}일${posts(d).length?`, 내 인증 ${posts(d).length}건`:', 인증 없음'}`,move=n=>{current.value=new Date(current.value.getFullYear(),current.value.getMonth()+n,1);selected.value=''},open=d=>{if(!posts(d).length)return;selected.value=key(d);modal.value=true},selectGroup=id=>{groupId.value=id;groupMenuOpen.value=false},status=s=>({APPROVED:'승인됨',REJECTED:'반려됨',PENDING:'심사중'})[s]
 
 const dateParam=(date)=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
 const loadMonthPosts=async()=>{
@@ -34,7 +35,9 @@ const loadMonthPosts=async()=>{
   if(groupId.value!=='all'&&!calendarGroups.value.some(group=>group.groupId===groupId.value))groupId.value='all'
 }
 watch(current,loadMonthPosts)
-onMounted(loadMonthPosts)
+const closeGroupMenu=(event)=>{if(!groupFilterRef.value?.contains(event.target))groupMenuOpen.value=false}
+onMounted(()=>{loadMonthPosts();document.addEventListener('click',closeGroupMenu)})
+onBeforeUnmount(()=>document.removeEventListener('click',closeGroupMenu))
 </script>
 
 <style scoped>
@@ -211,4 +214,345 @@ onMounted(loadMonthPosts)
   text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 1px 0 1px rgba(0, 0, 0, .75);
 }
 @media (max-width: 767px) { .day.has strong { font-size: 13px; } }
+
+/* 챌린지 보관함: 그룹 상세 화면의 보라색 정보 UI 톤을 적용합니다. */
+.head h1 { margin: 0; font-size: 30px; letter-spacing: -.04em; }
+.filters { display: flex; align-items: center; gap: 12px; }
+.filters > span { color: #62576c; font-size: 14px; font-weight: 800; }
+.group-dropdown { position: relative; display: block !important; min-width: 210px; }
+.group-trigger { width: 100%; min-height: 46px; padding: 0 13px 0 15px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid #d6cbe2; border-radius: 12px; background: #faf8fd; box-shadow: 0 3px 10px rgba(79,57,126,.10); color: #4d405a; font: inherit; cursor: pointer; text-align: left; transition: border-color .18s, box-shadow .18s, background-color .18s; }
+.group-trigger strong { overflow: hidden; font-size: 14px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.group-trigger svg { flex: 0 0 auto; color: #69529f; transition: transform .18s; }
+.group-trigger[aria-expanded='true'] { border-color: #8063aa; background: #fff; box-shadow: 0 0 0 3px rgba(105,82,159,.12); }
+.group-trigger[aria-expanded='true'] svg { transform: rotate(180deg); }
+.group-menu { position: absolute; top: calc(100% + 7px); right: 0; z-index: 20; width: 100%; max-height: 220px; padding: 6px; overflow-y: auto; border: 1px solid #ddd3e7; border-radius: 13px; background: #fff; box-shadow: 0 12px 30px rgba(54,39,76,.18); }
+.group-menu button { width: 100%; min-height: 40px; padding: 0 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 0; border-radius: 8px; background: transparent; color: #62576c; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; text-align: left; }
+.group-menu button:hover, .group-menu button.selected { background: #eee6f8; color: #5d408d; }
+.group-menu button.selected { font-weight: 900; }
+.group-menu-enter-active,.group-menu-leave-active { transition: opacity .15s, transform .15s; transform-origin: top right; }
+.group-menu-enter-from,.group-menu-leave-to { opacity: 0; transform: translateY(-5px) scale(.98); }
+.board { --pixel-outline-color: var(--yl-purple); --pixel-fill: #fff; filter: drop-shadow(6px 7px 0 rgba(91,66,137,.38)); }
+.nav { grid-template-columns: 44px 1fr 44px; }
+.nav h2 { font-size: 22px; font-weight: 800; }
+.nav button { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid #cfc1df; border-radius: 10px; background: #faf8fd; color: #604795; }
+.nav button:hover { border-color: #8063aa; background: #f2ecfa; }
+.week { font-size: 15px; font-weight: 800; }
+.day strong { font-size: 16px; font-weight: 800; }
+.day.has strong { font-size: 17px; }
+.image b.APPROVED { border-color: #2f7d4d; background: #e4f7ea; color: #21643b; }
+.image b.REJECTED { border-color: #b44755; background: #ffeaec; color: #a13b49; }
+.challenge-name { color: #4d405a; font-size: 14px; font-weight: 900; line-height: 1.45; }
+.feeds time { display: block; margin-top: 1px; }
+@media (max-width: 767px) {
+  .head h1 { font-size: 28px; }
+  .filters { gap: 10px; margin-bottom: 16px; }
+  .filters > span { font-size: 14px; }
+  .group-dropdown { min-width: 0; flex: 1; }
+  .group-trigger { min-height: 46px; }
+  .nav { grid-template-columns: 42px 1fr 42px; }
+  .nav h2 { font-size: 21px; }
+  .nav button { width: 38px; height: 38px; }
+  .week { font-size: 13px; }
+  .day strong { width: 26px; height: 26px; font-size: 14px; }
+  .day.has strong { font-size: 16px; }
+  .challenge-name { font-size: 14px; }
+}
+
+/* 그룹 상세 화면과 동일한 카드 반경: 큰 카드 20px, 선택 요소 12px */
+.head { display: none; }
+.filters { min-height: 76px; box-sizing: border-box; justify-content: space-between; margin-bottom: 16px; padding: 12px 13px; border: 1px solid #ded4ea; border-radius: 20px; background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,.04); }
+.filter-copy { display: grid !important; min-width: 0; gap: 4px; }
+.filter-copy strong { color: #3f354a; font-size: 14px; font-weight: 900; }
+.filter-copy span { color: #8a7d97; font-size: 12px; font-weight: 700; }
+.group-dropdown { min-width: 170px; }
+.group-trigger { min-height: 48px; border-width: 1.5px; border-radius: 12px; background: #f8f5fc; box-shadow: none; }
+.board { padding: 7px; border-radius: 0; background: #7156ad; filter: drop-shadow(6px 7px 0 rgba(91,66,137,.32)); }
+.surface { border: 0; border-radius: 20px; background: #fff; box-shadow: 0 4px 16px rgba(50,35,76,.10); }
+.group-menu { border-radius: 12px; }
+@media (max-width: 767px) {
+  .filters { min-height: 70px; margin-bottom: 13px; padding: 10px 11px; border-radius: 20px; }
+  .filter-copy strong { font-size: 13px; }
+  .filter-copy span { font-size: 11px; }
+  .group-dropdown { min-width: 0; width: min(52vw, 208px); flex: 0 1 auto; }
+  .group-trigger { min-height: 46px; padding-inline: 12px; }
+  .group-trigger strong { font-size: 13px; }
+  .board { padding: 6px; }
+  .surface { border-radius: 20px; }
+}
+/* 모바일 필터는 한 줄로 유지하고, 긴 그룹명도 가능한 한 온전히 보여줍니다. */
+.filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(190px, 228px); gap: 12px; }
+.filter-copy { display: flex !important; align-items: center; }
+.filter-copy span { color: #7156ad; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.group-dropdown { width: 100%; min-width: 0; }
+.group-trigger strong { overflow: visible; font-size: clamp(10px, 1.9vw, 13px); text-overflow: clip; white-space: nowrap; }
+@media (max-width: 767px) {
+  .filters { grid-template-columns: minmax(0, 1fr) minmax(188px, 1.5fr); gap: 8px; }
+  .filter-copy span { font-size: 12px; }
+  .group-dropdown { width: 100%; }
+  .group-trigger strong { font-size: clamp(10px, 3.2vw, 13px); }
+}
+
+/* 날짜 가독성 및 주말 구분 */
+.week span:last-child { color: #3e62c7; }
+.day strong { font-size: 19px; }
+.day.has strong { font-size: 19px; }
+@media (max-width: 767px) {
+  .day strong { font-size: 17px; }
+  .day.has strong { font-size: 17px; }
+}
+
+/* 보라색을 기본 포인트로 통일하고, 반려만 차분한 빨강으로 구분합니다. */
+.cal { color: #332d3a; }
+.filters { border-color: #e7e1ee; background: #fff; }
+.filter-copy span { color: #7156ad; }
+.group-trigger { border-color: #e1d9eb; background: #fff; color: #3f354a; }
+.group-trigger[aria-expanded='true'] { border-color: #7156ad; box-shadow: 0 0 0 3px rgba(113,86,173,.10); }
+.group-menu { border-color: #e1d9eb; box-shadow: 0 10px 24px rgba(54,39,76,.12); }
+.group-menu button:hover,.group-menu button.selected { background: #f3eff8; color: #604795; }
+.surface { border-color: #7156ad; box-shadow: 3px 3px 0 rgba(113,86,173,.10); }
+.nav button { color: #604795; }
+.nav button:hover { background: #f3eff8; }
+.week { color: #62576c; }
+.week span:first-child { color: #b85b64; }
+.week span:last-child { color: #536ba8; }
+.photo { border-color: #7156ad; background: #f3eff8; }
+.photo em,.day > i { background: #7156ad; }
+.day.selected .photo { border-color: #7156ad; box-shadow: 0 0 0 3px #eee7f8; }
+.empty { border-color: #d9cdea; background: #faf8fd; color: #62576c; }
+:global(.calendar-modal) { border-color: #7156ad !important; box-shadow: 0 -2px 0 #7156ad !important; }
+:global(.calendar-modal .base-modal__header) { border-bottom-color: #e6dff0 !important; background: #fff !important; }
+:global(.calendar-modal .base-modal__title) { color: #3f354a; }
+.feeds header > span { border-color: #d9cdea; background: #faf8fd; color: #604795; }
+.image b { border: 1px solid; box-shadow: none; }
+.image b.APPROVED { border-color: #7156ad; background: #f0ebf8; color: #604795; }
+.image b.REJECTED { border-color: #c56a72; background: #fff1f2; color: #a34c55; }
+.image b.PENDING { border-color: #d8d0df; background: #f7f5f8; color: #6f6678; }
+.feeds aside { border-left: 3px solid #c56a72; background: #fff5f5; color: #9c5058; }
+
+/* 선택값을 감싼 사각형을 없애고, 날짜 중심의 바텀시트로 정보 순서를 정리합니다. */
+.filters { min-height: 52px; padding-block: 6px; }
+.group-trigger { width: auto; min-height: 38px; padding: 0 2px 0 8px; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: #604795; }
+.group-trigger:hover,.group-trigger[aria-expanded='true'] { background: transparent; box-shadow: none; }
+.group-trigger strong { font-size: 13px; font-weight: 900; }
+.group-menu { min-width: 196px; }
+:global(.calendar-modal .base-modal__header) { justify-content: center; }
+:global(.calendar-modal .base-modal__title) { font-size: 19px; font-weight: 900; }
+.sheet-summary { display: block; margin: 2px 0 12px; padding: 0 0 13px; border-bottom: 1px solid #ebe6f0; }
+.sheet-summary p { margin: 0 0 4px; color: #3f354a; font-size: 16px; font-weight: 800; }
+.sheet-summary p strong { color: #7156ad; }
+.sheet-summary > span { color: #8a7d97; font-size: 12px; font-weight: 600; }
+.feeds article { padding: 14px 0; border-top: 0; border-bottom: 1px solid #eeeaf1; }
+.feeds article:last-child { border-bottom: 0; }
+.image { min-height: 112px; border-radius: 12px; }
+.image b { top: 7px; left: 7px; padding: 4px 7px; border-radius: 7px; font-size: 11px; }
+.challenge-name { display: block; color: #332d3a; font-size: 15px; }
+.feeds article p { color: #5f5568; }
+.image b.APPROVED { border-color: #5ca36d; background: #eef8f0; color: #387747; }
+.image b.REJECTED { border-color: #c56a72; background: #fff1f2; color: #a34c55; }
+.image b.PENDING { border-color: #d8d0df; background: #f7f5f8; color: #6f6678; }
+@media (max-width: 767px) {
+  .filters { min-height: 50px; }
+  .group-trigger { min-height: 36px; }
+  :global(.calendar-modal .base-modal__title) { font-size: 18px; }
+  .sheet-summary { margin-top: 3px; }
+  .sheet-summary p { font-size: 16px; }
+  .image { min-height: 108px; }
+}
+
+/* 상태는 작고 선명한 라운드 배지로 표시합니다. */
+.image b { min-height: 24px; box-sizing: border-box; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 11px; font-weight: 900; letter-spacing: -.02em; }
+
+/* 긴 챌린지명을 위한 넓은 선택 영역 */
+.filters { grid-template-columns: minmax(58px, .55fr) minmax(230px, 2.2fr); }
+.group-trigger { width: 100%; min-height: 44px; padding: 0 13px 0 15px; border: 1px solid #d9cdea; border-radius: 12px; background: #faf8fd; box-shadow: 0 3px 10px rgba(79,57,126,.07); color: #4d405a; }
+.group-trigger:hover,.group-trigger[aria-expanded='true'] { border-color: #8063aa; background: #fff; box-shadow: 0 0 0 3px rgba(105,82,159,.10); }
+.group-trigger strong { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.group-menu { width: 100%; min-width: 0; }
+@media (max-width: 767px) {
+  .filters { grid-template-columns: minmax(52px, .5fr) minmax(220px, 2.15fr); }
+  .group-trigger { min-height: 42px; }
+}
+
+/* 필터 라벨과 선택 영역의 시각적 간격 */
+.filters { column-gap: 16px; }
+.filter-copy { min-height: 28px; padding-right: 14px; border-right: 1px solid #e5deeb; }
+.filter-copy span { color: #62576c; font-size: 12px; }
+@media (max-width: 767px) {
+  .filters { column-gap: 12px; }
+  .filter-copy { padding-right: 10px; }
+}
+
+/* 그룹 피드처럼 사진과 인증 문구를 중심으로 보여주는 기록 카드 */
+.sheet-summary { margin-bottom: 14px; }
+.sheet-status-summary { display: flex; flex-wrap: wrap; gap: 6px; }
+.sheet-status-summary span,.feed-meta b { min-height: 24px; box-sizing: border-box; padding: 0 8px; display: inline-flex; align-items: center; border: 1px solid; border-radius: 999px; font-size: 11px; font-weight: 800; }
+.sheet-status-summary .approved,.feed-meta b.APPROVED { border-color: #5ca36d; background: #eef8f0; color: #387747; }
+.sheet-status-summary .rejected,.feed-meta b.REJECTED { border-color: #c56a72; background: #fff1f2; color: #a34c55; }
+.sheet-status-summary .pending,.feed-meta b.PENDING { border-color: #d8d0df; background: #f7f5f8; color: #6f6678; }
+.feeds article { display: block; padding: 0 0 16px; overflow: hidden; border: 1px solid #e8e1ed; border-radius: 14px; background: #fff; }
+.feeds article + article { margin-top: 14px; }
+.image { height: 220px; min-height: 0; overflow: hidden; border-radius: 0; background: #eee; }
+.image::after { content: ''; position: absolute; inset: 35% 0 0; background: linear-gradient(transparent, rgba(0,0,0,.62)); pointer-events: none; }
+.image img { display: block; }
+.feed-photo-copy { position: absolute; z-index: 2; right: 14px; bottom: 13px; left: 14px; display: grid; gap: 6px; color: #fff; }
+.feed-photo-copy span { width: max-content; padding: 4px 8px; border-radius: 999px; background: rgba(113,86,173,.92); font-size: 11px; font-weight: 900; }
+.feed-photo-copy strong { overflow: hidden; color: #fff; font-size: 19px; font-weight: 900; letter-spacing: -.04em; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.feed-meta { padding: 12px 14px 0; }
+.challenge-name { margin-bottom: 9px; font-size: 15px; }
+.feed-meta > div { display: flex; align-items: center; gap: 8px; }
+.feed-meta time { margin: 0; color: #8a7d97; font-size: 12px; }
+.feed-meta aside { margin-bottom: 0; }
+@media (max-width: 767px) {
+  .image { height: 205px; }
+  .feed-photo-copy strong { font-size: 18px; }
+}
+
+/* 필터는 작은 화면에서도 한 줄을 유지한다. 라벨과 선택 영역을 분리하되,
+   고정 최소 너비를 두지 않아 선택 상자가 카드 밖으로 밀리지 않는다. */
+.filters {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 12px;
+}
+.filter-copy {
+  display: flex !important;
+  flex: 0 0 auto;
+  min-height: 0;
+  padding-right: 0;
+  border-right: 0;
+}
+.filter-copy span {
+  font-size: 13px;
+  white-space: nowrap;
+}
+.group-dropdown {
+  display: block !important;
+  grid-column: 2;
+  width: auto;
+  min-width: 0;
+}
+.group-trigger {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+}
+.group-trigger strong {
+  min-width: 0;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.group-menu { min-width: 0; }
+@media (max-width: 767px) {
+  .filters { gap: 10px; padding: 9px 11px; }
+  .group-trigger { min-height: 42px; }
+}
+
+/* 두 메인 카드는 그룹 피드와 같은 공통 픽셀 프레임 구조를 사용한다. */
+.filter-frame {
+  --pixel-outline-width: 2px;
+  --pixel-outline-color: #ac99d2;
+  width: 100%;
+  margin: 0;
+  padding: 2px !important;
+  background: #ac99d2;
+  filter: none !important;
+}
+.filter-frame::before { content: none; }
+.filter-frame .filters {
+  min-height: 0;
+  margin: 0;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: none;
+}
+.filter-frame .group-dropdown {
+  width: 100%;
+  max-width: none;
+  justify-self: stretch;
+}
+.calendar-filter-shadow { position: relative; z-index: 10; }
+.calendar-filter-menu { top: calc(100% + 7px); right: 0; z-index: 30; width: min(228px, 62%); }
+.board {
+  --pixel-outline-width: 2px;
+  --pixel-outline-color: #ac99d2;
+  padding: 2px !important;
+  background: #ac99d2;
+  filter: drop-shadow(5px 5px 0 #c8b7e5);
+}
+.empty {
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  border: 1.5px dashed #cdbde1;
+  border-radius: 12px;
+  background: #faf8fd;
+  color: #62576c;
+  line-height: 1.5;
+}
+.feeds.daily-feed article { border: 2px solid #d8d0df; box-shadow: none; }
+.feeds.daily-feed article.APPROVED { border-color: #5ca36d; }
+.feeds.daily-feed article.REJECTED { border-color: #c56a72; }
+.feeds.daily-feed article.PENDING { border-color: #aca1b6; }
+.feed-meta { padding-bottom: 13px; }
+.reaction-counts { display: flex; align-items: center; gap: 13px; margin-top: 8px; color: #766b81; }
+.reaction-counts span { display: inline-flex; align-items: center; gap: 5px; }
+.reaction-counts b { min-height: 0; padding: 0; border: 0; background: transparent; font-size: 12px; font-weight: 800; line-height: 1; }
+.reaction-counts span { color: var(--yl-ink); }
+
+/* 그룹 상세 카드와 동일한 2px 프레임·5px 연보라 그림자 규격 */
+.filter-frame .filters,
+.board .surface { border-radius: 20px; }
+.day > i { display: none; }
+.day:not(.has) strong,
+.day.today:not(.has) strong {
+  box-sizing: border-box;
+  width: 26px;
+  height: 26px;
+  color: #62576c;
+}
+.day.today:not(.has) strong {
+  position: absolute;
+  inset: 1px;
+  width: auto;
+  height: auto;
+  margin: 0;
+  border-width: 2px;
+  background: #fff;
+  color: var(--yl-ink);
+}
+
+/* 그룹 피드 카드와 같은 2px 픽셀 외곽선과 5px 연보라 그림자 */
+.calendar-card-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 5px;
+}
+.calendar-card-shadow { margin-bottom: 18px; }
+.calendar-card-shadow .filter-frame { margin: 0; }
+.calendar-card-shadow .filter-frame::before { filter: none; }
+.calendar-card-shadow .board { filter: none !important; }
+.calendar-card-shadow .pixel-step-surface {
+  border-radius: 0;
+  box-shadow: none;
+  clip-path: inherit;
+}
+.calendar-card-shadow .nav button,
+.calendar-card-shadow .nav button:hover {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+@media (max-width: 767px) {
+  .calendar-card-shadow { margin-bottom: 14px; }
+}
+@media (max-width: 767px) {
+  .filter-frame { margin-bottom: 12px; }
+  .filter-frame .filters { padding: 13px 17px; }
+  .filter-frame .group-dropdown { max-width: none; }
+}
 </style>
