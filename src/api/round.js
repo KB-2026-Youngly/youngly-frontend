@@ -23,3 +23,7 @@ export function getRoundTransferRequests(roundId) {
 export function retryRoundTransferRequest(roundId, transferRequestId) {
   return apiClient.post(`/rounds/${roundId}/transfer-requests/${transferRequestId}/retry`)
 }
+
+export function createGroupRound(groupId, payload) {
+  return apiClient.post(`/groups/${groupId}/rounds`, payload)
+}
