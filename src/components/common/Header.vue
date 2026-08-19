@@ -13,7 +13,8 @@
           >
             <span aria-hidden="true">&lt;</span>
           </button>
-          <img class="header-logo" :src="headerLogoUrl" alt="Youngly" />
+          <h1 v-if="isMoimAccountDetail" class="header-page-title">모임통장 상세</h1>
+          <img v-if="!isMoimAccountDetail" class="header-logo" :src="headerLogoUrl" alt="Youngly" />
         </div>
 
         <div class="header-right">
@@ -265,7 +266,7 @@ onBeforeUnmount(() => {
 .app-header {
   position: relative;
   z-index: 1000;
-  padding: 12px 24px;
+  padding: 12px 24px 6px;
   background-color: var(--app-background, #e6dcf6);
 }
 
@@ -312,16 +313,24 @@ onBeforeUnmount(() => {
   transform: translateX(-2px);
 }
 
+.header-page-title {
+  margin: 0;
+  color: #2d1f4f;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .header-logo {
   display: block;
   width: auto;
-  height: 68px;
+  height: 50px;
   margin-left: -5px;
   object-fit: contain;
 }
 
 .header-back-button + .header-logo {
-  margin-left: 0;
+  margin-left: -11px;
 }
 
 .header-right {
@@ -632,7 +641,7 @@ onBeforeUnmount(() => {
     right: 0;
     left: 0;
     z-index: 1000;
-    padding: 8px 16px 9px;
+    padding: 8px 16px 4px;
     background: var(--app-background, #e6dcf6);
     border-bottom: 0;
     transform: translateZ(0);
@@ -640,12 +649,12 @@ onBeforeUnmount(() => {
   }
 
   .header-logo {
-    height: 60px;
+    height: 42px;
     margin-left: -4px;
   }
 
   .header-back-button + .header-logo {
-    margin-left: 0;
+    margin-left: -8px;
   }
 
   .header-brand {
@@ -656,6 +665,10 @@ onBeforeUnmount(() => {
     width: 27px;
     height: 27px;
     flex-basis: 27px;
+  }
+
+  .header-page-title {
+    font-size: 17px;
   }
 
   .user-name {

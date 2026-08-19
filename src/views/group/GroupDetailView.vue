@@ -63,7 +63,7 @@
                 aria-label="라운드 랭킹 자세히 보기"
                 @click="openRankingSheet"
               >
-                <span>전체 랭킹 보기</span>
+                <span>전체 랭킹</span>
                 <ArrowRight :size="15" :stroke-width="2.4" aria-hidden="true" />
               </button>
             </div>
@@ -4273,14 +4273,15 @@ button {
 /* 상단 모임통장 버튼과 동일한 형태로 유지합니다. */
 .round-overview-heading .expand-button.account-button {
   display: inline-flex;
-  width: auto;
+  width: 100px;
   height: auto;
   min-width: 0;
   min-height: 38px;
   align-items: center;
   justify-content: center;
   gap: 5px;
-  padding: 9px 11px;
+  padding: 9px 22px;
+  position: relative;
   border: 1.5px solid #7156ad;
   border-radius: 10px;
   background: #fff;
@@ -4295,6 +4296,20 @@ button {
 .round-overview-heading .expand-button.account-button:active {
   box-shadow: none;
   transform: scale(0.97);
+}
+
+.round-overview-heading .expand-button.account-button > span {
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  transform: translate(-5px, 1px);
+}
+
+.round-overview-heading .expand-button.account-button > svg {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
 }
 
 @media (max-width: 767px) {

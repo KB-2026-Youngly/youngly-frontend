@@ -1,6 +1,13 @@
 <template>
-  <section class="transaction-history yl-card-frame pixel-step-card pixel-step-solid" aria-labelledby="transaction-history-title">
-    <div class="transaction-history-surface pixel-step-surface">
+  <section
+    class="transaction-history"
+    :class="accountType === 'PENSION' ? 'transaction-history--rounded' : 'yl-card-frame pixel-step-card pixel-step-solid'"
+    aria-labelledby="transaction-history-title"
+  >
+    <div
+      class="transaction-history-surface"
+      :class="{ 'pixel-step-surface': accountType !== 'PENSION' }"
+    >
     <div class="history-heading">
       <div>
         <small>최근 이용 내역</small>
@@ -446,6 +453,13 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeRoundMenu
 .transaction-history-surface {
   padding: 20px;
   background: #fff;
+}
+.transaction-history--rounded {
+  overflow: hidden;
+  border: 1px solid #ac99d2;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 7px 0 rgba(105, 82, 159, 0.16);
 }
 .history-heading {
   display: flex;

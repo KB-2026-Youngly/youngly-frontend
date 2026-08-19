@@ -98,7 +98,7 @@ export default {
   padding: 36px 16px 24px 16px;
   box-sizing: border-box;
   position: relative;
-  border-right: 1px solid #2d1f4f;
+  border-right: 1px solid #ac99d2;
   image-rendering: pixelated;
   flex-shrink: 0;
   background-color: #ffffff; /* 순백색 배경 */
