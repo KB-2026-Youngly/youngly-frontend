@@ -39,6 +39,13 @@
           <h2>{{ connectedPension.bankName }} 개인연금</h2>
         </div>
       </div>
+      <div class="pension-sync-row">
+        <button type="button" :disabled="syncingPension" @click="refreshPensionAccount">
+          <span aria-hidden="true" :class="{ spinning: syncingPension }">↻</span>
+          {{ syncingPension ? '갱신 중' : '새로고침' }}
+        </button>
+        <span>{{ formatSyncedAt(connectedPension.syncedAt) }}</span>
+      </div>
       <dl class="account-details">
         <div>
           <dt>계좌번호</dt>
@@ -61,6 +68,7 @@
         <b aria-hidden="true">→</b>
       </button>
       <TransactionHistory
+        :key="pensionHistoryRefreshKey"
         account-type="PENSION"
         :account-id="connectedPension.accountId"
         :account-number="connectedPension.accountNumber"
@@ -430,6 +438,7 @@ import {
   deactivateMoimAccount,
   getAccount,
   getMoimAccounts,
+  syncAccount,
   registerAccount,
   registerMoimAccount,
   searchAccounts,
@@ -496,6 +505,8 @@ const loadingAccounts = ref(false)
 const submitting = ref(false)
 const modalError = ref('')
 const connectedPension = ref(null)
+const syncingPension = ref(false)
+const pensionHistoryRefreshKey = ref(0)
 const loadingConnectedAccount = ref(true)
 const isEditing = ref(false)
 const connectedMoimAccounts = ref([])
@@ -930,6 +941,38 @@ async function loadConnectedPension() {
   }
 }
 
+async function refreshPensionAccount() {
+  if (!connectedPension.value?.accountId || syncingPension.value) return
+  syncingPension.value = true
+  try {
+    const { data } = await syncAccount(connectedPension.value.accountId)
+    connectedPension.value = {
+      ...connectedPension.value,
+      balance: data?.balance ?? connectedPension.value.balance,
+      syncedAt: data?.syncedAt ?? connectedPension.value.syncedAt,
+    }
+    pensionHistoryRefreshKey.value += 1
+    showToast('개인연금 계좌 정보를 새로고침했습니다.')
+  } catch (error) {
+    showToast(apiErrorMessage(error, '개인연금 계좌 정보를 새로고침하지 못했습니다.'))
+  } finally {
+    syncingPension.value = false
+  }
+}
+
+function formatSyncedAt(value) {
+  if (!value) return '아직 새로고침하지 않았어요'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '최근 갱신 시간을 확인할 수 없어요'
+  return `${new Intl.DateTimeFormat('ko-KR', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date)} 갱신`
+}
+
 async function openEditModal() {
   isEditing.value = true
   modalStep.value = 'select'
@@ -1255,7 +1298,7 @@ function resetModal() {
   place-items: center;
   position: absolute;
   top: 30px;
-  right: 14px;
+  right: 31px;
   z-index: 2;
   border: 1px solid #dad3e4;
   border-radius: 9px;
@@ -1289,9 +1332,46 @@ function resetModal() {
   margin: 5px 0 0;
   font-size: 20px;
 }
+.pension-sync-row {
+  width: 82px;
+  position: absolute;
+  top: 70px;
+  right: 31px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.pension-sync-row > span {
+  color: #8b8492;
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.pension-sync-row button {
+  width: 82px;
+  height: 28px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid #b8a7d4;
+  border-radius: 10px;
+  background: #fff;
+  color: #60458f;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pension-sync-row button:disabled { cursor: wait; opacity: .65; }
+.pension-sync-row .spinning { animation: pension-sync-spin .75s linear infinite; }
+@keyframes pension-sync-spin { to { transform: rotate(360deg); } }
 .account-details {
   width: min(620px, 100%);
-  margin: 32px 0 0;
+  margin: 45px 0 0;
   position: relative;
   z-index: 1;
   border-top: 1px solid #e7e1ed;
@@ -1333,7 +1413,7 @@ function resetModal() {
   border: 0;
   border-radius: 14px;
   color: #fff;
-  background: linear-gradient(110deg, #654596, #8067bd);
+  background: #7156ad;
   font-weight: 800;
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(99, 69, 150, 0.2);
@@ -1401,8 +1481,8 @@ function resetModal() {
   display: grid;
   place-items: center;
   position: absolute;
-  top: 13px;
-  right: 14px;
+  top: 30px;
+  right: 31px;
   border: 1px solid #d8d0e2;
   border-radius: 9px;
   background: #fff;
@@ -2201,15 +2281,23 @@ function resetModal() {
     min-height: 324px;
     padding: 23px 17px;
   }
+  .pension-sync-row {
+    top: 51px;
+    right: 17px;
+  }
   .edit-account-button {
     top: 13px;
-    right: 14px;
+    right: 17px;
+  }
+  .moim-edit-button {
+    top: 13px;
+    right: 17px;
   }
   .linked-card-heading h2 {
     font-size: 17px;
   }
   .account-details {
-    margin-top: 25px;
+    margin-top: 36px;
   }
   .account-details > div {
     min-height: 58px;

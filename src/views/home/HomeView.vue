@@ -2936,11 +2936,26 @@ onBeforeUnmount(() => {
 }
 
 .group-card.is-recruiting.pixel-step-solid {
-  --pixel-outline-width: 0px;
+  --pixel-outline-width: 2px;
   --pixel-outline-color: transparent;
-  padding: 0 !important;
-  border: 2px dashed #8f79b8 !important;
-  background: transparent !important;
+  border: 0 !important;
+  background:
+    linear-gradient(#8f79b8, #8f79b8) left 3px top 3px / 5px 2px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) left 3px top 3px / 2px 7px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) left 0 top 8px / 5px 2px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) right 3px top 3px / 5px 2px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) right 3px top 3px / 2px 7px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) right 0 top 8px / 5px 2px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) left 0 bottom 8px / 5px 2px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) left 3px bottom 3px / 2px 7px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) left 3px bottom 3px / 5px 2px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) right 0 bottom 8px / 5px 2px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) right 3px bottom 3px / 2px 7px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) right 3px bottom 3px / 5px 2px no-repeat,
+    repeating-linear-gradient(90deg, #8f79b8 0 7px, transparent 7px 12px) left 8px top / calc(100% - 16px) 2px no-repeat,
+    repeating-linear-gradient(90deg, #8f79b8 0 7px, transparent 7px 12px) left 8px bottom / calc(100% - 16px) 2px no-repeat,
+    repeating-linear-gradient(180deg, #8f79b8 0 7px, transparent 7px 12px) left top 8px / 2px calc(100% - 16px) no-repeat,
+    repeating-linear-gradient(180deg, #8f79b8 0 7px, transparent 7px 12px) right top 8px / 2px calc(100% - 16px) no-repeat !important;
 }
 
 .group-card.is-recruiting .group-card-surface {

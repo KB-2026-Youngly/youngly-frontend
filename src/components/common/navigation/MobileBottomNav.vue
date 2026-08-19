@@ -89,7 +89,7 @@ export default {
   z-index: 999;
   image-rendering: pixelated;
   background-color: #ffffff;
-  border-top: 2px solid #2d1f4f;
+  border-top: 2px solid #ac99d2;
   transition: all 0.2s ease;
   transform: translateZ(0);
   backface-visibility: hidden;
@@ -170,7 +170,7 @@ export default {
   cursor: pointer;
   outline: none;
   padding: 0;
-  background-color: #2d1f4f;
+  background-color: #ac99d2;
   border: none;
   border-radius: 50%;
   transition: transform 0.15s ease;

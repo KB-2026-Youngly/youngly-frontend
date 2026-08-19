@@ -136,7 +136,7 @@ export default {
   }
 
   .main-content-wrapper {
-    padding-top: 68px;
+    padding-top: 63px;
     padding-bottom: 76px;
   }
 
