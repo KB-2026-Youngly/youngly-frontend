@@ -30,14 +30,12 @@
 
     <main>
       <button class="youngly-banner" type="button" :disabled="enteringYoungly" @click="enterYoungly">
-        <span class="banner-decoration circle-one"></span>
-        <span class="banner-decoration circle-two"></span>
         <span class="banner-content">
           <span class="banner-label">MZ 맞춤 자산관리</span>
           <span class="banner-copy"><span class="yellow-letter">영</span>차영차 쌓은 오늘의 습관<br /><span class="yellow-letter">리</span>치한 내일을 만드는 자산으로</span>
           <span class="banner-link">{{ enteringYoungly ? '확인 중...' : 'Youngly 시작하기' }} <b>→</b></span>
         </span>
-        <span class="temporary-logo"><i>Y</i><b>YOUNGLY</b><small>습관이 자산이 되는 순간</small></span>
+        <img class="banner-logo" :src="younglyLogoImage" alt="Youngly" />
       </button>
 
       <button class="all-account" type="button" @click="router.push('/asset')">
@@ -89,6 +87,7 @@ import headerMenuImage from '@/assets/second_view/header_menu.png'
 import accountNumberImage from '@/assets/second_view/account_number.png'
 import bottomMenuImage from '@/assets/second_view/bottom_menu.png'
 import kbIconImage from '@/assets/icons/kb_icon.png'
+import younglyLogoImage from '@/assets/icons/yl_logo.png'
 
 const router = useRouter()
 const depositAccounts = ref([])
@@ -447,6 +446,23 @@ function formatCurrency(value) {
 @media (max-width: 380px) {
   .user-name {
     font-size: 16px !important;
+  }
+}
+
+.banner-logo {
+  position: relative;
+  z-index: 1;
+  width: clamp(104px, 19vw, 145px);
+  height: auto;
+  margin-left: 20px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+@media (max-width: 600px) {
+  .banner-logo {
+    width: clamp(72px, 22vw, 100px);
+    margin-left: 8px;
   }
 }
 </style>

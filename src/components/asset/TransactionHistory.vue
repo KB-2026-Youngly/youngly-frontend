@@ -32,7 +32,7 @@
             @click="roundMenuOpen = !roundMenuOpen"
           >
             {{ selectedRoundLabel }}
-            <span class="round-chevron" aria-hidden="true">⌄</span>
+            <ChevronDown class="round-chevron" :size="17" :stroke-width="2.3" aria-hidden="true" />
           </button>
           <transition name="round-menu">
             <div v-if="roundMenuOpen" class="round-menu" role="listbox" aria-label="라운드 선택">
@@ -76,7 +76,16 @@
     <div v-else-if="!filteredTransactions.length" class="history-state">조건에 맞는 거래내역이 없어요.</div>
 
     <ul v-else class="history-list">
-      <li v-for="transaction in visibleTransactions" :key="transaction.transactionId">
+      <li
+        v-for="transaction in visibleTransactions"
+        :key="transaction.transactionId"
+        class="history-item"
+        role="button"
+        tabindex="0"
+        @click="openTransactionDetail(transaction)"
+        @keydown.enter.prevent="openTransactionDetail(transaction)"
+        @keydown.space.prevent="openTransactionDetail(transaction)"
+      >
         <div class="transaction-symbol" :class="typeClass(transaction.transactionType)">
           {{ transaction.transactionType === 'DEPOSIT' ? '↓' : '↑' }}
         </div>
@@ -106,21 +115,75 @@
       @click="expanded = !expanded"
     >
       {{ expanded ? '접어 보기' : `전체 내역 펼쳐 보기 (${transactions.length}건)` }}
-      <span aria-hidden="true">{{ expanded ? '⌃' : '⌄' }}</span>
+      <ChevronDown
+        class="history-toggle-chevron"
+        :class="{ expanded }"
+        :size="17"
+        :stroke-width="2.3"
+        aria-hidden="true"
+      />
     </button>
     </div>
   </section>
+
+  <BaseModal
+    v-model="detailModalOpen"
+    title="거래 상세"
+    size="small"
+    modal-class="transaction-detail-modal"
+    :show-close-button="false"
+    drag-from-anywhere
+  >
+    <div v-if="selectedTransaction" class="transaction-detail-content">
+      <div class="detail-description">
+        <small>거래 내용</small>
+        <strong>{{ transactionDescription(selectedTransaction) }}</strong>
+        <b class="yl-money" :class="typeClass(selectedTransaction.transactionType)">
+          {{ selectedTransaction.transactionType === 'DEPOSIT' ? '+' : '-'
+          }}{{ formatCurrency(selectedTransaction.amount) }}원
+        </b>
+      </div>
+
+      <div class="detail-transfer-flow">
+        <div class="detail-account-card">
+          <small>출금 계좌</small>
+          <strong>{{ transferSource(selectedTransaction).name }}</strong>
+          <span>{{ transferSource(selectedTransaction).bankName }}</span>
+          <b>{{ transferSource(selectedTransaction).accountNumber }}</b>
+        </div>
+        <div class="detail-transfer-arrow" aria-hidden="true">↓</div>
+        <div class="detail-account-card destination">
+          <small>입금 계좌</small>
+          <strong>{{ transferDestination(selectedTransaction).name }}</strong>
+          <span>{{ transferDestination(selectedTransaction).bankName }}</span>
+          <b>{{ transferDestination(selectedTransaction).accountNumber }}</b>
+        </div>
+      </div>
+
+      <dl class="detail-metadata">
+        <div><dt>처리 일시</dt><dd>{{ formatDetailDate(selectedTransaction.createdAt) }}</dd></div>
+        <div><dt>거래 구분</dt><dd>{{ categoryLabel(selectedTransaction.transactionCategory) }}</dd></div>
+        <div><dt>거래 후 잔액</dt><dd class="yl-money">{{ formatCurrency(selectedTransaction.balanceAfter) }}원</dd></div>
+      </dl>
+    </div>
+  </BaseModal>
 </template>
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { ChevronDown } from 'lucide-vue-next'
 import { getAccountTransactions } from '@/api/account'
 import { getRound } from '@/api/round'
+import BaseModal from '@/components/base/BaseModal.vue'
 
 const props = defineProps({
   accountType: { type: String, required: true },
   accountId: { type: String, required: true },
   initialLimit: { type: Number, default: 0 },
+  accountNumber: { type: String, default: '' },
+  bankName: { type: String, default: '' },
+  accountName: { type: String, default: '' },
+  isAccountOwner: { type: Boolean, default: false },
 })
 
 const transactions = ref([])
@@ -132,6 +195,8 @@ const selectedCategory = ref('ALL')
 const selectedRoundId = ref('')
 const roundMenuOpen = ref(false)
 const roundFilterRef = ref(null)
+const detailModalOpen = ref(false)
+const selectedTransaction = ref(null)
 const roundDetails = ref({})
 const categoryFilters = [
   { label: '전체', value: 'ALL' },
@@ -174,6 +239,60 @@ const visibleTransactions = computed(() =>
 const canToggle = computed(
   () => props.initialLimit > 0 && filteredTransactions.value.length > props.initialLimit,
 )
+
+function openTransactionDetail(transaction) {
+  selectedTransaction.value = transaction
+  detailModalOpen.value = true
+}
+
+function maskAccountNumber(accountNumber) {
+  const value = String(accountNumber || '')
+  if (!value) return '계좌 정보 없음'
+  const parts = value.split('-')
+  if (parts.length >= 3) {
+    const lastPart = parts.at(-1)
+    const visibleLength = Math.min(4, lastPart.length)
+    const maskedMiddle = parts.slice(1, -1).map((part) => '*'.repeat(part.length))
+    const maskedLast = `${'*'.repeat(lastPart.length - visibleLength)}${lastPart.slice(-visibleLength)}`
+    return [parts[0], ...maskedMiddle, maskedLast].join('-')
+  }
+  if (value.length <= 10) return '*'.repeat(Math.max(0, value.length - 4)) + value.slice(-4)
+  return `${value.slice(0, 6)}${'*'.repeat(value.length - 10)}${value.slice(-4)}`
+}
+
+function currentAccountInfo() {
+  return {
+    name: props.accountName || (props.accountType === 'MOIM' ? '모임통장' : '개인연금'),
+    bankName: props.bankName || '은행 정보 없음',
+    accountNumber: props.accountNumber || '계좌 정보 없음',
+  }
+}
+
+function counterpartInfo(transaction) {
+  return {
+    name: transaction.anotherName || '상대 예금주 정보 없음',
+    bankName: transaction.anotherBankName || '은행 정보 없음',
+    accountNumber: props.isAccountOwner
+      ? transaction.anotherAccountNumber || '계좌 정보 없음'
+      : maskAccountNumber(transaction.anotherAccountNumber),
+  }
+}
+
+function transferSource(transaction) {
+  return transaction.transactionType === 'DEPOSIT'
+    ? counterpartInfo(transaction)
+    : currentAccountInfo()
+}
+
+function transferDestination(transaction) {
+  return transaction.transactionType === 'DEPOSIT'
+    ? currentAccountInfo()
+    : counterpartInfo(transaction)
+}
+
+function transactionDescription(transaction) {
+  return transaction.description || categoryLabel(transaction.transactionCategory)
+}
 
 async function loadTransactions() {
   if (!props.accountId) return
@@ -269,6 +388,20 @@ function formatDate(value) {
   }).format(new Date(value))
 }
 
+function formatDetailDate(value) {
+  if (!value) return '처리 시각 정보 없음'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value).replace('T', ' ')
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(date)
+}
+
 function formatRoundPeriod(startDate, endDate) {
   const compact = (value) => {
     const date = new Date(`${value}T00:00:00`)
@@ -350,7 +483,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeRoundMenu
 .round-trigger { width: 100%; min-height: 40px; padding: 0 12px 0 14px; display: flex; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid #d6cbe2; border-radius: 12px; outline: none; background: #faf8fd; color: #4d405a; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; box-shadow: 0 3px 10px rgba(79,57,126,.07); transition: border-color .18s, box-shadow .18s, background-color .18s; }
 .round-trigger:hover,.round-trigger[aria-expanded='true'] { border-color: #8063aa; background: #fff; box-shadow: 0 0 0 3px rgba(105,82,159,.1); }
 .round-trigger:disabled { cursor: wait; opacity: .58; }
-.round-chevron { color: #69529f; font-size: 15px; transition: transform .18s; }
+.round-chevron { display: block; flex: 0 0 auto; color: #69529f; transition: transform .18s; transform-origin: center; }
 .round-trigger[aria-expanded='true'] .round-chevron { transform: rotate(180deg); }
 .round-menu { width: 100%; max-height: 220px; padding: 6px; position: absolute; top: calc(100% + 7px); right: 0; z-index: 15; overflow-y: auto; border: 1px solid #ddd3e7; border-radius: 13px; background: #fff; box-shadow: 0 12px 30px rgba(54,39,76,.18); }
 .round-menu button { width: 100%; min-height: 39px; padding: 0 10px; display: flex; align-items: center; justify-content: space-between; border: 0; border-radius: 8px; background: transparent; color: #62576c; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; text-align: left; }
@@ -384,6 +517,9 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeRoundMenu
   padding: 15px 0;
   border-top: 1px solid #f0ebf3;
 }
+.history-item { cursor: pointer; transition: background-color .16s; }
+.history-item:hover { background: #fbf9fd; }
+.history-item:focus-visible { outline: 2px solid #8063aa; outline-offset: 3px; }
 .history-toggle {
   width: 100%;
   margin-top: 6px;
@@ -394,9 +530,18 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeRoundMenu
   color: #654794;
   font-weight: 800;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.history-toggle span {
+.history-toggle-chevron {
   margin-left: 5px;
+  flex: 0 0 auto;
+  transition: transform .18s;
+  transform-origin: center;
+}
+.history-toggle-chevron.expanded {
+  transform: rotate(180deg);
 }
 .transaction-symbol {
   width: 38px;
@@ -444,6 +589,27 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeRoundMenu
 .transaction-amount strong.withdraw {
   color: #b55757;
 }
+.transaction-detail-content { display: grid; gap: 17px; padding: 2px 0 4px; }
+.detail-description { display: grid; grid-template-columns: minmax(0,1fr); gap: 7px; padding: 15px; border: 1px solid #ddd3e7; border-radius: 14px; background: #faf8fd; }
+.detail-description small { color: #8a8194; font-size: 11px; }
+.detail-description strong { min-width: 0; color: #382f43; font-size: 15px; line-height: 1.55; overflow-wrap: anywhere; }
+.detail-description b { justify-self: end; margin-top: 2px; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif; font-size: 19px; }
+.detail-description b.deposit { color: #624493; }
+.detail-description b.withdraw { color: #b55757; }
+.detail-transfer-flow { display: grid; gap: 7px; }
+.detail-account-card { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 5px 12px; padding: 14px 15px; border: 1px solid #e1dae8; border-radius: 13px; background: #fff; }
+.detail-account-card.destination { background: #f7f2fc; }
+.detail-account-card small { grid-column: 1 / -1; color: #8c8295; font-size: 10px; font-weight: 700; }
+.detail-account-card strong { color: #41364d; font-size: 14px; }
+.detail-account-card span { color: #776c80; font-size: 11px; text-align: right; }
+.detail-account-card b { grid-column: 1 / -1; color: #5d4f69; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif; font-size: 15px; letter-spacing: .02em; }
+.detail-transfer-arrow { color: #7253a2; font-size: 21px; font-weight: 900; line-height: 1; text-align: center; }
+.detail-metadata { margin: 0; padding: 5px 0 0; border-top: 1px solid #eee8f2; }
+.detail-metadata > div { min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.detail-metadata dt { color: #8c8295; font-size: 13px; }
+.detail-metadata dd { margin: 0; color: #4c4255; font-size: 14px; font-weight: 700; text-align: right; }
+:global(.transaction-detail-modal .base-modal__header) { border-bottom: 0; }
+:global(.transaction-detail-modal .base-modal__body) { padding-top: 8px; }
 @media (max-width: 560px) {
   .transaction-history {
     margin-top: 16px;

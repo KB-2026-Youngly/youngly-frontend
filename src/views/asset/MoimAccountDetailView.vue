@@ -26,7 +26,12 @@
           <img class="kb-icon" :src="kbIcon" alt="KB국민은행" />
           <div class="account-heading">
             <h1>{{ account.accountName || 'KB 모임통장' }}</h1>
-            <p>{{ account.accountNumber }}</p>
+            <div class="summary-account-number">
+              <p>{{ account.accountNumber }}</p>
+              <button type="button" aria-label="계좌번호 복사" @click="copyAccountNumber">
+                <img :src="accountNumberIcon" alt="" />
+              </button>
+            </div>
           </div>
         </div>
         <strong class="account-balance yl-money">{{ formatCurrency(account.balance) }}원</strong>
@@ -164,6 +169,10 @@
           :key="historyRefreshKey"
           account-type="MOIM"
           :account-id="account.moimAccountId"
+          :account-number="account.accountNumber"
+          :bank-name="account.bankName"
+          :account-name="account.accountName || 'KB 모임통장'"
+          :is-account-owner="Boolean(account.owner)"
           :initial-limit="6"
         />
       </div>
@@ -236,6 +245,7 @@ import { useRoute } from 'vue-router'
 import BaseModal from '@/components/base/BaseModal.vue'
 import TransactionHistory from '@/components/asset/TransactionHistory.vue'
 import kbIcon from '@/assets/icons/kb_icon.png'
+import accountNumberIcon from '@/assets/second_view/account_number.png'
 import { getAccount, getMoimAccounts, syncMoimAccount } from '@/api/account'
 import { depositToGroup, getGroups, getMemberDepositStatuses, getMyDepositStatus } from '@/api/group'
 import {
@@ -320,8 +330,13 @@ async function refreshAccount() {
       balance: data?.balance ?? account.value.balance,
       syncedAt: data?.syncedAt ?? account.value.syncedAt,
     }
+    await loadMemberDeposits()
     historyRefreshKey.value += 1
-    showToast('계좌 정보를 새로고침했습니다.')
+    showToast(
+      membersError.value
+        ? '계좌는 갱신했지만 예치금 현황을 불러오지 못했습니다.'
+        : '계좌와 예치금 현황을 새로고침했습니다.',
+    )
   } catch (requestError) {
     showToast(apiError(requestError, '계좌 정보를 새로고침하지 못했습니다.'))
   } finally {
@@ -526,6 +541,16 @@ function showToast(message) {
   toastTimer = setTimeout(() => (toast.value = ''), 2400)
 }
 
+async function copyAccountNumber() {
+  if (!account.value?.accountNumber) return
+  try {
+    await navigator.clipboard.writeText(account.value.accountNumber)
+    showToast('계좌번호를 복사했어요.')
+  } catch {
+    showToast('계좌번호를 복사하지 못했어요.')
+  }
+}
+
 function formatCurrency(value) {
   return Number(value || 0).toLocaleString('ko-KR')
 }
@@ -565,7 +590,10 @@ function formatSyncedAt(value) {
 .kb-icon { width: 48px; height: 48px; flex: 0 0 48px; object-fit: contain; }
 .account-heading { min-width: 0; }
 .account-heading h1 { margin: 0; overflow: hidden; color: #30293a; font-size: 21px; text-overflow: ellipsis; white-space: nowrap; }
-.account-heading p { margin: 6px 0 0; color: #8b8195; font-size: 13px; }
+.account-heading p { margin: 0; color: #8b8195; font-size: 16px; }
+.summary-account-number { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.summary-account-number button { display: grid; width: 22px; height: 22px; padding: 0; border: 0; place-items: center; background: transparent; cursor: pointer; }
+.summary-account-number img { display: block; width: 17px; height: 17px; object-fit: contain; }
 .account-balance { display: block; margin-top: 25px; color: #30293a; font-size: 30px; letter-spacing: -.7px; }
 .deposit-status-section { margin-top: 0; padding: 0; }
 .deposit-status-surface { padding: 22px 26px; }
@@ -598,7 +626,7 @@ function formatSyncedAt(value) {
 .my-deposit-summary,.deposit-visualization { min-width: 0; padding: 17px; border-radius: 14px; background: #f8f5fc; }
 .my-deposit-summary { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 7px 12px; }
 .my-deposit-summary > div:first-child { display: grid; gap: 5px; }
-.my-deposit-summary small,.completion-copy > span { color: #8b8195; font-size: 11px; }
+.my-deposit-summary small,.completion-copy > span { color: #8b8195; font-size: 13px; }
 .my-deposit-summary strong { color: #3d3349; font-size: 20px; }
 .my-deposit-summary > span { padding: 5px 8px; border-radius: 999px; color: #9a5e16; background: #fff1d9; font-size: 10px; font-weight: 800; white-space: nowrap; }
 .my-deposit-summary > span.complete { color: #28745a; background: #e5f6ee; }
@@ -608,7 +636,7 @@ function formatSyncedAt(value) {
 .deposit-visualization { display: grid; gap: 10px; }
 .completion-copy { display: flex; align-items: center; justify-content: space-between; }
 .completion-copy strong { color: #5d4189; font-size: 23px; }
-.completion-copy strong small { margin-left: 2px; color: #8b8195; font-size: 11px; }
+.completion-copy strong small { margin-left: 2px; color: #8b8195; font-size: 15px; }
 .member-list { margin: 15px 0 0; padding: 0; list-style: none; }
 .member-list li { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 10px 16px; padding: 15px 12px; border-top: 1px solid #f0ebf3; border-radius: 12px; }
 .member-list li.is-me { margin: 5px 0; border: 1px solid #9d84c4; background: #f8f4fd; }
@@ -622,8 +650,8 @@ function formatSyncedAt(value) {
 .status-badge.complete { border-color: #b9dfce; color: #28745a; background: #effaf5; }
 .status-badge.pending { border-color: #f0cf9d; color: #9a5e16; background: #fff8ec; }
 .member-deposit { text-align: right; }
-.member-deposit strong { color: #4f397e; font-size: 14px; }
-.member-deposit span { color: #948b9b; font-size: 12px; }
+.member-deposit strong { color: #4f397e; font-size: 16px; }
+.member-deposit span { color: #948b9b; font-size: 14px; }
 .deposit-progress { grid-column: 1 / -1; height: 6px; overflow: hidden; border-radius: 999px; background: #eee9f1; }
 .deposit-progress span { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg,#8061aa,#5d4385); }
 .deposit-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
@@ -677,7 +705,7 @@ function formatSyncedAt(value) {
   .account-summary-surface { padding: 18px 16px; }
   .kb-icon { width: 44px; height: 44px; flex-basis: 44px; }
   .account-heading h1 { font-size: 17px; }
-  .account-heading p { font-size: 12px; }
+  .account-heading p { font-size: 15px; }
   .account-balance { margin-top: 22px; font-size: 27px; }
   .deposit-status-surface { padding: 18px 14px; }
   .settlement-result-surface { padding: 18px 14px; }
