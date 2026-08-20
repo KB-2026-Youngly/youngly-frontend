@@ -63,7 +63,10 @@
             <div class="group-badges">
               <span class="group-badge">{{ groupCategory }}</span>
               <span class="group-badge">{{ groupStatusLabel }}</span>
-              <span class="member-count">♟&nbsp; {{ groupMemberCount }} / {{ groupMemberLimit }}명</span>
+              <span class="member-count">
+                <UserRound :size="11" :stroke-width="2.5" aria-hidden="true" />
+                {{ groupMemberCount }} / {{ groupMemberLimit }}명
+              </span>
             </div>
             <div class="group-title-row">
               <button
@@ -96,6 +99,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { UserRound } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
 import bellIconUrl from '@/assets/icons/bell.svg'
@@ -566,7 +570,10 @@ onBeforeUnmount(() => {
 }
 
 .member-count {
+  display: inline-flex;
   flex: 0 0 auto;
+  align-items: center;
+  gap: 3px;
   color: #27272a;
   font-size: 10px;
   font-weight: 700;

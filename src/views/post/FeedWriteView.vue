@@ -44,16 +44,14 @@
         <div class="section-card-shadow yl-stepped-card-shadow">
           <section class="verification-section-card yl-card-frame pixel-step-card pixel-step-solid">
             <div class="verification-section-surface pixel-step-surface">
-              <h2 class="section-title">인증 사진 업로드</h2>
+              <h2 class="section-title">인증 사진 촬영</h2>
               <button class="photo-upload" :class="{ 'has-image': imagePreview }" type="button" @click="openCamera">
-                <img v-if="imagePreview" :src="imagePreview" alt="업로드한 인증 사진 미리보기" />
+                <img v-if="imagePreview" :src="imagePreview" alt="촬영한 인증 사진 미리보기" />
                 <template v-else>
                   <Camera class="camera-icon" :size="38" :stroke-width="1.8" aria-hidden="true" />
-                  <strong>인증 사진 촬영 또는 업로드</strong>
-                  <small>카메라</small>
+                  <small>카메라 열기</small>
                 </template>
               </button>
-              <input ref="galleryInput" class="gallery-input" type="file" accept="image/*" @change="handleImageChange" />
               <input ref="nativeCameraInput" class="gallery-input" type="file" accept="image/*" capture="environment" @change="handleImageChange" />
             </div>
           </section>
@@ -134,7 +132,6 @@ const groupsError = ref('')
 const selectedGroupIds = ref([])
 const imageFile = ref(null)
 const imagePreview = ref('')
-const galleryInput = ref(null)
 const nativeCameraInput = ref(null)
 const cameraVideo = ref(null)
 const captureCanvas = ref(null)
@@ -370,7 +367,7 @@ const startCamera = async () => {
   } catch (error) {
     cameraError.value = error?.name === 'NotAllowedError'
       ? '카메라 권한을 허용해 주세요.'
-      : '카메라 연결을 확인하거나 사진첩을 이용해 주세요.'
+      : '카메라 연결 상태를 확인해 주세요.'
   } finally {
     cameraLoading.value = false
   }
@@ -641,7 +638,8 @@ onBeforeUnmount(() => {
   position: relative;
   display: grid;
   width: 100%;
-  min-height: 220px;
+  min-height: 0;
+  aspect-ratio: 1.15 / 1;
   box-sizing: border-box;
   place-content: center;
   gap: 8px;
@@ -672,7 +670,7 @@ onBeforeUnmount(() => {
 .photo-upload img {
   display: block;
   width: 100%;
-  height: 280px;
+  height: 100%;
   object-fit: cover;
 }
 

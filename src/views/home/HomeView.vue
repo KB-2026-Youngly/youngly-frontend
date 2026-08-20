@@ -10,7 +10,7 @@
           <div class="alert-card-surface pixel-step-surface">
             <div class="alert-content">
               <div class="alert-icon-wrap">
-                <span class="alert-icon">!</span>
+                <Camera class="alert-icon" :size="18" :stroke-width="2.2" aria-hidden="true" />
               </div>
               <div class="alert-text">
                 <h3>오늘 인증이 {{ unverifiedCount }}개 남았어요!</h3>
@@ -55,17 +55,44 @@
       <h3 class="section-title">그룹</h3>
 
       <div class="group-list">
-        <div v-if="groupsLoading" class="group-list-state" role="status">
-          그룹 목록 불러오는 중
+        <div v-if="groupsLoading" class="group-list-state-shadow yl-stepped-card-shadow">
+          <div class="group-list-state group-list-state--loading yl-card-frame pixel-step-card pixel-step-solid" role="status">
+            <div class="group-list-state__surface pixel-step-surface">
+              <div class="group-state-characters" aria-hidden="true">
+                <img :src="pixelFriendsCharacter" alt="" />
+              </div>
+              <strong>그룹을 찾고 있어요</strong>
+              <span>친구들이 목록을 모으는 중</span>
+              <span class="group-state-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            </div>
+          </div>
         </div>
 
-        <div v-else-if="groupsError" class="group-list-state group-list-state--error" role="alert">
-          <span>{{ groupsError }}</span>
-          <button type="button" @click="loadGroups">다시 시도</button>
+        <div v-else-if="groupsError" class="group-list-state-shadow yl-stepped-card-shadow">
+          <div class="group-list-state group-list-state--error yl-card-frame pixel-step-card pixel-step-solid" role="alert">
+            <div class="group-list-state__surface pixel-step-surface">
+              <div class="group-error-character" aria-hidden="true">
+                <span>?</span>
+                <img :src="pixelFriendsCharacter" alt="" />
+              </div>
+              <strong>앗, 그룹을 놓쳤어요</strong>
+              <span>{{ groupsError }}</span>
+              <button type="button" @click="loadGroups">
+                <RefreshCw :size="15" :stroke-width="2.4" aria-hidden="true" />
+                다시 찾아보기
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div v-else-if="groups.length === 0" class="group-list-state">
-          참여 그룹 없음
+        <div v-else-if="groups.length === 0" class="group-list-state-shadow yl-stepped-card-shadow">
+          <div class="group-list-state group-list-state--empty yl-card-frame pixel-step-card pixel-step-solid">
+            <div class="group-list-state__surface pixel-step-surface">
+              <img class="group-empty-character" :src="pixelFriendsCharacter" alt="" />
+              <strong>아직 참여한 그룹이 없어요</strong>
+              <span>새 그룹에서 친구들과 도전해 보세요</span>
+            </div>
+          </div>
         </div>
 
         <div
@@ -118,15 +145,18 @@
                 </span>
               </div>
               <h4 class="group-title">{{ group.title }}</h4>
-              <p class="group-subtitle" :class="{ 'highlight': !group.isCompleted }">
-                {{ group.subtitle }}
-              </p>
             </div>
 
             <!-- 우측: 화살표 -->
             <div v-if="!group.isPending" class="group-arrow">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 18L15 12L9 6" stroke="#999999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path
+                  d="M9 18L15 12L9 6"
+                  stroke="#7156AD"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
             </div>
 
@@ -147,14 +177,10 @@
     </section>
 
     <div class="floating-add">
-      <button
-        class="floating-add-button pixel-step-circle"
-        type="button"
+      <FloatingActionButton
         aria-label="그룹 메뉴 열기"
         @click="groupActionModalOpen = true"
-      >
-        +
-      </button>
+      />
     </div>
 
     <BaseModal
@@ -358,11 +384,13 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
 import {
   BookOpen,
   ArrowRight,
+  Camera,
   CalendarCheck2,
   CircleAlert,
   ClipboardPaste,
   Dumbbell,
   GraduationCap,
+  RefreshCw,
   Shapes,
   UserRound,
 } from 'lucide-vue-next';
@@ -371,6 +399,8 @@ import {
 import { useRouter } from 'vue-router';
 import BaseModal from '@/components/base/BaseModal.vue';
 import BaseSelect from '@/components/base/BaseSelect.vue';
+import FloatingActionButton from '@/components/common/FloatingActionButton.vue';
+import pixelFriendsCharacter from '@/assets/characters/pixel-friends.png';
 import {
   createGroup as createGroupRequest,
   getGroupDetail,
@@ -1216,34 +1246,168 @@ onBeforeUnmount(() => {
 }
 
 .group-list-state {
-  display: grid;
-  min-height: 112px;
-  place-items: center;
-  padding: 18px;
+  width: 100%;
+  min-height: 218px;
   box-sizing: border-box;
-  border: 2px dashed #b7a5d8;
-  background: rgba(255, 255, 255, 0.46);
+  --pixel-outline-width: 2px;
+  --pixel-outline-color: #ac99d2;
+  --pixel-fill: #fff;
+  background: #fff;
   color: #655b75;
-  font-size: 14px;
-  font-weight: 700;
   text-align: center;
 }
 
+.group-list-state-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 5px;
+}
+
+.group-list-state__surface {
+  display: grid;
+  min-height: 214px;
+  box-sizing: border-box;
+  place-items: center;
+  align-content: center;
+  gap: 7px;
+  padding: 20px;
+}
+
+.group-list-state__surface > strong {
+  margin-top: 2px;
+  color: #342a43;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.group-list-state__surface > span:not(.group-state-dots) {
+  color: #81768d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.group-state-characters {
+  display: flex;
+  height: 86px;
+  align-items: flex-end;
+  justify-content: center;
+  margin-bottom: 3px;
+}
+
+.group-state-characters img {
+  width: 174px;
+  height: 86px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  transform-origin: center bottom;
+  animation: group-character-hop 1.15s ease-in-out infinite;
+}
+
+.group-state-dots {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.group-state-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #bca7dc;
+  animation: group-dot-pulse 1s ease-in-out infinite;
+}
+
+.group-state-dots i:nth-child(2) { animation-delay: 0.16s; }
+.group-state-dots i:nth-child(3) { animation-delay: 0.32s; }
+
 .group-list-state--error {
-  gap: 12px;
-  border-color: #d99b9b;
-  color: #a84242;
+  --pixel-outline-color: #d99b9b;
+  --pixel-fill: #fff9fa;
+  background: #fff9fa;
+}
+
+.group-error-character {
+  position: relative;
+  width: 150px;
+  height: 82px;
+}
+
+.group-error-character img {
+  width: 150px;
+  height: 82px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  animation: group-error-wiggle 2.4s ease-in-out infinite;
+}
+
+.group-error-character span {
+  position: absolute;
+  top: -3px;
+  right: 0;
+  z-index: 2;
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border: 1.5px solid #d99b9b;
+  border-radius: 50%;
+  background: #fff;
+  color: #b65050;
+  font-size: 14px;
+  font-weight: 900;
 }
 
 .group-list-state--error button {
-  min-height: 34px;
-  padding: 0 14px;
-  border: 1.5px solid currentColor;
-  border-radius: 8px;
-  background: #fff;
-  color: inherit;
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 0 16px;
+  border: 1.5px solid #bca7dc;
+  border-radius: 10px;
+  background: #7156ad;
+  color: #fff;
   font: inherit;
+  font-size: 12px;
+  font-weight: 800;
   cursor: pointer;
+}
+
+.group-list-state--error button:active {
+  transform: scale(0.97);
+}
+
+.group-empty-character {
+  width: 150px;
+  height: 84px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+@keyframes group-character-hop {
+  0%, 58%, 100% { transform: translateY(0) rotate(0); }
+  30% { transform: translateY(-7px) rotate(-2deg); }
+}
+
+@keyframes group-dot-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes group-error-wiggle {
+  0%, 72%, 100% { transform: rotate(0); }
+  78% { transform: rotate(-4deg); }
+  86% { transform: rotate(4deg); }
+  94% { transform: rotate(-2deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .group-state-characters img,
+  .group-state-dots i,
+  .group-error-character img {
+    animation: none;
+  }
 }
 
 .group-card {
@@ -1334,7 +1498,7 @@ onBeforeUnmount(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 7px;
 }
 
 .tags {
@@ -1365,14 +1529,17 @@ onBeforeUnmount(() => {
 }
 
 .group-title {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
+  line-height: 1.2;
   color: #111;
   margin: 0;
 }
 
 .group-subtitle {
+  margin: 0;
   font-size: 12px;
+  line-height: 1.2;
   color: #888;
 }
 
@@ -1385,6 +1552,9 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 20px;
+  width: 20px;
+  margin-left: 0;
 }
 
 .pending-label {
@@ -2045,7 +2215,7 @@ onBeforeUnmount(() => {
 }
 
 .group-arrow svg path {
-  stroke: var(--yl-ink);
+  stroke: #7156AD;
   stroke-linecap: square;
   stroke-linejoin: miter;
 }
@@ -2512,7 +2682,12 @@ onBeforeUnmount(() => {
   min-height: 92px;
   align-items: center;
   gap: 14px;
-  padding: 13px 15px;
+  padding: 12px 16px;
+}
+
+.group-card-surface .group-info {
+  justify-content: center;
+  gap: 10px;
 }
 
 .group-card:hover:not(.is-pending) .group-card-surface {
@@ -2673,17 +2848,35 @@ onBeforeUnmount(() => {
 
 .category-tag {
   border: 1px solid #d6cbe2;
-  border-radius: 999px;
+  border-radius: 3px;
   background: #f4f1f8;
   color: #6f6479;
 }
 
-.status-tag,
-.status-tag.completed {
+.status-tag {
   border: 1px solid #bca7dc;
-  border-radius: 999px;
+  border-radius: 3px;
   background: #eee8fa;
   color: #60418f;
+}
+
+.status-tag.completed {
+  border-color: #b9d8b9;
+  border-radius: 3px;
+  background: #e9f5e9;
+  color: #4b7c4b;
+}
+
+.tags {
+  gap: 3px;
+}
+
+.tags .tag {
+  padding: 2px 6px;
+  border-width: 1px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .profiles-wrap .profile-circle {
@@ -2721,16 +2914,39 @@ onBeforeUnmount(() => {
   display: none !important;
 }
 
-.group-card.is-pending.pixel-step-solid {
+/* .group-card.is-pending.pixel-step-solid {
   --pixel-outline-width: 0px;
   --pixel-outline-color: transparent;
   padding: 0 !important;
   border: 2px dashed #8f79b8 !important;
   background: transparent !important;
-}
+} */
 
 .group-card.is-pending .group-card-surface {
   background: rgba(255, 255, 255, 0.8);
+}
+
+.group-card.is-pending.pixel-step-solid {
+  --pixel-outline-width: 2px;
+  --pixel-outline-color: transparent;
+  border: 0 !important;
+  background:
+    linear-gradient(#8f79b8, #8f79b8) left 3px top 3px / 5px 2px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) left 3px top 3px / 2px 7px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) left 0 top 8px / 5px 2px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) right 3px top 3px / 5px 2px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) right 3px top 3px / 2px 7px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) right 0 top 8px / 5px 2px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) left 0 bottom 8px / 5px 2px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) left 3px bottom 3px / 2px 7px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) left 3px bottom 3px / 5px 2px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) right 0 bottom 8px / 5px 2px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) right 3px bottom 3px / 2px 7px no-repeat,
+    linear-gradient(#8f79b8, #8f79b8) right 3px bottom 3px / 5px 2px no-repeat,
+    repeating-linear-gradient(90deg, #8f79b8 0 7px, transparent 7px 12px) left 8px top / calc(100% - 16px) 2px no-repeat,
+    repeating-linear-gradient(90deg, #8f79b8 0 7px, transparent 7px 12px) left 8px bottom / calc(100% - 16px) 2px no-repeat,
+    repeating-linear-gradient(180deg, #8f79b8 0 7px, transparent 7px 12px) left top 8px / 2px calc(100% - 16px) no-repeat,
+    repeating-linear-gradient(180deg, #8f79b8 0 7px, transparent 7px 12px) right top 8px / 2px calc(100% - 16px) no-repeat !important;
 }
 
 /* 오늘 인증을 끝낸 그룹은 옅은 회색 면으로 구분 */
@@ -2987,15 +3203,17 @@ onBeforeUnmount(() => {
 }
 
 .group-drag-handle {
-  position: absolute;
-  right: 11px;
-  bottom: 10px;
+  position: static;
+  margin-left: 0;
   z-index: 8;
 
   display: grid;
-  width: 25px;
+  flex: 0 0 25px;
+  width: 20px;
   height: 25px;
   place-items: center;
+
+  margin-left: -8px;
 
   background: transparent;
   color: rgba(105, 82, 159, 0.7);
@@ -3010,6 +3228,7 @@ onBeforeUnmount(() => {
   font-size: 21px;
   font-weight: 800;
   line-height: 1;
+  transform: translateY(2px);
 }
 
 .group-drag-handle:active {
@@ -3022,4 +3241,60 @@ onBeforeUnmount(() => {
   outline-offset: 3px;
   cursor: grabbing;
 }
+
+/* .group-arrow,
+.group-drag-handle {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  flex: 0 0 24px;
+  align-self: center;
+} */
+
+/* 홈 화면 플로팅 그룹 메뉴 버튼 */
+.floating-add-button {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  place-items: center;
+  overflow: visible;
+  border: 2px solid #2f2935 !important;
+  border-radius: 50% !important;
+  background: #7156ad !important;
+  clip-path: none !important;
+  color: #fff;
+  box-shadow: 5px 5px 0 #bca7dc !important;
+  filter: none !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.floating-add-button::before {
+  display: none;
+}
+
+.floating-add-button svg {
+  display: block;
+  pointer-events: none;
+}
+
+.floating-add-button:hover {
+  box-shadow: 6px 6px 0 #bca7dc !important;
+  filter: none !important;
+  transform: translate(-1px, -1px);
+}
+
+.floating-add-button:active {
+  box-shadow: 2px 2px 0 #bca7dc !important;
+  filter: none !important;
+  transform: translate(3px, 3px);
+}
+
+.floating-add-button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+
 </style>
