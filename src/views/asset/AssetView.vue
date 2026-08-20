@@ -156,7 +156,6 @@
     <div v-else class="empty-asset-shadow yl-stepped-card-shadow">
     <article class="asset-card empty-asset-card pixel-step-card pixel-step-solid">
       <div class="empty-asset-surface pixel-step-surface">
-      <div class="card-decoration"></div>
       <h2>{{ content.title }}</h2>
       <button
         class="connect-button"
@@ -1272,19 +1271,6 @@ function resetModal() {
 }
 .linked-account-card::after {
   content: none;
-}
-
-.linked-account-card-surface::after {
-  content: '';
-  width: 210px;
-  height: 210px;
-  position: absolute;
-  right: -80px;
-  bottom: -120px;
-  z-index: 0;
-  border-radius: 50%;
-  background: #eee8fa;
-  pointer-events: none;
 }
 
 .linked-account-card-surface > * {
