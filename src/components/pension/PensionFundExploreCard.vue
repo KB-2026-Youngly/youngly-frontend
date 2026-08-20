@@ -9,7 +9,7 @@
 <script setup>
 import { ChevronRight } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
-import rabbitImage from '@/assets/characters/rabbit.png'
+import rabbitImage from '@/assets/pension/fund-banner-character.png'
 </script>
 
 <style scoped>

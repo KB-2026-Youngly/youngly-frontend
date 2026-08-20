@@ -5,11 +5,11 @@
       <div v-if="!isGroupDetail" class="default-header-content">
         <div class="header-brand">
           <button
-            v-if="isMoimAccountDetail"
+            v-if="showDefaultBackButton"
             class="header-back-button"
             type="button"
-            aria-label="자산으로 돌아가기"
-            @click="goBackToAssets"
+            :aria-label="defaultBackLabel"
+            @click="goBackFromDefaultHeader"
           >
             <span aria-hidden="true">&lt;</span>
           </button>
@@ -132,6 +132,17 @@ const unreadNotificationCount = computed(
 // 현재 경로가 그룹 상세 페이지인지 판별 (Composition API 방식)
 const isGroupDetail = computed(() => route.name === 'GroupDetail')
 const isMoimAccountDetail = computed(() => route.name === 'MoimAccountDetail')
+const isMyPageSubpage = computed(() =>
+  ['ProfileEdit', 'AccountSettings', 'SettlementHistory', 'PasswordChange', 'Point', 'Characters'].includes(
+    route.name,
+  ),
+)
+const showDefaultBackButton = computed(
+  () => isMoimAccountDetail.value || isMyPageSubpage.value,
+)
+const defaultBackLabel = computed(() =>
+  isMoimAccountDetail.value ? '자산으로 돌아가기' : '마이페이지로 돌아가기',
+)
 // mock 권한: 실제 API 연결 전에는 owner=false 쿼리로 그룹장이 아닌 상태를 확인할 수 있습니다.
 const isGroupOwner = ref(route.query.owner !== 'false')
 const groupStatusLabel = computed(() => ({
@@ -146,6 +157,14 @@ const closeMenu = () => {
 
 const goBackToAssets = () => {
   router.push({ path: '/asset', query: { tab: 'group' } })
+}
+
+const goBackFromDefaultHeader = () => {
+  if (isMoimAccountDetail.value) {
+    goBackToAssets()
+    return
+  }
+  router.push('/mypage')
 }
 
 const goBackToHome = () => {
@@ -430,6 +449,13 @@ onBeforeUnmount(() => {
   padding: 0;
   object-fit: cover;
   transform: scale(1.18);
+}
+
+.profile-button__avatar.user-profile-avatar--cover :deep(img) {
+  width: 100%;
+  height: 100%;
+  object-fit: contain !important;
+  transform: none;
 }
 
 .profile-dropdown {

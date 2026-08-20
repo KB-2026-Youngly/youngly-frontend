@@ -1,11 +1,6 @@
 <template>
   <div class="account-settings">
     <header class="account-settings__header">
-      <div class="account-back-shadow mypage-back-shadow yl-stepped-card-shadow">
-        <button class="account-back-button mypage-back-button pixel-step-button pixel-step-solid" type="button" aria-label="마이페이지로 돌아가기" @click="goBack">
-          <span class="account-back-button__surface mypage-back-surface pixel-step-surface"><ArrowLeft :size="22" aria-hidden="true" /></span>
-        </button>
-      </div>
       <h1>입출금 계좌 설정</h1>
     </header>
 
@@ -86,8 +81,6 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { ArrowLeft } from 'lucide-vue-next'
-import { useRouter } from 'vue-router'
 import AccountCard from '@/components/account/AccountCard.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseEmptyState from '@/components/base/BaseEmptyState.vue'
@@ -96,7 +89,6 @@ import BaseSpinner from '@/components/base/BaseSpinner.vue'
 import { useAccountStore } from '@/stores/account'
 import { useUserStore } from '@/stores/user'
 
-const router = useRouter()
 const accountStore = useAccountStore()
 const userStore = useUserStore()
 const { accounts, primaryAccount, isLoading, error, isSaving, saveError, successMessage } =
@@ -167,10 +159,6 @@ async function confirmSelection() {
   }, 3500)
 }
 
-function goBack() {
-  router.push('/mypage')
-}
-
 onMounted(loadAccounts)
 onBeforeUnmount(() => clearTimeout(messageTimer))
 </script>
@@ -192,9 +180,7 @@ onBeforeUnmount(() => clearTimeout(messageTimer))
 }
 
 .account-settings__header {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) 40px;
-  align-items: center;
+  display: block;
 }
 
 .account-settings__header button {

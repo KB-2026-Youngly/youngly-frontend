@@ -37,10 +37,10 @@
             <span class="character-card__action">캐릭터 뽑기 · 선택 및 장착</span>
           </div>
           <span
-            class="character-card__button pixel-step-button pixel-step-button--compact pixel-step-solid"
+            class="character-card__button"
             aria-hidden="true"
           >
-            <span class="character-card__button-surface pixel-step-surface"
+            <span class="character-card__button-surface"
               ><ChevronRight :size="20" aria-hidden="true"
             /></span>
           </span>
@@ -327,19 +327,6 @@ watch(
   --yl-stepped-shadow-offset: 6px;
 }
 
-.character-card__surface::after {
-  position: absolute;
-  top: 18px;
-  right: 82px;
-  width: 8px;
-  height: 8px;
-  background: #d9c9ef;
-  box-shadow:
-    14px 0 0 #a98bd3,
-    28px 0 0 #7658b5;
-  content: '';
-}
-
 .character-card__badge {
   position: absolute;
   top: 17px;
@@ -396,23 +383,22 @@ watch(
 }
 
 .character-card__button {
-  --pixel-outline-color: #ac99d2;
-  --pixel-fill: #eee7fb;
   display: grid;
   width: 44px;
   height: 44px;
-  padding: 2px;
+  padding: 0;
   place-items: center;
-  border: 0;
-  border-radius: 0;
+  border: 1px solid #d8ccea;
+  border-radius: 13px;
   color: var(--color-primary-dark, #7156ad);
-  background: #eee7fb;
-  box-shadow: none;
-  filter: drop-shadow(4px 4px 0 #c8b7e5) !important;
+  background: #f5f0fc;
+  box-shadow: 0 4px 10px rgba(81, 54, 127, 0.12);
+  filter: none !important;
   cursor: pointer;
   transition:
     color 0.18s ease,
     background-color 0.18s ease,
+    box-shadow 0.18s ease,
     transform 0.18s ease;
 }
 
@@ -422,14 +408,18 @@ watch(
   height: 100%;
   place-items: center;
   color: var(--color-primary-dark, #7156ad);
-  background: #eee7fb;
+  background: transparent;
 }
 
 .character-card:hover .character-card__button {
   color: #ffffff;
   background: var(--color-primary-hover, #7156ad);
-  box-shadow: 1px 1px 0 #cbbbe4;
-  transform: translate(2px, 2px);
+  box-shadow: 0 6px 14px rgba(81, 54, 127, 0.2);
+  transform: translateX(2px);
+}
+
+.character-card:hover .character-card__button-surface {
+  color: #ffffff;
 }
 
 .character-card:focus-visible {
@@ -440,10 +430,11 @@ watch(
 @media (max-width: 767px) {
   .mypage {
     grid-template-columns: 1fr;
-    gap: 17px;
+    grid-template-rows: auto auto auto minmax(56px, 1fr);
+    gap: 14px;
     min-height: calc(100dvh - 68px - 76px);
     margin: 0;
-    padding: 8px 14px 44px;
+    padding: 10px clamp(12px, 4vw, 20px) 12px;
   }
 
   .mypage > * {
@@ -451,32 +442,37 @@ watch(
   }
 
   .character-card {
-    min-height: 126px;
+    min-height: 116px;
     padding: 2px;
     border-radius: 0;
     box-shadow: none;
   }
 
   .character-card__surface {
-    grid-template-columns: 76px minmax(0, 1fr) 36px;
-    gap: 14px;
-    min-height: 122px;
-    padding: 32px 16px 16px;
+    grid-template-columns: 68px minmax(0, 1fr) 32px;
+    gap: 12px;
+    min-height: 112px;
+    padding: 29px 14px 13px;
+  }
+
+  .character-card-shadow {
+    --yl-stepped-shadow-offset: 4px;
   }
 
   .character-card__badge {
-    top: 13px;
-    left: 18px;
+    top: 11px;
+    left: 16px;
+    font-size: 8px;
   }
 
   .character-card__preview {
-    width: 74px;
-    height: 74px;
-    border-radius: 14px;
+    width: 66px;
+    height: 66px;
+    border-radius: 12px;
   }
 
   .character-card__copy h2 {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   .character-card__copy p {
@@ -487,14 +483,25 @@ watch(
   }
 
   .character-card__button {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     border-radius: 10px;
+    box-shadow: 0 3px 8px rgba(81, 54, 127, 0.12);
+  }
+
+  .character-card__action {
+    margin-top: 7px;
+    padding: 5px 8px;
+    font-size: 10px;
+    line-height: 1.2;
   }
 
   .account-exit-bar {
-    min-height: 44px;
+    align-self: end;
+    min-height: 42px;
+    margin-top: 4px;
     padding-inline: 10px;
+    filter: drop-shadow(3px 3px 0 rgba(200, 183, 229, 0.16));
   }
 
   .account-exit-bar :is(button, a) {
@@ -510,14 +517,14 @@ watch(
   }
 
   .character-card__surface {
-    grid-template-columns: 64px minmax(0, 1fr) 32px;
-    gap: 11px;
-    padding-inline: 12px;
+    grid-template-columns: 60px minmax(0, 1fr) 30px;
+    gap: 9px;
+    padding-inline: 11px;
   }
 
   .character-card__preview {
-    width: 62px;
-    height: 62px;
+    width: 58px;
+    height: 58px;
   }
 
   .character-card__action {

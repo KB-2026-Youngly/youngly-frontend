@@ -142,30 +142,32 @@ defineProps({
   transform: translate(2px, -50%);
 }
 
-@media (max-width: 480px) {
+@media (max-width: 767px) {
   .activity-summary {
-    gap: 8px;
-    margin-top: 18px;
+    gap: 7px;
+    margin-top: 15px;
     padding: 0;
     border-radius: 12px;
   }
 
   .activity-summary__item {
-    min-height: 68px;
+    min-height: 62px;
     padding: 1px;
+    border-radius: 12px;
   }
 
   .activity-summary__surface {
-    min-height: 64px;
-    padding: 8px 5px;
+    min-height: 58px;
+    padding: 7px 4px;
+    border-radius: 10px;
   }
 
   .activity-summary__label {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .activity-summary__item strong {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .activity-summary__item--link {
@@ -177,7 +179,7 @@ defineProps({
   }
 
   .activity-summary__arrow {
-    right: 2px;
+    right: 1px;
   }
 }
 </style>

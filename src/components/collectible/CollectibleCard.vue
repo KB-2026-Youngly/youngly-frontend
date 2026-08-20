@@ -9,13 +9,14 @@
     }"
     type="button"
     :aria-pressed="selected"
-    :aria-label="`${character.name || '캐릭터'} 선택${equipped ? ', 현재 장착 중' : ''}`"
+    :aria-label="`${displayName || '캐릭터'} 선택${equipped ? ', 현재 장착 중' : ''}`"
     @click="emit('select', character.characterId)"
+    @dblclick.prevent="emit('equip', character.characterId)"
   >
     <span class="character-card__image">
       <CharacterPreview :character="character" />
     </span>
-    <strong>{{ character.name || '이름 없는 캐릭터' }}</strong>
+    <strong>{{ displayName || '이름 없는 캐릭터' }}</strong>
     <span class="character-card__check" aria-hidden="true">
       <Check :size="15" :stroke-width="3" />
     </span>
@@ -25,7 +26,7 @@
 <script setup>
 import { computed } from 'vue'
 import { Check } from 'lucide-vue-next'
-import { isCoverCharacterImage } from '@/constants/characterImages'
+import { isCoverCharacterImage, resolveCharacterDisplayName } from '@/constants/characterImages'
 import CharacterPreview from './CharacterPreview.vue'
 
 const props = defineProps({
@@ -47,8 +48,9 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['select'])
+const emit = defineEmits(['select', 'equip'])
 const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
+const displayName = computed(() => resolveCharacterDisplayName(props.character))
 </script>
 
 <style scoped>

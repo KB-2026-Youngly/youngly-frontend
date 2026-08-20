@@ -8,6 +8,7 @@
       :equipped="String(character.characterId) === String(equippedCharacterId)"
       :equip-effect="String(character.characterId) === String(equipEffectCharacterId)"
       @select="emit('select', $event)"
+      @equip="emit('equip', $event)"
     />
   </div>
 </template>
@@ -34,7 +35,7 @@ defineProps({
   },
 })
 
-const emit = defineEmits(['select'])
+const emit = defineEmits(['select', 'equip'])
 </script>
 
 <style scoped>

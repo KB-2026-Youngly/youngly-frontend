@@ -1,9 +1,5 @@
 <template>
   <div class="point-page">
-    <div class="point-back-shadow mypage-back-shadow yl-stepped-card-shadow"><button class="back-button mypage-back-button pixel-step-button pixel-step-solid" type="button" aria-label="마이페이지로 돌아가기" @click="goBack">
-      <span class="point-back-surface mypage-back-surface pixel-step-surface"><ArrowLeft :size="18" aria-hidden="true" /></span>
-    </button></div>
-
     <header class="page-heading">
       <span>REWARD LOG</span>
       <h1>내 포인트</h1>
@@ -53,8 +49,7 @@
 <script setup>
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { AlertTriangle, ArrowLeft } from 'lucide-vue-next'
-import { useRouter } from 'vue-router'
+import { AlertTriangle } from 'lucide-vue-next'
 import BaseEmptyState from '@/components/base/BaseEmptyState.vue'
 import BaseSpinner from '@/components/base/BaseSpinner.vue'
 import PointHistoryList from '@/components/point/PointHistoryList.vue'
@@ -62,10 +57,8 @@ import PointSummary from '@/components/point/PointSummary.vue'
 import { usePointStore } from '@/stores/point'
 
 const pointStore = usePointStore()
-const router = useRouter()
 const { balance, histories, isLoading, error } = storeToRefs(pointStore)
 const { fetchPointOverview } = pointStore
-const goBack = () => router.push('/mypage')
 
 onMounted(fetchPointOverview)
 </script>

@@ -1,16 +1,5 @@
 <template>
   <div class="profile-edit-page">
-    <div class="back-link-shadow yl-stepped-card-shadow"><router-link
-      class="back-link pixel-step-button pixel-step-solid"
-      to="/mypage"
-      aria-label="마이페이지로 돌아가기"
-    >
-      <span class="back-link__surface pixel-step-surface">
-        <ArrowLeft :size="16" aria-hidden="true" />
-        <span>마이페이지</span>
-      </span>
-    </router-link></div>
-
     <section v-if="isLoading" class="state-panel yl-mypage-card">
       <BaseSpinner size="large" label="사용자 정보를 불러오는 중..." centered />
     </section>
@@ -38,7 +27,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { ArrowLeft } from 'lucide-vue-next'
 import BaseEmptyState from '@/components/base/BaseEmptyState.vue'
 import BaseSpinner from '@/components/base/BaseSpinner.vue'
 import ProfileForm from '@/components/mypage/ProfileForm.vue'
@@ -109,8 +97,8 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-.back-link-shadow + .state-panel,
-.back-link-shadow + .profile-form-shadow {
+.profile-back + .state-panel,
+.profile-back + .profile-form-shadow {
   margin-top: 20px;
 }
 
@@ -144,8 +132,8 @@ onMounted(() => {
     padding: 20px 16px 52px;
   }
 
-  .back-link-shadow + .state-panel,
-  .back-link-shadow + .profile-form-shadow {
+  .profile-back + .state-panel,
+  .profile-back + .profile-form-shadow {
     margin-top: 16px;
   }
 }

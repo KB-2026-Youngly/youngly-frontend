@@ -75,17 +75,21 @@ const displayName = computed(() => user.value?.nickname || user.value?.name || '
   line-height: 1.35;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 767px) {
   .profile-card {
     padding: 2px;
   }
 
+  .profile-card-shell {
+    --yl-stepped-shadow-offset: 4px;
+  }
+
   .profile-card__surface {
-    padding: 20px 16px 16px;
+    padding: 17px 14px 14px;
   }
 
   .profile-card__info h2 {
-    font-size: 20px;
+    font-size: 19px;
   }
 }
 </style>

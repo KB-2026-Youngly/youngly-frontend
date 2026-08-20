@@ -1,18 +1,6 @@
 <template>
   <div class="settlement-page">
     <header class="settlement-header">
-      <div class="settlement-back-shadow mypage-back-shadow yl-stepped-card-shadow">
-        <button
-          type="button"
-          class="back-button mypage-back-button pixel-step-button pixel-step-solid"
-          aria-label="마이페이지로 돌아가기"
-          @click="goBack"
-        >
-          <span class="settlement-back-surface mypage-back-surface pixel-step-surface"
-            ><ArrowLeft :size="18" aria-hidden="true"
-          /></span>
-        </button>
-      </div>
       <h1>정산 내역</h1>
     </header>
 
@@ -173,10 +161,8 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useRouter } from 'vue-router'
 import {
   AlertTriangle,
-  ArrowLeft,
   ChevronDown,
   CircleDollarSign,
   ReceiptText,
@@ -186,7 +172,6 @@ import BaseSpinner from '@/components/base/BaseSpinner.vue'
 import { useMyPageStore } from '@/stores/mypage'
 import { useUserStore } from '@/stores/user'
 
-const router = useRouter()
 const myPageStore = useMyPageStore()
 const userStore = useUserStore()
 const {
@@ -260,8 +245,6 @@ const fetchSettlements = async (force = false) => {
 
 const retrySettlements = () => fetchSettlements(true)
 
-const goBack = () => router.push('/mypage')
-
 onMounted(() => {
   document.addEventListener('pointerdown', closeDropdown)
   fetchSettlements()
@@ -288,9 +271,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
 }
 
 .settlement-header {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) 40px;
-  align-items: center;
+  display: block;
 }
 
 .settlement-header h1 {
