@@ -7,4 +7,5 @@ defineEmits(['start'])
 </script>
 <style scoped>
 .state-card { display: flex; gap: 18px; padding: 25px; border: 1px solid rgba(105, 82, 159, .14); border-radius: 20px; background: linear-gradient(145deg, #fff, #f6f1ff); box-shadow: 0 10px 28px rgba(49, 37, 72, .07); }.icon { width: 44px; height: 44px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 14px; color: #654a8c; background: #eee7fa; }.state-card h2 { margin: 2px 0 9px; color: #302b38; font-size: 18px; }.state-card p { margin: 0; color: #706777; font-size: 13px; line-height: 1.7; }.state-card button { min-height: 42px; margin-top: 17px; padding: 0 14px; display:inline-flex; align-items:center; gap:7px; border: 0; border-radius: 11px; color: #fff; background: #69529f; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }.state-card button :deep(svg) { flex:0 0 auto; } @media (max-width: 767px) { .state-card { padding: 20px 17px; } }
+.state-card p{color:#413b48}
 </style>
