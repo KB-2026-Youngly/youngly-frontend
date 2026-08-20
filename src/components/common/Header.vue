@@ -5,16 +5,16 @@
       <div v-if="!isGroupDetail" class="default-header-content">
         <div class="header-brand">
           <button
-            v-if="isMoimAccountDetail"
+            v-if="isSimpleBackHeader"
             class="header-back-button"
             type="button"
             aria-label="자산으로 돌아가기"
-            @click="goBackToAssets"
+            @click="goBackToParent"
           >
             <span aria-hidden="true">&lt;</span>
           </button>
-          <h1 v-if="isMoimAccountDetail" class="header-page-title">모임통장 상세</h1>
-          <img v-if="!isMoimAccountDetail" class="header-logo" :src="headerLogoUrl" alt="Youngly" />
+          <h1 v-if="isSimpleBackHeader" class="header-page-title">{{ simpleHeaderTitle }}</h1>
+          <img v-if="!isSimpleBackHeader" class="header-logo" :src="headerLogoUrl" alt="Youngly" />
         </div>
 
         <div class="header-right">
@@ -132,7 +132,12 @@ const unreadNotificationCount = computed(
 
 // 현재 경로가 그룹 상세 페이지인지 판별 (Composition API 방식)
 const isGroupDetail = computed(() => route.name === 'GroupDetail')
-const isMoimAccountDetail = computed(() => route.name === 'MoimAccountDetail')
+const isSimpleBackHeader = computed(() => ['MoimAccountDetail', 'PensionInsight', 'PensionSurvey'].includes(route.name))
+const simpleHeaderTitle = computed(() => ({
+  MoimAccountDetail: '모임통장 상세',
+  PensionInsight: 'AI 인사이트',
+  PensionSurvey: '투자 성향 설문',
+}[route.name] || ''))
 // mock 권한: 실제 API 연결 전에는 owner=false 쿼리로 그룹장이 아닌 상태를 확인할 수 있습니다.
 const isGroupOwner = ref(route.query.owner !== 'false')
 const groupStatusLabel = computed(() => ({
@@ -147,6 +152,12 @@ const closeMenu = () => {
 
 const goBackToAssets = () => {
   router.push({ path: '/asset', query: { tab: 'group' } })
+}
+
+const goBackToParent = () => {
+  if (route.name === 'PensionSurvey') return router.push({ name: 'PensionInsight' })
+  if (route.name === 'PensionInsight') return router.push('/asset')
+  goBackToAssets()
 }
 
 const goBackToHome = () => {

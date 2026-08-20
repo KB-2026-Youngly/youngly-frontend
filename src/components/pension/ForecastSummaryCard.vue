@@ -31,5 +31,6 @@ const dDay = computed(() => {
 </script>
 
 <style scoped>
-.summary-card { min-height: 330px; padding: 28px; border: 1px solid rgba(105, 82, 159, .14); border-radius: 20px; background: #fff; box-shadow: 0 10px 28px rgba(49, 37, 72, .07); }.summary-card h2 { margin: 0; color: #302b38; font-size: 18px; }.summary-card dl { margin: 20px 0 0; }.summary-card dl > div { padding: 17px 0; border-top: 1px solid #eee8f2; }.summary-card dt { color: #766e7d; font-size: 12px; }.summary-card dd { margin: 7px 0 3px; color: #4d3477; font-size: 19px; font-weight: 900; }.summary-card small { color: #958b9c; font-size: 11px; }@media (max-width: 767px) { .summary-card { min-height: 0; padding: 20px 17px; } }
+.summary-card { min-height: 330px; padding: 28px; border: 1px solid rgba(105, 82, 159, .14); border-radius: 20px; background: #fff; box-shadow: 0 10px 28px rgba(49, 37, 72, .07); }.summary-card h2 { margin: 0; color: var(--yl-purple-dark,#4f2f84); font-size: 20px; font-weight: 900; }.summary-card dl { margin: 20px 0 0; }.summary-card dl > div { padding: 17px 0; border-top: 1px solid #eee8f2; }.summary-card dt { color: #766e7d; font-size: 12px; }.summary-card dd { margin: 7px 0 3px; color: var(--yl-purple-dark,#4f2f84); font-size: 20px; font-weight: 900; }.summary-card small { color: #958b9c; font-size: 11px; }@media (max-width: 767px) { .summary-card { min-height: 0; padding: 20px 17px; } }
+.summary-card dt{color:#4f4857}.summary-card small{color:#5d5564}.summary-card h2{font-size:18px}.summary-card dd{font-size:19px}
 </style>
