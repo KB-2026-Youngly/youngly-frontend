@@ -23,7 +23,7 @@
                     v-model="selectedGroupIds"
                     type="checkbox"
                     :value="group.id"
-                    :disabled="group.verifiedToday || group.verificationCheckFailed"
+                    :disabled="group.verifiedToday"
                   />
                   <span class="group-icon" aria-hidden="true">
                     <component :is="group.icon" :size="16" :stroke-width="2" />
@@ -50,7 +50,7 @@
                 <template v-else>
                   <Camera class="camera-icon" :size="38" :stroke-width="1.8" aria-hidden="true" />
                   <strong>인증 사진 촬영 또는 업로드</strong>
-                  <small>카메라 또는 사진첩 열기</small>
+                  <small>카메라</small>
                 </template>
               </button>
               <input ref="galleryInput" class="gallery-input" type="file" accept="image/*" @change="handleImageChange" />
@@ -98,17 +98,12 @@
               <CameraOff :size="38" :stroke-width="1.8" aria-hidden="true" />
               <strong>카메라를 열 수 없어요</strong>
               <small>{{ cameraError }}</small>
-              <button type="button" @click="openGallery">사진첩 열기</button>
             </div>
           </div>
           <p class="camera-guide">프레임 안에 인증 내용을 맞춰 주세요</p>
         </main>
 
         <footer class="camera-controls">
-          <button class="camera-side-button" type="button" aria-label="사진첩 열기" @click="openGallery">
-            <Images :size="25" :stroke-width="2" />
-            <span>사진첩</span>
-          </button>
           <button class="camera-capture-button" type="button" aria-label="사진 촬영" :disabled="cameraLoading || !!cameraError" @click="capturePhoto">
             <span></span>
           </button>
@@ -126,7 +121,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BookOpen, CalendarCheck2, Camera, CameraOff, Dumbbell, GraduationCap, Images, Shapes, SwitchCamera, X } from 'lucide-vue-next'
+import { BookOpen, CalendarCheck2, Camera, CameraOff, Dumbbell, GraduationCap, Shapes, SwitchCamera, X } from 'lucide-vue-next'
 import { getGroups, getGroupDetail, getGroupRounds } from '@/api/group'
 import { createVerificationPost, getVerificationFeed } from '@/api/post'
 
@@ -258,11 +253,11 @@ const loadVerificationGroups = async () => {
       .map((result) => result.value)
 
     selectedGroupIds.value = selectedGroupIds.value.filter((groupId) => (
-      groups.value.some((group) => group.id === groupId && !group.verifiedToday && !group.verificationCheckFailed)
+      groups.value.some((group) => group.id === groupId && !group.verifiedToday)
     ))
 
     if (requestedGroupId && groups.value.some((group) => (
-      group.id === requestedGroupId && !group.verifiedToday && !group.verificationCheckFailed
+      group.id === requestedGroupId && !group.verifiedToday
     ))) {
       selectedGroupIds.value = [requestedGroupId]
     }
@@ -408,9 +403,6 @@ const closeCamera = () => {
   document.body.style.overflow = ''
 }
 
-const openGallery = () => {
-  galleryInput.value?.click()
-}
 
 const switchCamera = async () => {
   cameraFacingMode.value = cameraFacingMode.value === 'environment' ? 'user' : 'environment'
@@ -820,15 +812,18 @@ onBeforeUnmount(() => {
 }
 
 .camera-controls {
-  display: grid;
-  grid-template-columns: 1fr 90px 1fr;
+  position: relative;
+  display: flex;
   align-items: center;
+  justify-content: center;
   padding: 12px 24px max(18px, env(safe-area-inset-bottom));
 }
 
 .camera-side-button {
+  position: absolute;
+  right: 24px;
+
   justify-items: center;
-  justify-self: center;
   gap: 5px;
   min-width: 58px;
   padding: 8px;

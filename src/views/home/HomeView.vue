@@ -2,7 +2,10 @@
   <div class="home-container">
     <!-- 최상단 인증 알림 카드 -->
     <section class="alert-section">
-      <div class="alert-card-shadow yl-stepped-card-shadow">
+      <div
+          v-if="unverifiedCount > 0"
+          class="alert-card-shadow yl-stepped-card-shadow"
+        >
         <div class="alert-card yl-card-frame pixel-step-card pixel-step-solid">
           <div class="alert-card-surface pixel-step-surface">
             <div class="alert-content">
@@ -209,12 +212,15 @@
               <small>명</small>
             </span>
           </label>
-          <label class="form-field">
+          <div class="form-field">
             <span>매주 몇 번</span>
-            <select v-model.number="newGroup.weeklyCount">
-              <option v-for="count in 7" :key="count" :value="count">주 {{ count }}회</option>
-            </select>
-          </label>
+
+            <BaseSelect
+              v-model="newGroup.weeklyCount"
+              :options="weeklyCountOptions"
+              placeholder="횟수 선택"
+            />
+          </div>
         </div>
 
         <label class="form-field form-field--full">
@@ -244,9 +250,11 @@
             <button class="tooltip-trigger" type="button" aria-label="실패 면제권 안내" aria-describedby="failure-pass-tooltip">?</button>
             <span id="failure-pass-tooltip" class="field-tooltip" role="tooltip">하루 챌린지를 하지 못했을 때 해당 날짜를 면제합니다.</span>
           </span>
-          <select v-model.number="newGroup.failurePassCount">
-            <option v-for="count in 9" :key="count - 1" :value="count - 1">{{ count - 1 }}개</option>
-          </select>
+          <BaseSelect
+              v-model="newGroup.failurePassCount"
+              :options="failurePassOptions"
+              placeholder="면제권 개수 선택"
+            />
         </label>
 
         <label class="form-field form-field--full">
@@ -359,8 +367,10 @@ import {
   UserRound,
 } from 'lucide-vue-next';
 
+
 import { useRouter } from 'vue-router';
 import BaseModal from '@/components/base/BaseModal.vue';
+import BaseSelect from '@/components/base/BaseSelect.vue';
 import {
   createGroup as createGroupRequest,
   getGroupDetail,
@@ -400,6 +410,22 @@ const goToDeposit = () => {
     },
   });
 };
+
+const weeklyCountOptions = Array.from(
+  { length: 7 },
+  (_, index) => ({
+    label: `주 ${index + 1}회`,
+    value: index + 1,
+  })
+)
+
+const failurePassOptions = Array.from(
+  { length: 9 },
+  (_, index) => ({
+    label: `${index}개`,
+    value: index,
+  })
+)
 
 const moveGroup = (targetGroupId) => {
   if (
@@ -1713,7 +1739,6 @@ onBeforeUnmount(() => {
 }
 
 .form-field input,
-.form-field select,
 .form-field textarea {
   width: 100%;
   height: 48px;
@@ -1736,7 +1761,6 @@ onBeforeUnmount(() => {
 }
 
 .form-field input:focus,
-.form-field select:focus,
 .form-field textarea:focus {
   outline: 3px solid rgba(113, 86, 173, 0.28);
   border-color: #7156ad;
@@ -2074,7 +2098,6 @@ onBeforeUnmount(() => {
 }
 
 .form-field input,
-.form-field select,
 .form-field textarea,
 .category-options button,
 .account-option,
@@ -2087,7 +2110,6 @@ onBeforeUnmount(() => {
 }
 
 .form-field input:focus,
-.form-field select:focus,
 .form-field textarea:focus {
   border-color: var(--yl-ink);
   outline: 3px solid #bca7dc;
@@ -2521,7 +2543,6 @@ onBeforeUnmount(() => {
 }
 
 .form-field input,
-.form-field select,
 .form-field textarea,
 .category-options button,
 .account-option,
@@ -2534,7 +2555,6 @@ onBeforeUnmount(() => {
 }
 
 .form-field input:focus,
-.form-field select:focus,
 .form-field textarea:focus {
   border-color: #8b6ab8;
   outline: 3px solid rgba(139, 106, 184, 0.16);
@@ -2960,5 +2980,46 @@ onBeforeUnmount(() => {
 
 .group-card.is-recruiting .group-card-surface {
   background: #f3f3f3;
+}
+
+.group-card {
+  position: relative;
+}
+
+.group-drag-handle {
+  position: absolute;
+  right: 11px;
+  bottom: 10px;
+  z-index: 8;
+
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+
+  background: transparent;
+  color: rgba(105, 82, 159, 0.7);
+
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.group-drag-handle span {
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.group-drag-handle:active {
+  cursor: grabbing;
+}
+
+.group-card.is-reordering {
+  opacity: 0.72;
+  outline: 4px dashed #a78bdf;
+  outline-offset: 3px;
+  cursor: grabbing;
 }
 </style>

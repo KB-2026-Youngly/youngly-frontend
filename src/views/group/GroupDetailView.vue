@@ -95,16 +95,108 @@
       </div>
 
       <div class="day-selector">
-  <button type="button" @click="changeFeedDate(-1)">&lt;</button>
+        <button
+          type="button"
+          :disabled="!canMovePrevious"
+          @click="changeFeedDate(-1)"
+        >
+          &lt;
+        </button>
 
-  <strong>
-    {{ selectedDate === new Date().toLocaleDateString('sv-SE')
-      ? '오늘'
-      : selectedDate }}
-  </strong>
+        <strong>
+          {{ isTodaySelected ? '오늘' : selectedDate }}
+        </strong>
 
-  <button type="button" @click="changeFeedDate(1)">&gt;</button>
-</div>
+        <button
+          type="button"
+          :disabled="!canMoveNext"
+          @click="changeFeedDate(1)"
+        >
+          &gt;
+        </button>
+      </div>
+
+      <section
+  v-if="isOwner && (joinRequestsLoading || joinRequests.length)"
+  class="join-request-panel"
+>
+  <div class="join-request-panel__header">
+    <div>
+      <strong>참여 요청</strong>
+
+      <span v-if="joinRequests.length">
+        {{ joinRequests.length }}명
+      </span>
+    </div>
+  </div>
+
+  <p
+    v-if="joinRequestsLoading"
+    class="join-request-loading"
+  >
+    참여 요청을 불러오는 중...
+  </p>
+
+  <div
+    v-else
+    class="join-request-list"
+  >
+    <div
+      v-for="request in joinRequests"
+      :key="request.groupUserId"
+      class="join-request-item"
+    >
+      <div class="join-request-user">
+        <div class="join-request-avatar">
+          <img
+            v-if="request.profileImageUrl"
+            :src="request.profileImageUrl"
+            :alt="`${request.nickname} 프로필`"
+          />
+
+          <span v-else>
+            {{ request.nickname?.slice(0, 1) || '?' }}
+          </span>
+        </div>
+
+        <div>
+          <strong>
+            {{ request.nickname || request.userId }}
+          </strong>
+          <span>그룹 참여를 요청했어요</span>
+        </div>
+      </div>
+
+      <div class="join-request-actions">
+        <button
+          type="button"
+          class="join-request-reject"
+          :disabled="
+            joinRequestProcessingId === request.groupUserId
+          "
+          @click="
+            rejectGroupJoinRequest(request)
+          "
+        >
+          거절
+        </button>
+
+        <button
+          type="button"
+          class="join-request-approve"
+          :disabled="
+            joinRequestProcessingId === request.groupUserId
+          "
+          @click="
+            approveGroupJoinRequest(request)
+          "
+        >
+          승인
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
 
       <section class="feed-list" aria-label="참여자 인증 목록">
         <div
@@ -186,27 +278,29 @@
                     </button>
                 </div>
                 <div
-  v-if="member.reviewStatus === 'approved'"
-  class="post-engagement"
-  aria-label="게시글 반응"
->
+                  v-if="canAccessPost(member)"
+                  class="post-engagement"
+                  aria-label="게시글 반응"
+                >
                   <button class="engagement-item" type="button" :aria-label="`댓글 ${member.commentCount}개, 상세 보기`" @click.stop="openPostDetail(member)">
                     <span class="engagement-icon"><MessageCircle :size="23" :stroke-width="2.2" aria-hidden="true" /></span>
                     <b>{{ member.commentCount }}</b>
                   </button>
-                  <button class="engagement-item" :class="{ 'is-active': member.myReaction === 'like' }" type="button" :aria-pressed="member.myReaction === 'like'" :aria-label="`좋아요 ${member.likeCount}개`" @click.stop="toggleFeedReaction(member, 'like')">
+                  <button class="engagement-item engagement-item--like"
+                      :class="{ 'is-active': member.myReaction === 'like' }" type="button" :aria-pressed="member.myReaction === 'like'" :aria-label="`좋아요 ${member.likeCount}개`" @click.stop="toggleFeedReaction(member, 'like')">
                     <span class="engagement-icon"><ThumbsUp :size="23" :stroke-width="2.2" aria-hidden="true" /></span>
                     <b>{{ member.likeCount }}</b>
                   </button>
-                  <button class="engagement-item" :class="{ 'is-active': member.myReaction === 'dislike' }" type="button" :aria-pressed="member.myReaction === 'dislike'" :aria-label="`싫어요 ${member.dislikeCount}개`" @click.stop="toggleFeedReaction(member, 'dislike')">
+                  <button class="engagement-item engagement-item--dislike"
+                      :class="{ 'is-active': member.myReaction === 'dislike' }" type="button" :aria-pressed="member.myReaction === 'dislike'" :aria-label="`싫어요 ${member.dislikeCount}개`" @click.stop="toggleFeedReaction(member, 'dislike')">
                     <span class="engagement-icon"><ThumbsDown :size="23" :stroke-width="2.2" aria-hidden="true" /></span>
                     <b>{{ member.dislikeCount }}</b>
                   </button>
                 </div>
                   <div
-  v-if="member.reviewStatus === 'approved'"
-  class="latest-comment-row"
->
+                    v-if="canAccessPost(member)"
+                    class="latest-comment-row"
+                  >
                     <span
                       class="latest-comment-avatar"
                       :title="member.latestCommentAuthor || '김민준'"
@@ -223,20 +317,29 @@
                     {{ member.reviewStatus === 'approved' ? '승인 완료' : '반려 처리' }}
                   </span>
                 </div>
-                <button
+                <template v-else>
+                  <button
+                    v-if="isTodaySelected"
+                    type="button"
+                    class="pending-verification"
+                    @click="handlePendingCard(member)"
+                  >
+                    <strong>
+                      {{
+                        member.isMe
+                          ? '눌러서 인증하러 가기 📷 ›'
+                          : '눌러서 깨우기 ⏰ ›'
+                      }}
+                    </strong>
+                  </button>
 
-  v-else
-  type="button"
-  class="pending-verification"
-  @click="handlePendingCard(member)"
->
-  <strong>
-    {{ member.isMe
-      ? '눌러서 인증하러 가기 📷 ›'
-      : '눌러서 깨우기 ⏰ ›'
-    }}
-  </strong>
-</button>
+                  <div
+                    v-else
+                    class="pending-verification past-verification"
+                  >
+                    <strong>ZZZ...</strong>
+                  </div>
+                </template>
               </template>
               <p v-else class="sleep-message">ZZZ...</p>
               <span
@@ -457,12 +560,15 @@
           </ul>
         </section>
 
-        <label class="group-edit-field">
+        <div class="group-edit-field">
           <span>매주 몇 번</span>
-          <select v-model.number="groupEditForm.weeklyCount">
-            <option v-for="count in 7" :key="count" :value="count">주 {{ count }}회</option>
-          </select>
-        </label>
+
+          <BaseSelect
+            v-model="groupEditForm.weeklyCount"
+            :options="weeklyCountOptions"
+            placeholder="횟수 선택"
+          />
+        </div>
 
         <label class="group-edit-field">
           <span>챌린지 목표</span>
@@ -497,11 +603,11 @@
               >
             </span>
           </span>
-          <select v-model.number="groupEditForm.failurePassCount">
-            <option v-for="count in 9" :key="count - 1" :value="count - 1">
-              {{ count - 1 }}개
-            </option>
-          </select>
+          <BaseSelect
+            v-model="groupEditForm.failurePassCount"
+            :options="failurePassOptions"
+            placeholder="면제권 개수 선택"
+          />
         </label>
 
         <label class="group-edit-field">
@@ -622,11 +728,15 @@ import {
   X,
 } from 'lucide-vue-next'
 import BaseModal from '@/components/base/BaseModal.vue'
+import BaseSelect from '@/components/base/BaseSelect.vue'
 import {
   getGroupDetail,
   getGroupUsers,
   kickGroupUser,
   updateGroup,
+  getJoinRequests,
+  approveJoinRequest,
+  rejectJoinRequest,
 } from '@/api/group'
 
 import {
@@ -653,6 +763,10 @@ const members = reactive([])
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+
+const joinRequests = ref([])
+const joinRequestsLoading = ref(false)
+const joinRequestProcessingId = ref(null)
 
 const challengeStarted = computed(
   () => currentRound.value?.roundStatus === 'ONGOING'
@@ -711,15 +825,10 @@ const roundSettlements = ref([])
 const rankingLoading = ref(false)
 const rankingError = ref('')
 const currentRoundPosts = ref([])
+const currentRound = ref(null)
 const currentUserId = computed(() => userStore.user?.userId || '')
-const currentRound = computed(() => {
-  const rounds = [...rankingRounds.value]
-  const ongoingRound = [...rounds].reverse().find((round) => round.roundStatus === 'ONGOING')
-  const latestStartedRound = [...rounds].reverse().find(
-    (round) => round.startDate && Date.now() >= new Date(`${round.startDate}T00:00:00`).getTime(),
-  )
-  return ongoingRound || latestStartedRound || null
-})
+
+
 const currentRoundStarted = computed(() => {
   if (!currentRound.value?.startDate) return false
   return Date.now() >= new Date(`${currentRound.value.startDate}T00:00:00`).getTime()
@@ -835,6 +944,23 @@ const categoryValues = {
   습관: 'HABIT',
   기타: 'CUSTOM',
 }
+
+const weeklyCountOptions = Array.from(
+  { length: 7 },
+  (_, index) => ({
+    label: `주 ${index + 1}회`,
+    value: index + 1,
+  })
+)
+
+const failurePassOptions = Array.from(
+  { length: 9 },
+  (_, index) => ({
+    label: `${index}개`,
+    value: index,
+  })
+)
+
 const groupEditForm = reactive({
   title: '30일 매일 운동 챌린지',
   category: '운동',
@@ -982,7 +1108,7 @@ const applyGroupDetail = (detail) => {
 
   inviteCode.value = detail.inviteCode || ''
   isOwner.value = Boolean(detail.inviteCode)
-  startDateModalOpen.value = isOwner.value && allMembersJoined.value && !challengeStarted.value
+  startDateModalOpen.value = isOwner.value && allMembersJoined.value && groupInfo.status === 'RECRUITING'
   syncGroupHeader()
 }
 
@@ -1032,6 +1158,7 @@ const loadGroupMembers = async () => {
   localStorage.getItem('youngly_user') || '{}'
 )
 
+
 const loadedMembers = (response.data || []).map((member) => ({
   groupUserId: member.groupUserId,
   userId: member.userId,
@@ -1054,6 +1181,89 @@ const loadedMembers = (response.data || []).map((member) => ({
     groupInfo.memberCount = loadedMembers.length
   } catch (error) {
     console.error('그룹 참여자 조회 실패:', error)
+  }
+}
+
+const loadJoinRequests = async () => {
+  if (!isOwner.value) {
+    joinRequests.value = []
+    return
+  }
+
+  const groupId = String(route.params.id || '')
+  if (!groupId) return
+
+  joinRequestsLoading.value = true
+
+  try {
+    const response = await getJoinRequests(groupId)
+
+    joinRequests.value = Array.isArray(response.data)
+      ? response.data
+      : []
+  } catch (error) {
+    console.error('그룹 참여 요청 조회 실패:', error)
+    joinRequests.value = []
+  } finally {
+    joinRequestsLoading.value = false
+  }
+}
+
+const approveGroupJoinRequest = async (request) => {
+  if (!request?.groupUserId) return
+
+  const groupId = String(route.params.id || '')
+  if (!groupId) return
+
+  joinRequestProcessingId.value = request.groupUserId
+
+  try {
+    await approveJoinRequest(
+      groupId,
+      request.groupUserId
+    )
+
+    await Promise.all([
+      loadJoinRequests(),
+      loadGroupMembers(),
+      loadGroupInfo(),
+    ])
+  } catch (error) {
+    console.error('그룹 참여 승인 실패:', error)
+
+    window.alert(
+      error?.response?.data?.message ||
+      '참여 승인에 실패했습니다.'
+    )
+  } finally {
+    joinRequestProcessingId.value = null
+  }
+}
+
+const rejectGroupJoinRequest = async (request) => {
+  if (!request?.groupUserId) return
+
+  const groupId = String(route.params.id || '')
+  if (!groupId) return
+
+  joinRequestProcessingId.value = request.groupUserId
+
+  try {
+    await rejectJoinRequest(
+      groupId,
+      request.groupUserId
+    )
+
+    await loadJoinRequests()
+  } catch (error) {
+    console.error('그룹 참여 거절 실패:', error)
+
+    window.alert(
+      error?.response?.data?.message ||
+      '참여 거절에 실패했습니다.'
+    )
+  } finally {
+    joinRequestProcessingId.value = null
   }
 }
 
@@ -1161,41 +1371,67 @@ const handleInvite = () => {
 const loadCurrentRoundOverview = async () => {
   try {
     const { data } = await getGroupRounds(route.params.id)
+
     rankingRounds.value = (Array.isArray(data) ? data : []).sort(
-      (first, second) => Number(first.roundNo || 0) - Number(second.roundNo || 0),
+      (first, second) =>
+        Number(first.roundNo || 0) - Number(second.roundNo || 0)
     )
 
-    const ongoingIndex = rankingRounds.value.findIndex((round) => round.roundStatus === 'ONGOING')
-    const latestStartedIndex = rankingRounds.value.findLastIndex(
-      (round) => round.startDate && Date.now() >= new Date(`${round.startDate}T00:00:00`).getTime(),
+    const ongoingIndex = rankingRounds.value.findIndex(
+      (round) => round.roundStatus === 'ONGOING'
     )
-    const overviewIndex = ongoingIndex >= 0 ? ongoingIndex : latestStartedIndex
+
+    const latestStartedIndex = rankingRounds.value.findLastIndex(
+      (round) =>
+        round.startDate &&
+        Date.now() >= new Date(`${round.startDate}T00:00:00`).getTime()
+    )
+
+    const overviewIndex =
+      ongoingIndex >= 0 ? ongoingIndex : latestStartedIndex
+
     if (overviewIndex < 0) {
+      currentRound.value = null
       roundRankings.value = []
       currentRoundPosts.value = []
       return
     }
 
     selectedRoundIndex.value = overviewIndex
-    const round = rankingRounds.value[overviewIndex]
-    const [rankingResponse, postsResponse] = await Promise.all([
-      getRoundRanking(round.roundId),
-      getMyCertificationPosts({
-        from: round.startDate,
-        to: round.endDate,
-        groupId: String(route.params.id || ''),
-      }),
-    ])
 
-    roundRankings.value = Array.isArray(rankingResponse.data) ? rankingResponse.data : []
-    currentRoundPosts.value = (Array.isArray(postsResponse.data) ? postsResponse.data : []).filter(
-      (post) => Number(post.roundId) === Number(round.roundId),
-    )
+    const round = rankingRounds.value[overviewIndex]
+
+    currentRound.value = round
+
+    const [rankingResult, postsResult] =
+      await Promise.allSettled([
+        getRoundRanking(round.roundId),
+        getMyCertificationPosts({
+          from: round.startDate,
+          to: round.endDate,
+          groupId: String(route.params.id || ''),
+        }),
+      ])
+
+    roundRankings.value =
+      rankingResult.status === 'fulfilled' &&
+      Array.isArray(rankingResult.value.data)
+        ? rankingResult.value.data
+        : []
+
+    currentRoundPosts.value =
+      postsResult.status === 'fulfilled' &&
+      Array.isArray(postsResult.value.data)
+        ? postsResult.value.data.filter(
+            (post) =>
+              Number(post.roundId) === Number(round.roundId)
+          )
+        : []
   } catch (error) {
-    console.error('현재 라운드 현황 조회 실패:', error)
-    rankingRounds.value = []
-    roundRankings.value = []
-    currentRoundPosts.value = []
+  console.error('라운드 목록 조회 실패:', error)
+
+  roundRankings.value = []
+  currentRoundPosts.value = []
   }
 }
 
@@ -1290,6 +1526,9 @@ const setStartDate = async () => {
     })
 
     startDateConfigured.value = true
+    startDateModalOpen.value = false
+
+    await loadGroupInfo()
 
     // 생성된 라운드 다시 조회
     await loadCurrentRoundOverview()
@@ -1516,13 +1755,24 @@ const removeMember = async (member) => {
   }
 }
 
+const canAccessPost = (member) => {
+  if (!member?.postId) return false
+
+  return (
+    member.isMe ||
+    Boolean(member.myApproval) ||
+    member.reviewStatus === 'approved' ||
+    member.reviewStatus === 'rejected'
+  )
+}
+
 const handleFeedCardClick = (member) => {
   if (preventNextFeedClick) {
     preventNextFeedClick = false
     return
   }
 
-  if (member.reviewStatus !== 'approved') return
+  if (!canAccessPost(member)) return
 
   openPostDetail(member)
 }
@@ -1833,10 +2083,42 @@ const changeFeedDate = async (days) => {
   const date = new Date(`${selectedDate.value}T00:00:00`)
   date.setDate(date.getDate() + days)
 
-  selectedDate.value = date.toLocaleDateString('sv-SE')
+  const nextDate = date.toLocaleDateString('sv-SE')
+  const today = new Date().toLocaleDateString('sv-SE')
+
+  if (
+    currentRound.value?.startDate &&
+    nextDate < currentRound.value.startDate
+  ) {
+    return
+  }
+
+  if (nextDate > today) {
+    return
+  }
+
+  selectedDate.value = nextDate
 
   await loadVerificationFeed()
 }
+
+const isTodaySelected = computed(
+  () =>
+    selectedDate.value ===
+    new Date().toLocaleDateString('sv-SE')
+)
+
+const canMovePrevious = computed(() => {
+  if (!currentRound.value?.startDate) return false
+
+  return selectedDate.value > currentRound.value.startDate
+})
+
+const canMoveNext = computed(() => {
+  const today = new Date().toLocaleDateString('sv-SE')
+
+  return selectedDate.value < today
+})
 
 const cancelGroupEditSwipe = () => {
   const state = groupEditSwipeState
@@ -1863,6 +2145,10 @@ watch(
       await loadCurrentRoundOverview()
       await loadGroupMembers()
       await loadVerificationFeed()
+
+      if (isOwner.value) {
+    await loadJoinRequests()
+  }
     }
   },
 )
@@ -1911,9 +2197,13 @@ onMounted(async () => {
   }
 
   await loadGroupInfo()
-  await loadCurrentRoundOverview()
   await loadGroupMembers()
+  await loadCurrentRoundOverview()
   await loadVerificationFeed()
+
+  if (isOwner.value) {
+    await loadJoinRequests()
+  }
 
   countdownTimer = setInterval(() => {
   now.value = new Date()
@@ -2467,8 +2757,10 @@ button {
   filter: none;
   text-shadow: none;
 }
-.engagement-item.is-active {
-  color: #c8afff;
+.engagement-item.is-active,
+.engagement-item.is-active .engagement-icon,
+.engagement-item.is-active b {
+  color: #b994f4;
 }
 .engagement-item:active {
   transform: scale(0.9);
@@ -4317,5 +4609,141 @@ button {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
   }
+}
+
+.past-verification {
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.join-request-panel {
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 2px solid var(--yl-ink);
+  background: var(--yl-paper);
+  box-shadow: 5px 5px 0 var(--yl-purple);
+}
+
+.join-request-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.join-request-panel__header > div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.join-request-panel__header strong {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.join-request-panel__header span {
+  display: grid;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  place-items: center;
+  box-sizing: border-box;
+  background: #eee8fa;
+  color: var(--yl-purple-dark);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.join-request-list {
+  display: grid;
+  gap: 10px;
+}
+
+.join-request-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 12px;
+  border: 1.5px solid #d6cbe2;
+  background: #f8f5fc;
+}
+
+.join-request-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.join-request-avatar {
+  display: grid;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid var(--yl-ink);
+  background: #eee8fa;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.join-request-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.join-request-user > div:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.join-request-user strong {
+  font-size: 13px;
+}
+
+.join-request-user span {
+  color: #8b8195;
+  font-size: 11px;
+}
+
+.join-request-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.join-request-actions button {
+  min-height: 34px;
+  padding: 0 11px;
+  border: 2px solid var(--yl-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.join-request-reject {
+  background: #fff;
+  color: var(--yl-ink);
+}
+
+.join-request-approve {
+  background: var(--yl-purple);
+  color: #fff;
+}
+
+.join-request-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.join-request-loading {
+  margin: 0;
+  color: #8b8195;
+  font-size: 12px;
 }
 </style>
