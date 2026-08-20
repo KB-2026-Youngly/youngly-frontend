@@ -813,6 +813,29 @@ watch([() => props.open, () => props.mode], async ([open]) => {
   border-radius: 50%;
   background: #f6f1fb;
   box-sizing: border-box;
+  transform-origin: center;
+  animation: gacha-result-pop 0.52s ease-out both;
+}
+
+@keyframes gacha-result-pop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+
+  58% {
+    transform: scale(1.025);
+    opacity: 1;
+  }
+
+  78% {
+    transform: scale(0.99);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .gacha-modal__result--cover {
@@ -1147,7 +1170,8 @@ watch([() => props.open, () => props.mode], async ([open]) => {
   .summon-scene__magic-circle,
   .summon-scene__spark,
   .summon-scene__egg,
-  .summon-state-fade {
+  .summon-state-fade,
+  .gacha-modal__result {
     animation: none;
   }
 

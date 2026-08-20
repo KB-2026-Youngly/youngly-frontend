@@ -568,10 +568,28 @@ onBeforeUnmount(() => {
 .equipped-stage__spotlight {
   width: min(240px, 70vw);
   height: 240px;
+  overflow: hidden;
   padding: 0;
   border: 0;
   background: transparent;
   box-sizing: border-box;
+}
+
+.equipped-stage__spotlight :deep(img) {
+  transform-origin: center;
+  animation: equipped-character-breathe 3.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes equipped-character-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.015);
+  }
 }
 
 .equipped-stage__info {
@@ -1018,8 +1036,10 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .draw-panel__spinner {
+  .draw-panel__spinner,
+  .equipped-stage__spotlight :deep(img) {
     animation: none;
+    will-change: auto;
   }
 }
 </style>

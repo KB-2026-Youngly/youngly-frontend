@@ -13,7 +13,13 @@
           >
             <span aria-hidden="true">&lt;</span>
           </button>
-          <img class="header-logo" :src="headerLogoUrl" alt="Youngly" />
+          <h1 v-if="headerPageTitle" class="header-page-title">{{ headerPageTitle }}</h1>
+          <img
+            v-else-if="!isMyPageSubpage"
+            class="header-logo"
+            :src="headerLogoUrl"
+            alt="Youngly"
+          />
         </div>
 
         <div class="header-right">
@@ -132,6 +138,15 @@ const unreadNotificationCount = computed(
 // 현재 경로가 그룹 상세 페이지인지 판별 (Composition API 방식)
 const isGroupDetail = computed(() => route.name === 'GroupDetail')
 const isMoimAccountDetail = computed(() => route.name === 'MoimAccountDetail')
+const headerPageTitle = computed(
+  () =>
+    ({
+      Point: '내 포인트',
+      AccountSettings: '입출금 계좌 설정',
+      SettlementHistory: '정산 내역',
+      PasswordChange: '비밀번호 변경',
+    })[route.name] || '',
+)
 const isMyPageSubpage = computed(() =>
   ['ProfileEdit', 'AccountSettings', 'SettlementHistory', 'PasswordChange', 'Point', 'Characters'].includes(
     route.name,
@@ -343,6 +358,14 @@ onBeforeUnmount(() => {
   margin-left: 0;
 }
 
+.header-page-title {
+  margin: 0;
+  color: #342843;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+}
+
 .header-right {
   display: flex;
   gap: 14px;
@@ -419,42 +442,51 @@ onBeforeUnmount(() => {
 }
 
 .profile-button {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   padding: 2px;
-  overflow: hidden;
-  border: 1px solid #222222;
+  box-sizing: border-box;
+  border: 0;
   border-radius: 50%;
-  background: #ffffff;
+  background: transparent;
   box-shadow: none;
-  transition:
-    transform 0.15s ease,
-    border-color 0.15s ease;
+  transition: transform 0.15s ease;
 }
 
 .profile-button:hover {
-  border-color: #7156ad;
-  transform: translateY(-1px);
+  transform: scale(1.03);
 }
 
 .profile-button__avatar {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   overflow: hidden;
+  box-sizing: border-box;
+  border: 2px solid #4b2b78;
   border-radius: 50%;
   clip-path: none;
+  background: #eee7f8 !important;
 }
 
 .profile-button__avatar :deep(img) {
+  display: block;
+  width: 100%;
+  height: 100%;
   padding: 0;
-  object-fit: cover;
-  transform: scale(1.18);
+  box-sizing: border-box;
+  object-fit: contain !important;
+  object-position: center;
+  background: transparent !important;
+  transform: none;
 }
 
 .profile-button__avatar.user-profile-avatar--cover :deep(img) {
   width: 100%;
   height: 100%;
-  object-fit: contain !important;
+  padding: 0;
+  object-fit: cover !important;
+  object-position: center;
+  background: transparent !important;
   transform: none;
 }
 
@@ -672,6 +704,10 @@ onBeforeUnmount(() => {
 
   .header-back-button + .header-logo {
     margin-left: 0;
+  }
+
+  .header-page-title {
+    font-size: 21px;
   }
 
   .header-brand {

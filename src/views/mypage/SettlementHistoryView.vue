@@ -1,9 +1,5 @@
 <template>
   <div class="settlement-page">
-    <header class="settlement-header">
-      <h1>정산 내역</h1>
-    </header>
-
     <section v-if="isLoading" class="state-panel yl-mypage-card">
       <BaseSpinner size="large" label="정산 내역을 불러오는 중..." centered />
     </section>
@@ -261,6 +257,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   --color-primary-soft: #f0eafd;
 
   display: grid;
+  align-content: start;
   gap: 18px;
   min-height: calc(100vh - 69px);
   margin: -20px;
@@ -268,17 +265,6 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   color: #342e3c;
   background: #e6dcf6;
   box-sizing: border-box;
-}
-
-.settlement-header {
-  display: block;
-}
-
-.settlement-header h1 {
-  margin: 0;
-  font-size: 21px;
-  letter-spacing: -0.03em;
-  text-align: center;
 }
 
 .back-button {
@@ -736,22 +722,26 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
   .settlement-page {
     min-height: calc(100dvh - 68px - 76px);
     margin: 0;
-    padding: 16px 16px 40px;
-  }
-
-  .settlement-header h1 {
-    font-size: 19px;
+    gap: 16px;
+    padding: 12px 16px max(36px, env(safe-area-inset-bottom));
   }
 
   .summary-card {
-    padding: 21px 18px;
+    min-height: 92px;
+    padding: 18px;
     border-radius: 18px;
+    box-sizing: border-box;
   }
 
   .group-section,
   .history-section {
     padding: 18px 16px;
     border-radius: 18px;
+  }
+
+  .group-section > .base-empty-state,
+  .history-section > .base-empty-state {
+    padding: 32px 12px 36px;
   }
 }
 
@@ -810,11 +800,6 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', closeDropdown)
 .back-button:hover {
   box-shadow: 2px 2px 0 var(--mypage-shadow);
   transform: translate(2px, 2px);
-}
-
-.settlement-header h1 {
-  color: var(--mypage-ink);
-  font-size: 28px;
 }
 
 .settlement-page :is(.state-panel, .group-section, .history-section) {

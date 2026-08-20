@@ -13,16 +13,23 @@
         :aria-label="item.to ? `${item.label} ${item.value}, 포인트 내역 보기` : undefined"
       >
         <span class="activity-summary__surface">
+          <span class="activity-summary__icon" aria-hidden="true">
+            <BriefcaseBusiness
+              v-if="item.label === '승인 횟수'"
+              :size="19"
+              :stroke-width="2.2"
+            />
+            <ClipboardX
+              v-else-if="item.label === '반려 횟수'"
+              :size="20"
+              :stroke-width="2.2"
+            />
+            <span v-else class="activity-summary__point-icon">P</span>
+          </span>
           <span class="activity-summary__label">{{ item.label }}</span>
           <strong :class="{ 'activity-summary__value--point': item.isPoint }">{{
             item.value
           }}</strong>
-          <ChevronRight
-            v-if="item.to"
-            class="activity-summary__arrow"
-            :size="17"
-            aria-hidden="true"
-          />
         </span>
       </component>
     </div>
@@ -30,7 +37,7 @@
 </template>
 
 <script setup>
-import { ChevronRight } from 'lucide-vue-next'
+import { BriefcaseBusiness, ClipboardX } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
 
 defineProps({
@@ -60,7 +67,7 @@ defineProps({
   display: block;
   min-width: 0;
   margin: 0;
-  min-height: 76px;
+  min-height: 92px;
   padding: 1px;
   border: 1px solid #ffffff;
   border-radius: 14px;
@@ -80,13 +87,35 @@ defineProps({
 .activity-summary__surface {
   position: relative;
   display: grid;
-  gap: 5px;
+  justify-items: center;
+  gap: 4px;
   align-content: center;
-  min-height: 72px;
-  padding: 10px 14px;
+  min-height: 88px;
+  padding: 8px 12px;
   border-radius: 12px;
   background: transparent;
   box-sizing: border-box;
+}
+
+.activity-summary__icon {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  color: #7651b5;
+}
+
+.activity-summary__point-icon {
+  display: grid;
+  width: 23px;
+  height: 16px;
+  place-items: center;
+  color: #ffffff;
+  background: #7651b5;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+  clip-path: polygon(24% 0, 76% 0, 100% 50%, 76% 100%, 24% 100%, 0 50%);
 }
 
 .activity-summary__label {
@@ -112,10 +141,6 @@ defineProps({
   cursor: pointer;
 }
 
-.activity-summary__item--link .activity-summary__surface {
-  padding-right: 24px;
-}
-
 .activity-summary__item--link:last-child {
   padding-right: 2px;
 }
@@ -129,19 +154,6 @@ defineProps({
   outline-offset: 2px;
 }
 
-.activity-summary__arrow {
-  position: absolute;
-  top: 50%;
-  right: 8px;
-  color: #60418f;
-  transform: translateY(-50%);
-  transition: transform 0.18s ease;
-}
-
-.activity-summary__item--link:hover .activity-summary__arrow {
-  transform: translate(2px, -50%);
-}
-
 @media (max-width: 767px) {
   .activity-summary {
     gap: 7px;
@@ -151,14 +163,14 @@ defineProps({
   }
 
   .activity-summary__item {
-    min-height: 62px;
+    min-height: 84px;
     padding: 1px;
     border-radius: 12px;
   }
 
   .activity-summary__surface {
-    min-height: 58px;
-    padding: 7px 4px;
+    min-height: 80px;
+    padding: 6px 4px;
     border-radius: 10px;
   }
 
@@ -178,8 +190,5 @@ defineProps({
     padding-right: 2px;
   }
 
-  .activity-summary__arrow {
-    right: 1px;
-  }
 }
 </style>

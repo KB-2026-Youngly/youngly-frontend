@@ -30,6 +30,14 @@ import colli05Image from '@/assets/characters/colli-05.png'
 import colli06Image from '@/assets/characters/colli-06.png'
 import colli07Image from '@/assets/characters/colli-07.png'
 import colli08Image from '@/assets/characters/colli-08.png'
+import ramu01Image from '@/assets/characters/ramu-01.png'
+import ramu02Image from '@/assets/characters/ramu-02.png'
+import ramu03Image from '@/assets/characters/ramu-03.png'
+import ramu04Image from '@/assets/characters/ramu-04.png'
+import ramu05Image from '@/assets/characters/ramu-05.png'
+import ramu06Image from '@/assets/characters/ramu-06.png'
+import ramu07Image from '@/assets/characters/ramu-07.png'
+import ramu08Image from '@/assets/characters/ramu-08.png'
 
 const CHARACTER_IMAGE_BY_FILE_NAME = Object.freeze({
   'kiki-01.png': kiki01Image,
@@ -64,6 +72,14 @@ const CHARACTER_IMAGE_BY_FILE_NAME = Object.freeze({
   'colli-06.png': colli06Image,
   'colli-07.png': colli07Image,
   'colli-08.png': colli08Image,
+  'ramu-01.png': ramu01Image,
+  'ramu-02.png': ramu02Image,
+  'ramu-03.png': ramu03Image,
+  'ramu-04.png': ramu04Image,
+  'ramu-05.png': ramu05Image,
+  'ramu-06.png': ramu06Image,
+  'ramu-07.png': ramu07Image,
+  'ramu-08.png': ramu08Image,
 })
 
 const CHARACTER_DISPLAY_NAME_BY_FILE_NAME = Object.freeze({
@@ -89,6 +105,12 @@ const CHARACTER_DISPLAY_NAME_BY_FILE_NAME = Object.freeze({
     Array.from({ length: 8 }, (_, index) => [
       `colli-${String(index + 1).padStart(2, '0')}.png`,
       '콜리',
+    ]),
+  ),
+  ...Object.fromEntries(
+    Array.from({ length: 8 }, (_, index) => [
+      `ramu-${String(index + 1).padStart(2, '0')}.png`,
+      '라무',
     ]),
   ),
 })

@@ -1,13 +1,5 @@
 <template>
   <div class="account-settings">
-    <header class="account-settings__header">
-      <h1>입출금 계좌 설정</h1>
-    </header>
-
-    <p class="account-settings__description">
-      Youngly에서 사용할 대표 입출금 계좌를 선택해 주세요.
-    </p>
-
     <section v-if="isLoading" class="state-panel yl-mypage-card" aria-live="polite">
       <BaseSpinner size="large" label="계좌를 불러오는 중..." centered />
     </section>
@@ -179,64 +171,6 @@ onBeforeUnmount(() => clearTimeout(messageTimer))
   box-sizing: border-box;
 }
 
-.account-settings__header {
-  display: block;
-}
-
-.account-settings__header button {
-  display: grid;
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
-  padding: 0;
-  place-items: center;
-  border: 1px solid rgba(113, 86, 173, 0.12);
-  border-radius: 50%;
-  color: var(--color-primary-dark);
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 5px 14px rgba(66, 43, 99, 0.07);
-  cursor: pointer;
-}
-
-.account-back-shadow {
-  --yl-stepped-shadow-color: #c8b7e5;
-  --yl-stepped-shadow-offset: 4px;
-  width: 40px !important;
-}
-
-.account-back-button {
-  --pixel-outline-color: #ac99d2;
-  --pixel-fill: #ffffff;
-}
-
-.account-back-button__surface {
-  display: grid;
-  width: 100%;
-  height: 100%;
-  place-items: center;
-  color: var(--color-primary-dark);
-  background: #ffffff;
-}
-
-.account-settings__header button:focus-visible {
-  outline: 3px solid rgba(113, 86, 173, 0.24);
-  outline-offset: 2px;
-}
-
-.account-settings__header h1 {
-  margin: 0;
-  font-size: 21px;
-  letter-spacing: -0.03em;
-  text-align: center;
-}
-
-.account-settings__description {
-  margin: 14px 0 24px;
-  color: #77717f;
-  font-size: 13px;
-  text-align: center;
-}
-
 .account-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -312,11 +246,7 @@ onBeforeUnmount(() => clearTimeout(messageTimer))
   .account-settings {
     min-height: calc(100dvh - 68px - 76px);
     margin: 0;
-    padding: 16px 16px 40px;
-  }
-
-  .account-settings__header h1 {
-    font-size: 21px;
+    padding: 12px 16px 40px;
   }
 
   .account-list {
@@ -334,25 +264,6 @@ onBeforeUnmount(() => clearTimeout(messageTimer))
   --mypage-ink: #342843;
   --mypage-shadow: #c8b7e5;
   padding-inline: max(22px, calc((100% - 760px) / 2));
-}
-
-.account-settings__header button {
-  border: 0;
-  border-radius: 0;
-  background: #ffffff;
-  box-shadow: none;
-  filter: none;
-  clip-path: polygon(8px 0, calc(100% - 8px) 0, calc(100% - 8px) 3px, calc(100% - 3px) 3px, calc(100% - 3px) 8px, 100% 8px, 100% calc(100% - 8px), calc(100% - 3px) calc(100% - 8px), calc(100% - 3px) calc(100% - 3px), calc(100% - 8px) calc(100% - 3px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 3px), 3px calc(100% - 3px), 3px calc(100% - 8px), 0 calc(100% - 8px), 0 8px, 3px 8px, 3px 3px, 8px 3px);
-}
-
-.account-settings__header button:hover {
-  box-shadow: 2px 2px 0 var(--mypage-shadow);
-  transform: translate(2px, 2px);
-}
-
-.account-settings__header h1 {
-  color: var(--mypage-ink);
-  font-size: 27px;
 }
 
 .state-panel {

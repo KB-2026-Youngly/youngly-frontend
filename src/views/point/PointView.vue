@@ -1,11 +1,5 @@
 <template>
   <div class="point-page">
-    <header class="page-heading">
-      <span>REWARD LOG</span>
-      <h1>내 포인트</h1>
-      <p>활동으로 모은 포인트와 사용 기록을 확인해 보세요.</p>
-    </header>
-
     <section v-if="isLoading" class="state-panel">
       <BaseSpinner size="large" label="포인트를 불러오는 중..." centered />
     </section>
@@ -109,25 +103,11 @@ onMounted(fetchPointOverview)
   outline-offset: 2px;
 }
 
-.page-heading span,
 .history-panel__heading span {
   color: #7156ad;
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 2px;
-}
-
-.page-heading h1 {
-  margin: 7px 0 8px;
-  font-size: clamp(27px, 5vw, 34px);
-  letter-spacing: -0.04em;
-  line-height: 1.15;
-}
-
-.page-heading p {
-  margin: 0;
-  color: #6e6677;
-  font-size: 14px;
 }
 
 .state-panel,
@@ -183,7 +163,7 @@ onMounted(fetchPointOverview)
     gap: 18px;
     min-height: calc(100dvh - 68px - 76px);
     margin: 0;
-    padding: 20px 16px 48px;
+    padding: 12px 16px 48px;
   }
 }
 
@@ -213,10 +193,6 @@ onMounted(fetchPointOverview)
 .back-button:hover {
   box-shadow: 2px 2px 0 var(--mypage-shadow);
   transform: translate(2px, 2px);
-}
-
-.page-heading h1 {
-  color: var(--mypage-ink);
 }
 
 .point-page :is(.state-panel, .history-panel) {
