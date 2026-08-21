@@ -203,6 +203,7 @@
       modal-class="youngly-modal home-group-modal"
       :title="`새로운 그룹 만들기`"
       size="large"
+      drag-from-anywhere
     >
       <form class="group-create-form" @submit.prevent="openAccountConnect">
         <label class="form-field form-field--full">
@@ -269,28 +270,30 @@
           />
         </label>
 
-        <fieldset v-if="depositRatios.length" class="deposit-ratio-field">
-          <legend>순위별 연금 적립 비율</legend>
-          <p>모집 인원만큼 순위가 생성돼요. 30%로 설정하면 해당 순위 참여자의 예치금 중 30%가 연금으로 적립돼요.</p>
-          <div class="deposit-ratio-grid">
-            <label v-for="(_, index) in depositRatios" :key="index">
-              <span>{{ index + 1 }}등</span>
-              <span class="ratio-input-control">
-                <input
-                  v-model.number="depositRatios[index]"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  required
-                  inputmode="numeric"
-                  :aria-label="`${index + 1}등 연금 적립 비율`"
-                />
-                <small>%</small>
-              </span>
-            </label>
+        <div v-if="depositRatios.length" class="form-field form-field--full deposit-ratio-section">
+          <span>순위별 연금 적립 비율</span>
+          <div class="deposit-ratio-field">
+            <p>모집 인원만큼 순위가 생성돼요. 30%로 설정하면 해당 순위 참여자의 예치금 중 30%가 연금으로 적립돼요.</p>
+            <div class="deposit-ratio-grid">
+              <label v-for="(_, index) in depositRatios" :key="index">
+                <span>{{ index + 1 }}등</span>
+                <span class="ratio-input-control">
+                  <input
+                    v-model.number="depositRatios[index]"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    required
+                    inputmode="numeric"
+                    :aria-label="`${index + 1}등 연금 적립 비율`"
+                  />
+                  <small>%</small>
+                </span>
+              </label>
+            </div>
           </div>
-        </fieldset>
+        </div>
 
         <label class="form-field form-field--full">
           <span class="field-label-with-tooltip">
@@ -1986,13 +1989,6 @@ onBeforeUnmount(() => {
   border: 2px solid #d8cdea;
   border-radius: 14px;
   background: #f8f5fc;
-}
-
-.deposit-ratio-field legend {
-  padding: 0 6px;
-  color: #30283a;
-  font-size: 14px;
-  font-weight: 800;
 }
 
 .deposit-ratio-field > p {

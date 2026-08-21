@@ -85,8 +85,7 @@
               :class="{ 'is-me': member.userId === myDeposit?.userId }"
             >
               <div class="member-profile">
-                <img v-if="member.profileImageUrl" :src="member.profileImageUrl" :alt="`${member.nickname} 프로필`" />
-                <span v-else>{{ member.nickname?.slice(0, 1) || '?' }}</span>
+                <UserProfileAvatar :image-url="member.profileImageUrl" />
                 <div>
                   <div class="member-name-row">
                     <strong>{{ member.nickname }}</strong>
@@ -141,7 +140,7 @@
             <ul v-else class="settlement-request-list">
               <li v-for="request in settlementRequests" :key="request.transferRequestId">
                 <div class="settlement-user">
-                  <span>{{ settlementReceiverName(request.settlementReceiverId).slice(0, 1) }}</span>
+                  <UserProfileAvatar :image-url="settlementReceiverProfile(request.settlementReceiverId)" />
                   <div>
                     <strong>{{ settlementReceiverName(request.settlementReceiverId) }}</strong>
                     <small>{{ formatDateTime(request.completedAt || request.updatedAt || request.requestedAt) }}</small>
@@ -258,6 +257,7 @@ import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseModal from '@/components/base/BaseModal.vue'
 import TransactionHistory from '@/components/asset/TransactionHistory.vue'
+import UserProfileAvatar from '@/components/common/UserProfileAvatar.vue'
 import kbIcon from '@/assets/icons/kb_icon.png'
 import accountNumberIcon from '@/assets/second_view/account_number.png'
 import { getAccount, getMoimAccounts, syncMoimAccount } from '@/api/account'
@@ -441,8 +441,12 @@ async function retrySettlementTransfer(request) {
 }
 
 function settlementReceiverName(userId) {
-  const member = members.value.find((item) => item.userId === userId)
+  const member = members.value.find((item) => String(item.userId) === String(userId))
   return member?.nickname || userId || '참여자'
+}
+
+function settlementReceiverProfile(userId) {
+  return members.value.find((item) => String(item.userId) === String(userId))?.profileImageUrl || ''
 }
 
 function transferStatusLabel(status) {

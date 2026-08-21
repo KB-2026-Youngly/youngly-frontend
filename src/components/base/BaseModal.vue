@@ -16,8 +16,12 @@
           @pointermove="handleSheetPointerMove"
           @pointerup="handleSheetPointerUp"
           @pointercancel="handleSheetPointerCancel"
+          @touchstart="handleSheetTouchStart"
+          @touchmove="handleSheetTouchMove"
+          @touchend="handleSheetTouchEnd"
+          @touchcancel="handleSheetTouchCancel"
         >
-          <div class="base-modal__surface">
+          <div ref="surfaceElement" class="base-modal__surface">
             <header
               v-if="hasTitle || showCloseButton"
               class="base-modal__header"
@@ -108,9 +112,12 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'close'])
 const slots = useSlots()
 const modalElement = ref(null)
+const surfaceElement = ref(null)
 const titleId = `base-modal-title-${Math.random().toString(36).slice(2, 9)}`
 const sheetPullStartY = ref(null)
 const sheetPullDistance = ref(0)
+let touchPullStartY = null
+let touchPullActive = false
 
 let previousActiveElement = null
 let previousBodyStyles = null
@@ -141,6 +148,7 @@ const isInteractiveTarget = (target) =>
   target instanceof Element && Boolean(target.closest('button, a, input, select, textarea, [role="button"]'))
 
 const handleSheetPointerDown = (event) => {
+  if (event.pointerType === 'touch' && props.dragFromAnywhere) return
   const startedInHeader =
     event.target instanceof Element && Boolean(event.target.closest('.base-modal__header'))
   if (!startedInHeader && !props.dragFromAnywhere) return
@@ -158,6 +166,38 @@ const handleSheetPointerUp = (event) => {
 
 const handleSheetPointerCancel = () => {
   if (sheetPullStartY.value !== null) cancelSheetPull()
+}
+
+const handleSheetTouchStart = (event) => {
+  if (!props.dragFromAnywhere || !isMobileSheet() || event.touches.length !== 1) return
+  if (isInteractiveTarget(event.target) || Number(surfaceElement.value?.scrollTop || 0) > 0) return
+  touchPullStartY = event.touches[0].clientY
+  touchPullActive = false
+  sheetPullDistance.value = 0
+}
+
+const handleSheetTouchMove = (event) => {
+  if (touchPullStartY === null || event.touches.length !== 1) return
+  const distance = event.touches[0].clientY - touchPullStartY
+  if (distance <= 0) return
+  touchPullActive = true
+  event.preventDefault()
+  sheetPullDistance.value = Math.min(distance, 220)
+}
+
+const handleSheetTouchEnd = () => {
+  if (touchPullStartY === null) return
+  const shouldDismiss = touchPullActive && sheetPullDistance.value >= 96
+  touchPullStartY = null
+  touchPullActive = false
+  sheetPullDistance.value = 0
+  if (shouldDismiss) close('swipe')
+}
+
+const handleSheetTouchCancel = () => {
+  touchPullStartY = null
+  touchPullActive = false
+  sheetPullDistance.value = 0
 }
 
 const startSheetPull = (event) => {
