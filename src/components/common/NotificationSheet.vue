@@ -197,7 +197,7 @@ function formatNotificationDate(value) {
 .notification-copy { min-width: 0; display: grid; gap: 5px; }
 .notification-copy > span { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .notification-copy strong { color: #564561; font-size: 11px; }
-.notification-copy i { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #7655a8; }
+.notification-copy i { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #ff4b4b; }
 .notification-copy b { color: #302a35; font-size: 13px; font-weight: 700; line-height: 1.55; word-break: keep-all; }
 .notification-copy small { color: #99909f; font-size: 10px; }
 

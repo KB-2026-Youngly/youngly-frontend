@@ -36,6 +36,10 @@ export function kickGroupUser(groupId, groupUserId) {
   return apiClient.delete(`/groups/${groupId}/groupusers/${groupUserId}`)
 }
 
+export function pokeGroupUser(groupId, groupUserId) {
+  return apiClient.post(`/groups/${groupId}/groupusers/${groupUserId}/poke`)
+}
+
 export function getMemberDepositStatuses(groupId) {
   return apiClient.get(`/groups/${groupId}/deposit`)
 }

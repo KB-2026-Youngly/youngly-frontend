@@ -316,14 +316,31 @@ const cropImageFile = (file) => new Promise((resolve) => {
   image.src = sourceUrl
 })
 
+const renderImagePreview = async (file) => {
+  const previousPreview = imagePreview.value
+
+  imagePreview.value = ''
+  imageFile.value = file
+  await nextTick()
+
+  if (previousPreview?.startsWith('blob:')) {
+    URL.revokeObjectURL(previousPreview)
+  }
+
+  imagePreview.value = URL.createObjectURL(file)
+  await nextTick()
+
+  await new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(resolve))
+  })
+}
+
 const handleImageChange = async (event) => {
   const [file] = event.target.files || []
   if (!file) return
 
   const croppedFile = await cropImageFile(file)
-  if (imagePreview.value) URL.revokeObjectURL(imagePreview.value)
-  imageFile.value = croppedFile
-  imagePreview.value = URL.createObjectURL(croppedFile)
+  await renderImagePreview(croppedFile)
   event.target.value = ''
   submitError.value = ''
   submitComplete.value = false
@@ -430,11 +447,10 @@ const capturePhoto = () => {
   canvas.height = 1000
   const context = canvas.getContext('2d')
   context.drawImage(video, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height)
-  canvas.toBlob((blob) => {
+  canvas.toBlob(async (blob) => {
     if (!blob) return
-    if (imagePreview.value) URL.revokeObjectURL(imagePreview.value)
-    imageFile.value = new File([blob], `verification-${Date.now()}.jpg`, { type: 'image/jpeg' })
-    imagePreview.value = URL.createObjectURL(blob)
+    const capturedFile = new File([blob], `verification-${Date.now()}.jpg`, { type: 'image/jpeg' })
+    await renderImagePreview(capturedFile)
     submitError.value = ''
     submitComplete.value = false
     closeCamera()
