@@ -28,6 +28,10 @@ export function updateAccount(accountId, kbAccountId) {
   return apiClient.put(`/accounts/${accountId}`, { kbAccountId })
 }
 
+export function syncAccount(accountId) {
+  return apiClient.patch(`/accounts/${accountId}/sync`)
+}
+
 export function searchMoimAccounts(payload) {
   return apiClient.post('/group-accounts/search', payload)
 }

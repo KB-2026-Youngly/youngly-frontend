@@ -5,17 +5,23 @@
       <div v-if="!isGroupDetail" class="default-header-content">
         <div class="header-brand">
           <button
-            v-if="showDefaultBackButton"
+            v-if="showBackHeader"
             class="header-back-button"
             type="button"
-            :aria-label="defaultBackLabel"
-            @click="goBackFromDefaultHeader"
+            :aria-label="backButtonLabel"
+            @click="goBackToParent"
           >
             <span aria-hidden="true">&lt;</span>
           </button>
-          <h1 v-if="headerPageTitle" class="header-page-title">{{ headerPageTitle }}</h1>
+          <h1
+            v-if="headerPageTitle"
+            class="header-page-title"
+            :class="{ 'header-page-title--mypage': isMyPageSubpage }"
+          >
+            {{ headerPageTitle }}
+          </h1>
           <img
-            v-else-if="!isMyPageSubpage"
+            v-else-if="!showBackHeader"
             class="header-logo"
             :src="headerLogoUrl"
             alt="Youngly"
@@ -68,7 +74,10 @@
             <div class="group-badges">
               <span class="group-badge">{{ groupCategory }}</span>
               <span class="group-badge">{{ groupStatusLabel }}</span>
-              <span class="member-count">♟&nbsp; {{ groupMemberCount }} / {{ groupMemberLimit }}명</span>
+              <span class="member-count">
+                <UserRound :size="11" :stroke-width="2.5" aria-hidden="true" />
+                {{ groupMemberCount }} / {{ groupMemberLimit }}명
+              </span>
             </div>
             <div class="group-title-row">
               <button
@@ -101,6 +110,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { UserRound } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
 import bellIconUrl from '@/assets/icons/bell.svg'
@@ -137,10 +147,12 @@ const unreadNotificationCount = computed(
 
 // 현재 경로가 그룹 상세 페이지인지 판별 (Composition API 방식)
 const isGroupDetail = computed(() => route.name === 'GroupDetail')
-const isMoimAccountDetail = computed(() => route.name === 'MoimAccountDetail')
 const headerPageTitle = computed(
   () =>
     ({
+      MoimAccountDetail: '모임통장 상세',
+      PensionInsight: 'AI 인사이트',
+      PensionSurvey: '투자 성향 설문',
       Point: '내 포인트',
       AccountSettings: '입출금 계좌 설정',
       SettlementHistory: '정산 내역',
@@ -152,11 +164,18 @@ const isMyPageSubpage = computed(() =>
     route.name,
   ),
 )
-const showDefaultBackButton = computed(
-  () => isMoimAccountDetail.value || isMyPageSubpage.value,
+const showBackHeader = computed(
+  () =>
+    isMyPageSubpage.value ||
+    ['MoimAccountDetail', 'PensionInsight', 'PensionSurvey'].includes(route.name),
 )
-const defaultBackLabel = computed(() =>
-  isMoimAccountDetail.value ? '자산으로 돌아가기' : '마이페이지로 돌아가기',
+const backButtonLabel = computed(
+  () =>
+    ({
+      PensionSurvey: 'AI 인사이트로 돌아가기',
+      PensionInsight: '자산으로 돌아가기',
+      MoimAccountDetail: '자산으로 돌아가기',
+    })[route.name] || '마이페이지로 돌아가기',
 )
 // mock 권한: 실제 API 연결 전에는 owner=false 쿼리로 그룹장이 아닌 상태를 확인할 수 있습니다.
 const isGroupOwner = ref(route.query.owner !== 'false')
@@ -174,11 +193,10 @@ const goBackToAssets = () => {
   router.push({ path: '/asset', query: { tab: 'group' } })
 }
 
-const goBackFromDefaultHeader = () => {
-  if (isMoimAccountDetail.value) {
-    goBackToAssets()
-    return
-  }
+const goBackToParent = () => {
+  if (route.name === 'PensionSurvey') return router.push({ name: 'PensionInsight' })
+  if (route.name === 'PensionInsight') return router.push('/asset')
+  if (route.name === 'MoimAccountDetail') return goBackToAssets()
   router.push('/mypage')
 }
 
@@ -299,7 +317,7 @@ onBeforeUnmount(() => {
 .app-header {
   position: relative;
   z-index: 1000;
-  padding: 12px 24px;
+  padding: 12px 24px 6px;
   background-color: var(--app-background, #e6dcf6);
 }
 
@@ -346,19 +364,27 @@ onBeforeUnmount(() => {
   transform: translateX(-2px);
 }
 
+.header-page-title {
+  margin: 0;
+  color: #2d1f4f;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .header-logo {
   display: block;
   width: auto;
-  height: 68px;
+  height: 50px;
   margin-left: -5px;
   object-fit: contain;
 }
 
 .header-back-button + .header-logo {
-  margin-left: 0;
+  margin-left: -11px;
 }
 
-.header-page-title {
+.header-page-title--mypage {
   margin: 0;
   color: #342843;
   font-size: 24px;
@@ -604,7 +630,10 @@ onBeforeUnmount(() => {
 }
 
 .member-count {
+  display: inline-flex;
   flex: 0 0 auto;
+  align-items: center;
+  gap: 3px;
   color: #27272a;
   font-size: 10px;
   font-weight: 700;
@@ -690,7 +719,7 @@ onBeforeUnmount(() => {
     right: 0;
     left: 0;
     z-index: 1000;
-    padding: 8px 16px 9px;
+    padding: 8px 16px 4px;
     background: var(--app-background, #e6dcf6);
     border-bottom: 0;
     transform: translateZ(0);
@@ -698,15 +727,15 @@ onBeforeUnmount(() => {
   }
 
   .header-logo {
-    height: 60px;
+    height: 42px;
     margin-left: -4px;
   }
 
   .header-back-button + .header-logo {
-    margin-left: 0;
+    margin-left: -8px;
   }
 
-  .header-page-title {
+  .header-page-title--mypage {
     font-size: 21px;
   }
 
@@ -718,6 +747,10 @@ onBeforeUnmount(() => {
     width: 27px;
     height: 27px;
     flex-basis: 27px;
+  }
+
+  .header-page-title {
+    font-size: 17px;
   }
 
   .user-name {

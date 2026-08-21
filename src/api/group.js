@@ -47,3 +47,21 @@ export function getMyDepositStatus(groupId) {
 export function depositToGroup(groupId, payload) {
   return apiClient.post(`/groups/${groupId}/deposit`, payload)
 }
+
+export function getJoinRequests(groupId) {
+  return apiClient.get(
+    `/groups/${groupId}/join-requests`
+  )
+}
+
+export function approveJoinRequest(groupId, groupUserId) {
+  return apiClient.put(
+    `/groups/${groupId}/join-requests/${groupUserId}/approve`
+  )
+}
+
+export function rejectJoinRequest(groupId, groupUserId) {
+  return apiClient.put(
+    `/groups/${groupId}/join-requests/${groupUserId}/reject`
+  )
+}

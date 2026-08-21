@@ -15,7 +15,6 @@
         @touchend="endHeaderDrag"
         @touchcancel="cancelHeaderDrag"
       >
-        <span class="notification-sheet__handle" aria-hidden="true"></span>
         <span>알림</span>
       </div>
     </template>
@@ -184,14 +183,13 @@ function formatNotificationDate(value) {
 .notification-sheet__summary { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 0 3px; color: #756b7d; font-size: 12px; }
 .notification-sheet__content { min-height: 0; display: flex; flex: 1; flex-direction: column; overflow: hidden; }
 .notification-sheet__header { display: grid; width: 100%; gap: 8px; color: #222; font-size: 20px; font-weight: 800; text-align: center; touch-action: none; user-select: none; cursor: grab; }
-.notification-sheet__handle { display: none; width: 42px; height: 5px; margin: 0 auto; border-radius: 999px; background: #b5adbd; }
 .notification-sheet__summary strong { color: #684d96; font-size: 13px; }
 .notification-sheet__state { min-height: 220px; display: grid; align-content: center; justify-items: center; gap: 8px; padding: 28px 15px; color: #8c8294; text-align: center; }
 .notification-sheet__state strong { color: #453a4f; font-size: 15px; }
 .notification-sheet__state small { font-size: 11px; }
 .notification-sheet__state--error button { min-height: 34px; padding: 0 12px; border: 1px solid #c9bcda; border-radius: 9px; color: #674d93; background: #fff; font: inherit; font-size: 11px; font-weight: 800; }
 .notification-sheet__empty-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #8c73b4; font-size: 18px; }
-.notification-list { max-height: min(58vh, 520px); display: grid; gap: 9px; margin: 0; padding: 0 2px 8px; overflow-y: auto; list-style: none; overscroll-behavior: contain; }
+.notification-list { max-height: min(58vh, 520px); display: grid; grid-auto-rows: max-content; align-content: start; gap: 9px; margin: 0; padding: 0 2px 8px; overflow-y: auto; list-style: none; overscroll-behavior: contain; }
 .notification-list li { border: 1px solid #e1d8e9; border-radius: 15px; background: #fff; transition: opacity .18s, background-color .18s; }
 .notification-list li:not(.is-read) { border-color: #c9b9dd; background: #fbf8ff; }
 .notification-list li.is-read { opacity: .58; background: #f7f5f8; }
@@ -206,10 +204,9 @@ function formatNotificationDate(value) {
 @media (max-width: 767px) {
   :global(.base-modal__overlay:has(.notification-sheet)) { align-items: flex-end; padding: 0; z-index: 10000; }
   :global(.notification-sheet) { position: relative; width: 100%; height: 72dvh; max-width: none; max-height: 72dvh; margin: 0; overflow: hidden; overscroll-behavior: none; border-width: 3px 0 0; border-radius: 26px 26px 0 0; }
-  :global(.notification-sheet .base-modal__header) { padding: 14px 20px 10px; position: sticky; top: 0; z-index: 2; justify-content: center; background: #fff; }
+  :global(.notification-sheet .base-modal__header) { padding: 28px 20px 10px; position: sticky; top: 0; z-index: 2; justify-content: center; background: #fff; }
   :global(.notification-sheet .base-modal__title) { text-align: center; }
   :global(.notification-sheet .base-modal__body) { height: calc(72dvh - 58px); box-sizing: border-box; display: flex; flex-direction: column; padding: 10px 16px calc(18px + env(safe-area-inset-bottom)); overflow: hidden; }
-  .notification-sheet__handle { display: block; }
-  .notification-list { min-height: 0; max-height: none; flex: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
+  .notification-list { min-height: 0; max-height: none; flex: 1; grid-auto-rows: max-content; align-content: start; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
 }
 </style>

@@ -30,8 +30,7 @@
   type="button"
   @click="goToMoimAccount"
 >
-                <Landmark :size="15" :stroke-width="2.2" aria-hidden="true" />
-                <span>모임통장</span>
+                <span>모임 통장</span>
                 <ArrowRight :size="15" :stroke-width="2.4" aria-hidden="true" />
               </button>
             </div>
@@ -58,12 +57,12 @@
                 <strong>{{ currentRoundPhaseLabel }}</strong>
               </div>
               <button
-                class="expand-button account-button"
+                class="account-button"
                 type="button"
                 aria-label="라운드 랭킹 자세히 보기"
                 @click="openRankingSheet"
               >
-                <span>전체 랭킹 보기</span>
+                <span>전체 랭킹</span>
                 <ArrowRight :size="15" :stroke-width="2.4" aria-hidden="true" />
               </button>
             </div>
@@ -94,17 +93,109 @@
         </section>
       </div>
 
-      <div class="day-selector">
-  <button type="button" @click="changeFeedDate(-1)">&lt;</button>
+      <section
+  v-if="isOwner && (joinRequestsLoading || joinRequests.length)"
+  class="join-request-panel"
+>
+  <div class="join-request-panel__header">
+    <div>
+      <strong>참여 요청</strong>
 
-  <strong>
-    {{ selectedDate === new Date().toLocaleDateString('sv-SE')
-      ? '오늘'
-      : selectedDate }}
-  </strong>
+      <span v-if="joinRequests.length">
+        {{ joinRequests.length }}명
+      </span>
+    </div>
+  </div>
 
-  <button type="button" @click="changeFeedDate(1)">&gt;</button>
+  <p
+    v-if="joinRequestsLoading"
+    class="join-request-loading"
+  >
+    참여 요청을 불러오는 중...
+  </p>
+
+  <div
+    v-else
+    class="join-request-list"
+  >
+    <div
+  v-for="request in joinRequests"
+  :key="request.groupUserId"
+  class="join-request-card-shadow yl-stepped-card-shadow"
+>
+  <div class="join-request-item yl-card-frame pixel-step-card pixel-step-solid">
+    <div class="join-request-item__surface pixel-step-surface">
+      <div class="join-request-user">
+        <div class="join-request-avatar">
+          <img
+            v-if="request.profileImageUrl"
+            :src="request.profileImageUrl"
+            :alt="`${request.nickname} 프로필`"
+          />
+
+          <span v-else>
+            {{ request.nickname?.slice(0, 1) || '?' }}
+          </span>
+        </div>
+
+        <div class="join-request-user__info">
+          <strong>
+            {{ request.nickname || request.userId }}
+          </strong>
+          <span>그룹 참여를 요청했어요</span>
+        </div>
+      </div>
+
+      <div class="join-request-actions">
+        <button
+          type="button"
+          class="join-request-reject"
+          :disabled="
+            joinRequestProcessingId === request.groupUserId
+          "
+          @click="rejectGroupJoinRequest(request)"
+        >
+          거절
+        </button>
+
+        <button
+          type="button"
+          class="join-request-approve"
+          :disabled="
+            joinRequestProcessingId === request.groupUserId
+          "
+          @click="approveGroupJoinRequest(request)"
+        >
+          승인
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
+  </div>
+</section>
+
+      <div class="day-selector">
+        <button
+          type="button"
+          :disabled="!canMovePrevious"
+          @click="changeFeedDate(-1)"
+        >
+          &lt;
+        </button>
+
+        <strong>
+          {{ isTodaySelected ? '오늘' : selectedDate }}
+        </strong>
+
+        <button
+          type="button"
+          :disabled="!canMoveNext"
+          @click="changeFeedDate(1)"
+        >
+          &gt;
+        </button>
+      </div>
 
       <section class="feed-list" aria-label="참여자 인증 목록">
         <div
@@ -186,27 +277,29 @@
                     </button>
                 </div>
                 <div
-  v-if="member.reviewStatus === 'approved'"
-  class="post-engagement"
-  aria-label="게시글 반응"
->
+                  v-if="canAccessPost(member)"
+                  class="post-engagement"
+                  aria-label="게시글 반응"
+                >
                   <button class="engagement-item" type="button" :aria-label="`댓글 ${member.commentCount}개, 상세 보기`" @click.stop="openPostDetail(member)">
                     <span class="engagement-icon"><MessageCircle :size="23" :stroke-width="2.2" aria-hidden="true" /></span>
                     <b>{{ member.commentCount }}</b>
                   </button>
-                  <button class="engagement-item" :class="{ 'is-active': member.myReaction === 'like' }" type="button" :aria-pressed="member.myReaction === 'like'" :aria-label="`좋아요 ${member.likeCount}개`" @click.stop="toggleFeedReaction(member, 'like')">
+                  <button class="engagement-item engagement-item--like"
+                      :class="{ 'is-active': member.myReaction === 'like' }" type="button" :aria-pressed="member.myReaction === 'like'" :aria-label="`좋아요 ${member.likeCount}개`" @click.stop="toggleFeedReaction(member, 'like')">
                     <span class="engagement-icon"><ThumbsUp :size="23" :stroke-width="2.2" aria-hidden="true" /></span>
                     <b>{{ member.likeCount }}</b>
                   </button>
-                  <button class="engagement-item" :class="{ 'is-active': member.myReaction === 'dislike' }" type="button" :aria-pressed="member.myReaction === 'dislike'" :aria-label="`싫어요 ${member.dislikeCount}개`" @click.stop="toggleFeedReaction(member, 'dislike')">
+                  <button class="engagement-item engagement-item--dislike"
+                      :class="{ 'is-active': member.myReaction === 'dislike' }" type="button" :aria-pressed="member.myReaction === 'dislike'" :aria-label="`싫어요 ${member.dislikeCount}개`" @click.stop="toggleFeedReaction(member, 'dislike')">
                     <span class="engagement-icon"><ThumbsDown :size="23" :stroke-width="2.2" aria-hidden="true" /></span>
                     <b>{{ member.dislikeCount }}</b>
                   </button>
                 </div>
                   <div
-  v-if="member.reviewStatus === 'approved'"
-  class="latest-comment-row"
->
+                    v-if="canAccessPost(member)"
+                    class="latest-comment-row"
+                  >
                     <span
                       class="latest-comment-avatar"
                       :title="member.latestCommentAuthor || '김민준'"
@@ -223,20 +316,29 @@
                     {{ member.reviewStatus === 'approved' ? '승인 완료' : '반려 처리' }}
                   </span>
                 </div>
-                <button
+                <template v-else>
+                  <button
+                    v-if="isTodaySelected"
+                    type="button"
+                    class="pending-verification"
+                    @click="handlePendingCard(member)"
+                  >
+                    <strong>
+                      {{
+                        member.isMe
+                          ? '눌러서 인증하러 가기 📷 ›'
+                          : '눌러서 깨우기 ⏰ ›'
+                      }}
+                    </strong>
+                  </button>
 
-  v-else
-  type="button"
-  class="pending-verification"
-  @click="handlePendingCard(member)"
->
-  <strong>
-    {{ member.isMe
-      ? '눌러서 인증하러 가기 📷 ›'
-      : '눌러서 깨우기 ⏰ ›'
-    }}
-  </strong>
-</button>
+                  <div
+                    v-else
+                    class="pending-verification past-verification"
+                  >
+                    <strong>ZZZ...</strong>
+                  </div>
+                </template>
               </template>
               <p v-else class="sleep-message">ZZZ...</p>
               <span
@@ -264,7 +366,7 @@
               @click="handleInvite"
             >
               <span class="invite-card-surface pixel-step-surface">
-                <span class="plus pixel-step-circle" aria-hidden="true">＋</span>
+                <span class="plus" aria-hidden="true">＋</span>
                 <span>친구 초대하기</span>
               </span>
             </button>
@@ -274,25 +376,57 @@
     </div>
 
     <BaseModal
-      v-model="inviteModalOpen"
-      modal-class="youngly-modal group-invite-modal"
-      title="코드를 누르시면 복사가 됩니다!"
-      size="medium"
-      @close="copyComplete = false"
+  v-model="inviteModalOpen"
+  modal-class="youngly-modal group-invite-modal"
+  title="친구 초대"
+  size="medium"
+  @close="copyComplete = false"
+>
+  <div class="invite-modal-content">
+    <p class="invite-modal-description">
+      초대 코드를 눌러 복사하거나 링크로 공유해 주세요.
+    </p>
+
+    <div class="invite-code-card-shadow">
+      <button
+        class="invite-code-card"
+        type="button"
+        @click="copyInviteCode"
+      >
+        <span class="invite-code-card-surface">
+          <small>초대 코드</small>
+
+          <strong>
+            {{ inviteCode }}
+          </strong>
+
+          <span class="invite-code-copy">
+            {{ copyComplete ? '✓ 복사됨' : '눌러서 복사' }}
+          </span>
+        </span>
+      </button>
+    </div>
+
+    <button
+      class="invite-share-button"
+      type="button"
+      @click="shareInviteLink"
     >
-      <div class="invite-modal-content">
-        <span class="invite-code-label">초대 코드</span>
-        <button class="invite-code-button" type="button" @click="copyInviteCode">
-          {{ inviteCode }}
-        </button>
-        <button class="invite-share-button" type="button" @click="shareInviteLink">
-          ↗ 링크 공유
-        </button>
-        <p v-if="copyComplete" class="copy-complete-message" role="status" aria-live="polite">
-          {{ copyComplete }}
-        </p>
-      </div>
-    </BaseModal>
+      <span>↗</span>
+      링크 공유
+    </button>
+
+    <p
+      v-if="copyComplete"
+      class="copy-complete-message"
+      role="status"
+      aria-live="polite"
+    >
+      <span class="copy-complete-icon" aria-hidden="true">✓</span>
+      <span>{{ copyComplete }}</span>
+    </p>
+  </div>
+</BaseModal>
 
     <BaseModal
       v-if="isOwner && allMembersJoined"
@@ -457,12 +591,15 @@
           </ul>
         </section>
 
-        <label class="group-edit-field">
+        <div class="group-edit-field">
           <span>매주 몇 번</span>
-          <select v-model.number="groupEditForm.weeklyCount">
-            <option v-for="count in 7" :key="count" :value="count">주 {{ count }}회</option>
-          </select>
-        </label>
+
+          <BaseSelect
+            v-model="groupEditForm.weeklyCount"
+            :options="weeklyCountOptions"
+            placeholder="횟수 선택"
+          />
+        </div>
 
         <label class="group-edit-field">
           <span>챌린지 목표</span>
@@ -497,11 +634,11 @@
               >
             </span>
           </span>
-          <select v-model.number="groupEditForm.failurePassCount">
-            <option v-for="count in 9" :key="count - 1" :value="count - 1">
-              {{ count - 1 }}개
-            </option>
-          </select>
+          <BaseSelect
+            v-model="groupEditForm.failurePassCount"
+            :options="failurePassOptions"
+            placeholder="면제권 개수 선택"
+          />
         </label>
 
         <label class="group-edit-field">
@@ -614,7 +751,7 @@ import {
   Dumbbell,
   Flag,
   GraduationCap,
-  Landmark,
+  // Landmark,
   MessageCircle,
   Shapes,
   ThumbsDown,
@@ -622,11 +759,15 @@ import {
   X,
 } from 'lucide-vue-next'
 import BaseModal from '@/components/base/BaseModal.vue'
+import BaseSelect from '@/components/base/BaseSelect.vue'
 import {
   getGroupDetail,
   getGroupUsers,
   kickGroupUser,
   updateGroup,
+  getJoinRequests,
+  approveJoinRequest,
+  rejectJoinRequest,
 } from '@/api/group'
 
 import {
@@ -653,6 +794,10 @@ const members = reactive([])
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+
+const joinRequests = ref([])
+const joinRequestsLoading = ref(false)
+const joinRequestProcessingId = ref(null)
 
 const challengeStarted = computed(
   () => currentRound.value?.roundStatus === 'ONGOING'
@@ -711,15 +856,10 @@ const roundSettlements = ref([])
 const rankingLoading = ref(false)
 const rankingError = ref('')
 const currentRoundPosts = ref([])
+const currentRound = ref(null)
 const currentUserId = computed(() => userStore.user?.userId || '')
-const currentRound = computed(() => {
-  const rounds = [...rankingRounds.value]
-  const ongoingRound = [...rounds].reverse().find((round) => round.roundStatus === 'ONGOING')
-  const latestStartedRound = [...rounds].reverse().find(
-    (round) => round.startDate && Date.now() >= new Date(`${round.startDate}T00:00:00`).getTime(),
-  )
-  return ongoingRound || latestStartedRound || null
-})
+
+
 const currentRoundStarted = computed(() => {
   if (!currentRound.value?.startDate) return false
   return Date.now() >= new Date(`${currentRound.value.startDate}T00:00:00`).getTime()
@@ -835,6 +975,23 @@ const categoryValues = {
   습관: 'HABIT',
   기타: 'CUSTOM',
 }
+
+const weeklyCountOptions = Array.from(
+  { length: 7 },
+  (_, index) => ({
+    label: `주 ${index + 1}회`,
+    value: index + 1,
+  })
+)
+
+const failurePassOptions = Array.from(
+  { length: 9 },
+  (_, index) => ({
+    label: `${index}개`,
+    value: index,
+  })
+)
+
 const groupEditForm = reactive({
   title: '30일 매일 운동 챌린지',
   category: '운동',
@@ -982,7 +1139,7 @@ const applyGroupDetail = (detail) => {
 
   inviteCode.value = detail.inviteCode || ''
   isOwner.value = Boolean(detail.inviteCode)
-  startDateModalOpen.value = isOwner.value && allMembersJoined.value && !challengeStarted.value
+  startDateModalOpen.value = isOwner.value && allMembersJoined.value && groupInfo.status === 'RECRUITING'
   syncGroupHeader()
 }
 
@@ -1032,6 +1189,7 @@ const loadGroupMembers = async () => {
   localStorage.getItem('youngly_user') || '{}'
 )
 
+
 const loadedMembers = (response.data || []).map((member) => ({
   groupUserId: member.groupUserId,
   userId: member.userId,
@@ -1054,6 +1212,89 @@ const loadedMembers = (response.data || []).map((member) => ({
     groupInfo.memberCount = loadedMembers.length
   } catch (error) {
     console.error('그룹 참여자 조회 실패:', error)
+  }
+}
+
+const loadJoinRequests = async () => {
+  if (!isOwner.value) {
+    joinRequests.value = []
+    return
+  }
+
+  const groupId = String(route.params.id || '')
+  if (!groupId) return
+
+  joinRequestsLoading.value = true
+
+  try {
+    const response = await getJoinRequests(groupId)
+
+    joinRequests.value = Array.isArray(response.data)
+      ? response.data
+      : []
+  } catch (error) {
+    console.error('그룹 참여 요청 조회 실패:', error)
+    joinRequests.value = []
+  } finally {
+    joinRequestsLoading.value = false
+  }
+}
+
+const approveGroupJoinRequest = async (request) => {
+  if (!request?.groupUserId) return
+
+  const groupId = String(route.params.id || '')
+  if (!groupId) return
+
+  joinRequestProcessingId.value = request.groupUserId
+
+  try {
+    await approveJoinRequest(
+      groupId,
+      request.groupUserId
+    )
+
+    await Promise.all([
+      loadJoinRequests(),
+      loadGroupMembers(),
+      loadGroupInfo(),
+    ])
+  } catch (error) {
+    console.error('그룹 참여 승인 실패:', error)
+
+    window.alert(
+      error?.response?.data?.message ||
+      '참여 승인에 실패했습니다.'
+    )
+  } finally {
+    joinRequestProcessingId.value = null
+  }
+}
+
+const rejectGroupJoinRequest = async (request) => {
+  if (!request?.groupUserId) return
+
+  const groupId = String(route.params.id || '')
+  if (!groupId) return
+
+  joinRequestProcessingId.value = request.groupUserId
+
+  try {
+    await rejectJoinRequest(
+      groupId,
+      request.groupUserId
+    )
+
+    await loadJoinRequests()
+  } catch (error) {
+    console.error('그룹 참여 거절 실패:', error)
+
+    window.alert(
+      error?.response?.data?.message ||
+      '참여 거절에 실패했습니다.'
+    )
+  } finally {
+    joinRequestProcessingId.value = null
   }
 }
 
@@ -1161,41 +1402,67 @@ const handleInvite = () => {
 const loadCurrentRoundOverview = async () => {
   try {
     const { data } = await getGroupRounds(route.params.id)
+
     rankingRounds.value = (Array.isArray(data) ? data : []).sort(
-      (first, second) => Number(first.roundNo || 0) - Number(second.roundNo || 0),
+      (first, second) =>
+        Number(first.roundNo || 0) - Number(second.roundNo || 0)
     )
 
-    const ongoingIndex = rankingRounds.value.findIndex((round) => round.roundStatus === 'ONGOING')
-    const latestStartedIndex = rankingRounds.value.findLastIndex(
-      (round) => round.startDate && Date.now() >= new Date(`${round.startDate}T00:00:00`).getTime(),
+    const ongoingIndex = rankingRounds.value.findIndex(
+      (round) => round.roundStatus === 'ONGOING'
     )
-    const overviewIndex = ongoingIndex >= 0 ? ongoingIndex : latestStartedIndex
+
+    const latestStartedIndex = rankingRounds.value.findLastIndex(
+      (round) =>
+        round.startDate &&
+        Date.now() >= new Date(`${round.startDate}T00:00:00`).getTime()
+    )
+
+    const overviewIndex =
+      ongoingIndex >= 0 ? ongoingIndex : latestStartedIndex
+
     if (overviewIndex < 0) {
+      currentRound.value = null
       roundRankings.value = []
       currentRoundPosts.value = []
       return
     }
 
     selectedRoundIndex.value = overviewIndex
-    const round = rankingRounds.value[overviewIndex]
-    const [rankingResponse, postsResponse] = await Promise.all([
-      getRoundRanking(round.roundId),
-      getMyCertificationPosts({
-        from: round.startDate,
-        to: round.endDate,
-        groupId: String(route.params.id || ''),
-      }),
-    ])
 
-    roundRankings.value = Array.isArray(rankingResponse.data) ? rankingResponse.data : []
-    currentRoundPosts.value = (Array.isArray(postsResponse.data) ? postsResponse.data : []).filter(
-      (post) => Number(post.roundId) === Number(round.roundId),
-    )
+    const round = rankingRounds.value[overviewIndex]
+
+    currentRound.value = round
+
+    const [rankingResult, postsResult] =
+      await Promise.allSettled([
+        getRoundRanking(round.roundId),
+        getMyCertificationPosts({
+          from: round.startDate,
+          to: round.endDate,
+          groupId: String(route.params.id || ''),
+        }),
+      ])
+
+    roundRankings.value =
+      rankingResult.status === 'fulfilled' &&
+      Array.isArray(rankingResult.value.data)
+        ? rankingResult.value.data
+        : []
+
+    currentRoundPosts.value =
+      postsResult.status === 'fulfilled' &&
+      Array.isArray(postsResult.value.data)
+        ? postsResult.value.data.filter(
+            (post) =>
+              Number(post.roundId) === Number(round.roundId)
+          )
+        : []
   } catch (error) {
-    console.error('현재 라운드 현황 조회 실패:', error)
-    rankingRounds.value = []
-    roundRankings.value = []
-    currentRoundPosts.value = []
+  console.error('라운드 목록 조회 실패:', error)
+
+  roundRankings.value = []
+  currentRoundPosts.value = []
   }
 }
 
@@ -1290,6 +1557,9 @@ const setStartDate = async () => {
     })
 
     startDateConfigured.value = true
+    startDateModalOpen.value = false
+
+    await loadGroupInfo()
 
     // 생성된 라운드 다시 조회
     await loadCurrentRoundOverview()
@@ -1516,13 +1786,24 @@ const removeMember = async (member) => {
   }
 }
 
+const canAccessPost = (member) => {
+  if (!member?.postId) return false
+
+  return (
+    member.isMe ||
+    Boolean(member.myApproval) ||
+    member.reviewStatus === 'approved' ||
+    member.reviewStatus === 'rejected'
+  )
+}
+
 const handleFeedCardClick = (member) => {
   if (preventNextFeedClick) {
     preventNextFeedClick = false
     return
   }
 
-  if (member.reviewStatus !== 'approved') return
+  if (!canAccessPost(member)) return
 
   openPostDetail(member)
 }
@@ -1833,10 +2114,42 @@ const changeFeedDate = async (days) => {
   const date = new Date(`${selectedDate.value}T00:00:00`)
   date.setDate(date.getDate() + days)
 
-  selectedDate.value = date.toLocaleDateString('sv-SE')
+  const nextDate = date.toLocaleDateString('sv-SE')
+  const today = new Date().toLocaleDateString('sv-SE')
+
+  if (
+    currentRound.value?.startDate &&
+    nextDate < currentRound.value.startDate
+  ) {
+    return
+  }
+
+  if (nextDate > today) {
+    return
+  }
+
+  selectedDate.value = nextDate
 
   await loadVerificationFeed()
 }
+
+const isTodaySelected = computed(
+  () =>
+    selectedDate.value ===
+    new Date().toLocaleDateString('sv-SE')
+)
+
+const canMovePrevious = computed(() => {
+  if (!currentRound.value?.startDate) return false
+
+  return selectedDate.value > currentRound.value.startDate
+})
+
+const canMoveNext = computed(() => {
+  const today = new Date().toLocaleDateString('sv-SE')
+
+  return selectedDate.value < today
+})
 
 const cancelGroupEditSwipe = () => {
   const state = groupEditSwipeState
@@ -1863,6 +2176,10 @@ watch(
       await loadCurrentRoundOverview()
       await loadGroupMembers()
       await loadVerificationFeed()
+
+      if (isOwner.value) {
+    await loadJoinRequests()
+  }
     }
   },
 )
@@ -1911,9 +2228,13 @@ onMounted(async () => {
   }
 
   await loadGroupInfo()
-  await loadCurrentRoundOverview()
   await loadGroupMembers()
+  await loadCurrentRoundOverview()
   await loadVerificationFeed()
+
+  if (isOwner.value) {
+    await loadJoinRequests()
+  }
 
   countdownTimer = setInterval(() => {
   now.value = new Date()
@@ -2300,10 +2621,14 @@ button {
 }
 .me-label {
   padding: 2px 6px;
-  border-radius: 6px;
-  background: rgba(113, 86, 173, 0.1);
-  color: #7156ad;
+  border: 1px solid #bca7dc;
+  border-radius: 3px;
+  background: #eee8fa;
+  color: #60418f;
   font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
 }
 .sleep-message {
   position: absolute;
@@ -2467,8 +2792,10 @@ button {
   filter: none;
   text-shadow: none;
 }
-.engagement-item.is-active {
-  color: #c8afff;
+.engagement-item.is-active,
+.engagement-item.is-active .engagement-icon,
+.engagement-item.is-active b {
+  color: #b994f4;
 }
 .engagement-item:active {
   transform: scale(0.9);
@@ -2574,6 +2901,7 @@ button {
 }
 .invite-card {
   display: flex;
+  min-height: 340px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -2589,9 +2917,14 @@ button {
   display: grid;
   width: 38px;
   height: 38px;
+  box-sizing: border-box;
   place-items: center;
+  border: 1.5px solid #bca7dc;
   border-radius: 50%;
   background: rgba(113, 86, 173, 0.1);
+  clip-path: none;
+  box-shadow: none;
+  filter: none;
   color: #7156ad;
   font-size: 27px;
   font-weight: 300;
@@ -2610,85 +2943,165 @@ button {
   outline-offset: 3px;
 }
 
-/* 친구 초대 코드 모달 */
+/* 친구 초대 바텀시트 */
 :global(.group-invite-modal) {
   max-width: 500px;
-  border: 4px solid #222;
-  border-radius: 0;
   color: #222;
-  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
 }
 
 :global(.group-invite-modal .base-modal__header) {
-  padding: 26px 32px 14px;
+  padding: 22px 24px 8px;
+  background: #fff;
 }
 
 :global(.group-invite-modal .base-modal__title) {
   color: #222;
-  font-size: 23px;
+  font-size: 20px;
   font-weight: 800;
 }
 
-:global(.group-invite-modal .base-modal__close) {
-  color: #71717a;
-  font-size: 34px;
-}
-
 :global(.group-invite-modal .base-modal__body) {
-  padding: 14px 32px 30px;
+  padding: 10px 24px 28px;
 }
 
 .invite-modal-content {
   display: grid;
-  gap: 13px;
-}
-.invite-code-label {
-  color: #222;
-  font-size: 14px;
-  font-weight: 700;
+  gap: 14px;
 }
 
-.invite-code-button {
-  min-height: 76px;
-  border: 3px solid #222;
-  border-radius: 17px;
-  background: #f0ede8;
-  color: #222;
-  font-family: 'YounglyNeoPixel', monospace;
-  font-size: 23px;
-  letter-spacing: 2px;
-  cursor: pointer;
+.invite-modal-description {
+  margin: 0 0 2px;
+  color: #756c80;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
-.invite-code-button:hover {
-  background: #e9e4dd;
+/* 초대 코드 카드 그림자 */
+.invite-code-card-shadow {
+  width: 100%;
 }
-.invite-code-button:focus-visible {
-  outline: 3px solid #7156ad;
-  outline-offset: 3px;
-}
-.invite-share-button {
-  min-height: 42px;
-  border: 2px solid var(--yl-ink);
-  background: var(--yl-purple);
-  color: #fff;
-  box-shadow: 3px 3px 0 var(--yl-ink);
+
+/* 초대 코드 카드 */
+.invite-code-card {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1.5px solid #d6cbe2;
+  border-radius: 14px;
+  background: #f8f5fc;
+  color: inherit;
   font: inherit;
-  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.invite-code-card-surface {
+  display: grid;
+  min-height: 96px;
+  box-sizing: border-box;
+  place-items: center;
+  gap: 6px;
+  padding: 16px 18px;
+}
+
+.invite-code-card small {
+  color: #82778d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.invite-code-card strong {
+  color: #2f2838;
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+}
+
+.invite-code-copy {
+  color: #7156ad;
+  font-size: 11px;
   font-weight: 800;
+}
+
+.invite-code-card:active {
+  border-color: #8b6ab8;
+  background: #eee8fa;
+  transform: scale(0.99);
+}
+
+.invite-code-card:focus-visible {
+  border-color: #8b6ab8;
+  outline: 3px solid rgba(139, 106, 184, 0.16);
+  outline-offset: 1px;
+}
+
+/* 링크 공유 버튼 */
+.invite-share-button {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  border: 1.5px solid #7156ad;
+  border-radius: 12px;
+
+  background: #7156ad;
+  color: #fff;
+
+  box-shadow: none;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+
   cursor: pointer;
 }
 
+.invite-share-button span {
+  font-size: 15px;
+}
+
+.invite-share-button:active {
+  transform: scale(0.98);
+}
+
+/* 복사 완료 안내 */
 .copy-complete-message {
-  margin: 14px 0 0;
-  padding: 12px 14px;
-  border: 2px solid #69529f;
-  border-radius: 11px;
-  background: #e5e2fa;
-  color: #533b85;
-  font-size: 14px;
+  display: flex;
+  min-height: 44px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 9px 12px;
+
+  border: 1.5px solid #d2c4e7;
+  border-radius: 12px;
+
+  background: #f3eff9;
+  color: #60418f;
+
+  font-size: 11px;
   font-weight: 700;
+
   text-align: center;
+}
+
+.copy-complete-icon {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  place-items: center;
+  border-radius: 50%;
+  background: #7156ad;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
 }
 
 /* 모든 친구 입장 후 그룹장에게 보이는 시작일 설정 모달 */
@@ -3419,18 +3832,20 @@ button {
   }
 
   :global(.group-invite-modal .base-modal__header) {
-    padding: 22px 20px 10px;
-  }
-  :global(.group-invite-modal .base-modal__body) {
-    padding: 12px 20px 24px;
-  }
-  :global(.group-invite-modal .base-modal__title) {
-    font-size: 20px;
-  }
-  .invite-code-button {
-    min-height: 68px;
-    font-size: 21px;
-  }
+  padding: 20px 20px 8px;
+}
+
+:global(.group-invite-modal .base-modal__body) {
+  padding: 10px 20px calc(24px + env(safe-area-inset-bottom));
+}
+
+:global(.group-invite-modal .base-modal__title) {
+  font-size: 19px;
+}
+
+.invite-code-card-surface {
+  min-height: 90px;
+}
 
   :global(.group-start-date-modal .base-modal__header) {
     padding: 22px 20px 10px;
@@ -3693,8 +4108,7 @@ button {
 
 .rank-marker,
 .ranking-avatar,
-.member-editor-avatar,
-.plus {
+.member-editor-avatar {
   border-radius: 0;
   clip-path: polygon(
     33% 0,
@@ -3760,16 +4174,13 @@ button {
   height: 30px;
 }
 
-.me-label,
 .review-status,
-.copy-complete-message,
 .start-date-complete,
 .group-edit-complete {
   border-radius: 0;
   border: 2px solid var(--yl-ink);
 }
 
-.invite-code-button,
 .start-date-input,
 .group-edit-field input,
 .group-edit-field select,
@@ -3894,7 +4305,7 @@ button {
 
 .invite-card-surface {
   display: flex;
-  min-height: 192px;
+  min-height: 336px;
   align-items: center;
   justify-content: center;
   flex-direction: column;
@@ -4273,14 +4684,15 @@ button {
 /* 상단 모임통장 버튼과 동일한 형태로 유지합니다. */
 .round-overview-heading .expand-button.account-button {
   display: inline-flex;
-  width: auto;
+  width: 100px;
   height: auto;
   min-width: 0;
   min-height: 38px;
   align-items: center;
   justify-content: center;
   gap: 5px;
-  padding: 9px 11px;
+  padding: 9px 22px;
+  position: relative;
   border: 1.5px solid #7156ad;
   border-radius: 10px;
   background: #fff;
@@ -4297,10 +4709,200 @@ button {
   transform: scale(0.97);
 }
 
+.round-overview-heading .expand-button.account-button > span {
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  transform: translate(-5px, 1px);
+}
+
+.round-overview-heading .expand-button.account-button > svg {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+}
+
 @media (max-width: 767px) {
   .group-edit-category > div {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
   }
+}
+
+.past-verification {
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.75;
+}
+.join-request-panel {
+  margin-bottom: 16px;
+}
+
+.join-request-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.join-request-panel__header > div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.join-request-panel__header strong {
+  color: var(--yl-ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.join-request-panel__header span {
+  display: grid;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  place-items: center;
+
+  background: #eee8fa;
+  color: var(--yl-purple-dark);
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.join-request-card-shadow {
+  --yl-stepped-shadow-color: #c8b7e5;
+  --yl-stepped-shadow-offset: 5px;
+}
+
+.join-request-item {
+  --pixel-fill: var(--yl-paper);
+  --pixel-outline-color: #ac99d2;
+
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.join-request-item__surface {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  min-height: 68px;
+  padding: 12px 14px;
+}
+
+.join-request-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.join-request-avatar {
+  display: grid;
+  flex: 0 0 38px;
+
+  width: 38px;
+  height: 38px;
+
+  place-items: center;
+
+  overflow: hidden;
+
+  border: 2px solid #fff;
+  border-radius: 50%;
+
+  background: #d8c9f0;
+  color: #3e3450;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.join-request-avatar img {
+  width: 100%;
+  height: 100%;
+
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.join-request-user__info {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.join-request-user__info strong {
+  overflow: hidden;
+
+  color: var(--yl-ink);
+
+  font-size: 13px;
+  font-weight: 800;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.join-request-user__info span {
+  color: #80758c;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.join-request-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+}
+
+.join-request-actions button {
+  min-width: 52px;
+  min-height: 36px;
+
+  padding: 0 12px;
+
+  border: 2px solid var(--yl-purple);
+  border-radius: 10px;
+
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.join-request-reject {
+  background: #fff;
+  color: var(--yl-purple-dark);
+}
+
+.join-request-approve {
+  background: var(--yl-purple);
+  color: #fff;
+}
+
+.join-request-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.join-request-loading {
+  margin: 0;
+  padding: 12px 0;
+
+  color: #80758c;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  text-align: center;
 }
 </style>

@@ -1,43 +1,92 @@
 <template>
   <section class="cal" aria-label="인증 보관함">
-    <div ref="groupFilterRef" class="calendar-card-shadow calendar-filter-shadow yl-stepped-card-shadow"><section class="filter-frame yl-card-frame pixel-step-card pixel-step-solid" aria-label="그룹 필터"><div class="filters pixel-step-surface"><div class="filter-copy"><span>챌린지 선택</span></div><div class="group-dropdown"><button class="group-trigger" type="button" :aria-expanded="groupMenuOpen" aria-haspopup="listbox" @click="groupMenuOpen=!groupMenuOpen"><strong>{{groupName}}</strong><ChevronDown :size="18" aria-hidden="true" /></button></div></div></section><transition name="group-menu"><div v-if="groupMenuOpen" class="group-menu calendar-filter-menu" role="listbox" aria-label="인증 그룹 선택"><button v-for="g in groups" :key="g.groupId" type="button" role="option" :aria-selected="groupId===g.groupId" :class="{selected:groupId===g.groupId}" @click="selectGroup(g.groupId)"><span>{{g.groupName}}</span><Check v-if="groupId===g.groupId" :size="16" aria-hidden="true" /></button></div></transition></div>
+    <div ref="groupFilterRef" class="calendar-card-shadow calendar-filter-shadow yl-stepped-card-shadow"><section class="filter-frame yl-card-frame pixel-step-card pixel-step-solid" aria-label="그룹 필터"><div class="filters pixel-step-surface"><div class="filter-copy"><span>챌린지 선택</span></div><div class="group-dropdown"><button ref="groupTriggerRef" class="group-trigger" type="button" :aria-expanded="groupMenuOpen" aria-haspopup="listbox" @click="toggleGroupMenu"><strong>{{groupName}}</strong><ChevronDown :size="18" aria-hidden="true" /></button></div></div></section></div>
+    <Teleport to="body"><transition name="group-menu"><div v-if="groupMenuOpen" ref="groupMenuRef" class="group-menu calendar-filter-menu calendar-filter-menu--portal" :style="groupMenuStyle" role="listbox" aria-label="인증 그룹 선택"><button v-for="g in groups" :key="g.groupId" type="button" role="option" :aria-selected="groupId===g.groupId" :class="{selected:groupId===g.groupId}" @click="selectGroup(g.groupId)"><span>{{g.groupName}}</span><Check v-if="groupId===g.groupId" :size="16" aria-hidden="true" /></button></div></transition></Teleport>
     <div class="calendar-card-shadow yl-stepped-card-shadow"><section class="board yl-card-frame pixel-step-card pixel-step-solid"><div class="surface pixel-step-surface"><div class="nav"><button aria-label="이전 달" @click="move(-1)"><ChevronLeft :size="22" stroke-width="2.5" aria-hidden="true" /></button><h2>{{label}}</h2><button aria-label="다음 달" @click="move(1)"><ChevronRight :size="22" stroke-width="2.5" aria-hidden="true" /></button></div><div class="week"><span v-for="w in week" :key="w">{{w}}</span></div><div class="grid"><i v-for="n in offset" :key="`b${n}`"></i><button v-for="d in lastDay" :key="d" class="day" :class="{has:posts(d).length,selected:key(d)===selected,today:isToday(d)}" :aria-label="aria(d)" @click="open(d)"><span v-if="posts(d).length" class="photo"><img :src="posts(d)[0].photoUrl" :alt="`${d}일 인증 사진`"><em v-if="posts(d).length>1">+{{posts(d).length-1}}</em></span><strong>{{d}}</strong><i v-if="posts(d).length"></i></button></div><p v-if="!monthPosts.length" class="empty">{{groupId==='all'?'이번 달에는 아직 인증 기록이 없어요.':`${groupName}에서 이번 달에 올린 인증이 없어요.`}}</p><p v-else class="hint">사진이 있는 날짜를 선택하면 내 인증 기록을 확인할 수 있어요.</p></div></section></div>
-    <BaseModal v-model="modal" modal-class="calendar-modal" size="large" :title="dateLabel" @close="selected=''"><section v-if="selected" class="feeds daily-feed"><header class="sheet-summary"><p>인증 기록 <strong>{{daily.length}}건</strong></p><div class="sheet-status-summary"><span class="approved">승인 {{dailySummary.APPROVED}}건</span><span class="rejected">반려 {{dailySummary.REJECTED}}건</span><span class="pending">심사중 {{dailySummary.PENDING}}건</span></div></header><article v-for="p in daily" :key="p.postId" :class="p.postStatus" :aria-label="`${p.groupName} ${status(p.postStatus)} 인증 기록`"><div class="image"><img :src="p.photoUrl" :alt="`${p.groupName} 인증 사진`"><div class="feed-photo-copy"><strong>{{p.content}}</strong></div></div><div class="feed-meta"><strong class="challenge-name">{{p.groupName}}</strong><div class="reaction-counts" :aria-label="`좋아요 ${p.likeCount ?? 0}개, 싫어요 ${p.dislikeCount ?? 0}개`"><span><ThumbsUp :size="15" :stroke-width="2.2" aria-hidden="true" /><b>{{p.likeCount ?? 0}}</b></span><span><ThumbsDown :size="15" :stroke-width="2.2" aria-hidden="true" /><b>{{p.dislikeCount ?? 0}}</b></span></div><aside v-if="p.postStatus==='REJECTED'&&p.rejectReason"><strong>반려 사유</strong>{{p.rejectReason}}</aside></div></article></section></BaseModal>
+    <BaseModal v-model="modal" modal-class="calendar-modal" size="large" :title="dateLabel" @close="selected=''"><section v-if="selected" class="feeds daily-feed" data-sheet-scroll-container><header class="sheet-summary"><p>인증 기록 <strong>{{daily.length}}건</strong></p><div class="sheet-status-summary"><span class="approved">승인 {{dailySummary.APPROVED}}건</span><span class="rejected">반려 {{dailySummary.REJECTED}}건</span><span class="pending">심사중 {{dailySummary.PENDING}}건</span></div></header><article v-for="p in daily" :key="p.postId" :class="p.postStatus" :aria-label="`${p.groupName} ${status(p.postStatus)} 인증 기록`"><div class="image"><img :src="p.photoUrl" :alt="`${p.groupName} 인증 사진`"><div class="feed-photo-copy"><strong>{{p.content}}</strong></div></div><div class="feed-meta"><strong class="challenge-name">{{p.groupName}}</strong><div class="reaction-counts" :aria-label="`좋아요 ${p.likeCount ?? 0}개, 싫어요 ${p.dislikeCount ?? 0}개`"><span><ThumbsUp :size="15" :stroke-width="2.2" aria-hidden="true" /><b>{{p.likeCount ?? 0}}</b></span><span><ThumbsDown :size="15" :stroke-width="2.2" aria-hidden="true" /><b>{{p.dislikeCount ?? 0}}</b></span></div><aside v-if="p.postStatus==='REJECTED'&&p.rejectReason"><strong>반려 사유</strong>{{p.rejectReason}}</aside></div></article></section></BaseModal>
   </section>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Check, ChevronDown, ChevronLeft, ChevronRight, ThumbsDown, ThumbsUp } from 'lucide-vue-next'
 import BaseModal from '@/components/base/BaseModal.vue'
 import { getMyCertificationPosts } from '@/api/post'
 import { getGroups } from '@/api/group'
 
 const calendarGroups=ref([])
+const groupTriggerRef=ref(null)
+const groupMenuRef=ref(null)
+const groupMenuStyle=ref({})
 const today=new Date()
 const week=['일','월','화','수','목','금','토'],groupId=ref('all'),current=ref(new Date(today.getFullYear(),today.getMonth(),1)),selected=ref(''),modal=ref(false),groupMenuOpen=ref(false),groupFilterRef=ref(null)
 const groups=computed(()=>[{groupId:'all',groupName:'전체'},...calendarGroups.value]),groupName=computed(()=>groups.value.find(g=>g.groupId===groupId.value)?.groupName??'전체')
-const apiPosts=ref([]),monthPosts=computed(()=>apiPosts.value.filter(p=>groupId.value==='all'||p.groupId===groupId.value)),label=computed(()=>`${current.value.getFullYear()}년 ${current.value.getMonth()+1}월`),offset=computed(()=>new Date(current.value.getFullYear(),current.value.getMonth(),1).getDay()),lastDay=computed(()=>new Date(current.value.getFullYear(),current.value.getMonth()+1,0).getDate()),daily=computed(()=>monthPosts.value.filter(p=>p.postedAt.slice(0,10)===selected.value).sort((a,b)=>a.postedAt.localeCompare(b.postedAt))),dateLabel=computed(()=>selected.value?`${Number(selected.value.slice(5,7))}월 ${Number(selected.value.slice(8))}일`:'')
+const apiPosts=ref([]), monthPosts = computed(() =>
+  apiPosts.value.filter(
+    (post) =>
+      groupId.value === 'all' ||
+      String(post.groupId) ===
+        String(groupId.value)
+  )
+),label=computed(()=>`${current.value.getFullYear()}년 ${current.value.getMonth()+1}월`),offset=computed(()=>new Date(current.value.getFullYear(),current.value.getMonth(),1).getDay()),lastDay=computed(()=>new Date(current.value.getFullYear(),current.value.getMonth()+1,0).getDate()),daily=computed(()=>monthPosts.value.filter(p=>p.postedAt.slice(0,10)===selected.value).sort((a,b)=>a.postedAt.localeCompare(b.postedAt))),dateLabel=computed(()=>selected.value?`${Number(selected.value.slice(5,7))}월 ${Number(selected.value.slice(8))}일`:'')
 const dailySummary=computed(()=>daily.value.reduce((summary,post)=>{summary[post.postStatus]=(summary[post.postStatus]??0)+1;return summary},{APPROVED:0,REJECTED:0,PENDING:0}))
 const key=d=>`${current.value.getFullYear()}-${String(current.value.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,posts=d=>monthPosts.value.filter(p=>p.postedAt.slice(0,10)===key(d)),isToday=d=>{const n=new Date();return n.getFullYear()===current.value.getFullYear()&&n.getMonth()===current.value.getMonth()&&n.getDate()===d},aria=d=>`${label.value} ${d}일${posts(d).length?`, 내 인증 ${posts(d).length}건`:', 인증 없음'}`,move=n=>{current.value=new Date(current.value.getFullYear(),current.value.getMonth()+n,1);selected.value=''},open=d=>{if(!posts(d).length)return;selected.value=key(d);modal.value=true},selectGroup=id=>{groupId.value=id;groupMenuOpen.value=false},status=s=>({APPROVED:'승인됨',REJECTED:'반려됨',PENDING:'심사중'})[s]
 
 const dateParam=(date)=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
+const syncGroupMenuPosition=()=>{const rect=groupTriggerRef.value?.getBoundingClientRect();if(!rect)return;groupMenuStyle.value={position:'fixed',top:`${rect.bottom+7}px`,left:`${rect.left}px`,width:`${rect.width}px`}}
+const toggleGroupMenu=async()=>{groupMenuOpen.value=!groupMenuOpen.value;if(groupMenuOpen.value){await nextTick();syncGroupMenuPosition()}}
+const updateGroupMenuPosition=()=>{if(groupMenuOpen.value)syncGroupMenuPosition()}
 const loadMonthPosts=async()=>{
   const from=new Date(current.value.getFullYear(),current.value.getMonth(),1)
   const to=new Date(current.value.getFullYear(),current.value.getMonth()+1,0)
-  const [{ data: posts },{ data: groups }]=await Promise.all([
-    getMyCertificationPosts({from:dateParam(from),to:dateParam(to)}),
-    getGroups(),
-  ])
-  apiPosts.value=Array.isArray(posts)?posts:[]
-  const fetchedGroups=Array.isArray(groups)?groups.filter(group=>group.groupId&&group.groupName).map(group=>({groupId:group.groupId,groupName:group.groupName})):[]
-  calendarGroups.value=fetchedGroups
-  if(groupId.value!=='all'&&!calendarGroups.value.some(group=>group.groupId===groupId.value))groupId.value='all'
+  try {
+    const [{ data: posts }, { data: fetchedGroups }] = await Promise.all([
+      getMyCertificationPosts({ from: dateParam(from), to: dateParam(to) }),
+      getGroups(),
+    ])
+
+    apiPosts.value = Array.isArray(posts)
+      ? posts.map((post) => ({
+          ...post,
+          myReaction: post.myReaction?.toUpperCase() || null,
+        }))
+      : []
+
+    calendarGroups.value = Array.isArray(fetchedGroups)
+      ? fetchedGroups
+          .filter((group) => group.groupId && group.groupName)
+          .map((group) => ({
+            groupId: String(group.groupId),
+            groupName: group.groupName,
+          }))
+      : []
+
+    if (groupId.value !== 'all' && !calendarGroups.value.some(
+      (group) => String(group.groupId) === String(groupId.value),
+    )) groupId.value = 'all'
+  } catch (error) {
+    console.error('캘린더 인증 기록 조회 실패:', error)
+    apiPosts.value = []
+    calendarGroups.value = []
+    groupId.value = 'all'
+  }
 }
+
 watch(current,loadMonthPosts)
-const closeGroupMenu=(event)=>{if(!groupFilterRef.value?.contains(event.target))groupMenuOpen.value=false}
-onMounted(()=>{loadMonthPosts();document.addEventListener('click',closeGroupMenu)})
-onBeforeUnmount(()=>document.removeEventListener('click',closeGroupMenu))
+const closeGroupMenu=(event)=>{if(!groupFilterRef.value?.contains(event.target)&&!groupMenuRef.value?.contains(event.target))groupMenuOpen.value=false}
+let calendarSheetElement=null
+let calendarSheetSwipe=null
+let calendarSheetCloseTimer=null
+const resetCalendarSheetSwipe=(state)=>{state?.sheet?.style.removeProperty('transform');state?.sheet?.style.removeProperty('transition');state?.sheet?.style.removeProperty('will-change');state?.overlay?.style.removeProperty('background-color');state?.overlay?.style.removeProperty('transition')}
+const startCalendarSheetSwipe=(event)=>{if(!event.touches||event.touches.length!==1)return;const target=event.target;if(target instanceof Element&&target.closest('button,a,input,select,textarea'))return;const scroll=target instanceof Element?target.closest('[data-sheet-scroll-container]'):null;if(scroll?.scrollTop>0)return;const touch=event.touches[0];const now=performance.now();calendarSheetSwipe={sheet:calendarSheetElement,overlay:calendarSheetElement?.closest('.base-modal__overlay'),startY:touch.clientY,lastY:touch.clientY,lastTime:now,velocity:0,distance:0};calendarSheetElement.style.transition='none';calendarSheetElement.style.willChange='transform'}
+const moveCalendarSheetSwipe=(event)=>{const state=calendarSheetSwipe;if(!state||event.touches.length!==1)return;const touch=event.touches[0];const delta=touch.clientY-state.startY;if(delta<=0)return;event.preventDefault();const now=performance.now();state.velocity=(touch.clientY-state.lastY)/Math.max(1,now-state.lastTime);state.lastY=touch.clientY;state.lastTime=now;state.distance=Math.min(delta,Math.max(220,state.sheet.offsetHeight));state.sheet.style.transform=`translate3d(0,${state.distance}px,0)`;state.overlay?.style.setProperty('background-color',`rgba(24,20,36,${.5*(1-Math.min(state.distance/Math.max(state.sheet.offsetHeight*.72,1),1))})`)}
+const endCalendarSheetSwipe=()=>{const state=calendarSheetSwipe;if(!state)return;calendarSheetSwipe=null;const shouldClose=state.distance>=Math.min(140,state.sheet.offsetHeight*.24)||(state.distance>=45&&state.velocity>.4);state.sheet.style.transition='transform 380ms cubic-bezier(.22,1,.36,1)';state.overlay?.style.setProperty('transition','background-color 380ms ease');if(shouldClose){state.sheet.style.transform=`translate3d(0,${state.sheet.offsetHeight+32}px,0)`;state.overlay?.style.setProperty('background-color','rgba(24,20,36,0)');calendarSheetCloseTimer=window.setTimeout(()=>{modal.value=false;selected.value='';resetCalendarSheetSwipe(state)},370);return}state.sheet.style.transform='translate3d(0,0,0)';state.overlay?.style.setProperty('background-color','rgba(24,20,36,.5)');window.setTimeout(()=>resetCalendarSheetSwipe(state),390)}
+const cancelCalendarSheetSwipe=()=>{const state=calendarSheetSwipe;if(!state)return;calendarSheetSwipe=null;state.sheet.style.transition='transform 340ms cubic-bezier(.22,1,.36,1)';state.sheet.style.transform='translate3d(0,0,0)';window.setTimeout(()=>resetCalendarSheetSwipe(state),350)}
+const unbindCalendarSheetSwipe=()=>{if(!calendarSheetElement)return;calendarSheetElement.removeEventListener('touchstart',startCalendarSheetSwipe);calendarSheetElement.removeEventListener('touchmove',moveCalendarSheetSwipe);calendarSheetElement.removeEventListener('touchend',endCalendarSheetSwipe);calendarSheetElement.removeEventListener('touchcancel',cancelCalendarSheetSwipe);calendarSheetElement=null}
+const bindCalendarSheetSwipe=async()=>{await nextTick();unbindCalendarSheetSwipe();if(!modal.value||!window.matchMedia('(max-width:767px)').matches)return;calendarSheetElement=document.querySelector('.calendar-modal');if(!calendarSheetElement)return;calendarSheetElement.addEventListener('touchstart',startCalendarSheetSwipe,{passive:true});calendarSheetElement.addEventListener('touchmove',moveCalendarSheetSwipe,{passive:false});calendarSheetElement.addEventListener('touchend',endCalendarSheetSwipe,{passive:true});calendarSheetElement.addEventListener('touchcancel',cancelCalendarSheetSwipe,{passive:true})}
+watch(modal,bindCalendarSheetSwipe)
+onMounted(()=>{loadMonthPosts();document.addEventListener('click',closeGroupMenu);window.addEventListener('resize',updateGroupMenuPosition);window.addEventListener('scroll',updateGroupMenuPosition,true)})
+onBeforeUnmount(()=>{document.removeEventListener('click',closeGroupMenu);window.removeEventListener('resize',updateGroupMenuPosition);window.removeEventListener('scroll',updateGroupMenuPosition,true);unbindCalendarSheetSwipe();clearTimeout(calendarSheetCloseTimer)})
 </script>
 
 <style scoped>
@@ -555,4 +604,13 @@ onBeforeUnmount(()=>document.removeEventListener('click',closeGroupMenu))
   .filter-frame .filters { padding: 13px 17px; }
   .filter-frame .group-dropdown { max-width: none; }
 }
+/* Final mobile sheet and feed alignment overrides */
+.calendar-filter-shadow,.filter-frame,.filter-frame .filters,.group-dropdown{overflow:visible!important}.calendar-filter-shadow{z-index:50}.group-dropdown{position:relative;z-index:60}.group-dropdown .calendar-filter-menu{top:calc(100% + 7px);right:0;z-index:70;width:100%;min-width:0}.feed-photo-copy{inset:0;align-items:center;justify-items:center;padding:18px;text-align:center}.feed-photo-copy strong{white-space:normal}.image{height:220px}.feed-meta{margin-top:14px;padding:18px 18px 20px}.daily-feed{padding:12px 8px 28px}
+@media(max-width:767px){.cal{width:100%;height:auto;min-height:calc(100dvh - 139px);margin:0;padding:8px 16px 16px;overflow:visible}.image{height:205px}.feed-photo-copy{padding:16px}.feed-meta{margin-top:14px;padding:18px 18px 22px}.daily-feed{padding:14px 10px 30px}:global(.base-modal-fade-enter-active .calendar-modal),:global(.base-modal-fade-leave-active .calendar-modal){transition:transform 380ms cubic-bezier(.22,1,.36,1)}}
+:global(.calendar-filter-menu--portal){position:fixed!important;z-index:2147483647!important;isolation:isolate;box-sizing:border-box;max-height:min(220px,calc(100dvh - 16px));padding:6px;overflow-y:auto;overflow-x:visible;border:1px solid #e1d9eb;border-radius:12px;background:#fff;box-shadow:0 12px 30px rgba(55,42,74,.2);color:#62576c}
+:global(.calendar-filter-menu--portal button){display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:40px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:#62576c;font:inherit;font-size:13px;font-weight:700;line-height:1.25;text-align:left;cursor:pointer}
+:global(.calendar-filter-menu--portal button:hover),:global(.calendar-filter-menu--portal button.selected){background:#f3eff8;color:#604795}
+:global(.calendar-filter-menu--portal button.selected){font-weight:900}
+:global(.group-menu-enter-active),:global(.group-menu-leave-active){transition:opacity .16s ease,transform .16s ease}
+:global(.group-menu-enter-from),:global(.group-menu-leave-to){opacity:0;transform:translateY(-4px)}
 </style>

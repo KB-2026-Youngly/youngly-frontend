@@ -7,6 +7,7 @@
       'feed-write-layout': isFeedWriteRoute,
       'group-detail-layout': isGroupDetailRoute,
       'mypage-layout': isMyPageRoute,
+      'calendar-layout': isCalendarRoute,
     }"
   >
     <!-- 사이드바 (데스크톱 전용 왼쪽 세로 영역 & 모바일 하단바) -->
@@ -20,6 +21,7 @@
         'feed-write-main-wrapper': isFeedWriteRoute,
         'group-detail-main-wrapper': isGroupDetailRoute,
         'mypage-main-wrapper': isMyPageRoute,
+        'calendar-main-wrapper': isCalendarRoute,
       }"
     >
       <!-- 헤더 (사이드바 우측 상단) -->
@@ -34,6 +36,7 @@
           'feed-write-content-area': isFeedWriteRoute,
           'group-detail-content-area': isGroupDetailRoute,
           'mypage-content-area': isMyPageRoute,
+          'calendar-content-area': isCalendarRoute,
         }"
       >
         <router-view />
@@ -70,6 +73,9 @@ export default {
     },
     isMyPageRoute() {
       return Boolean(this.$route.meta.mypageSurface)
+    },
+    isCalendarRoute() {
+      return this.$route.name === 'Calendar'
     },
   },
   mounted() {
@@ -128,6 +134,12 @@ export default {
   background: #e6dcf6;
 }
 
+.calendar-layout,
+.calendar-main-wrapper,
+.content-area.calendar-content-area {
+  background: #e6dcf6;
+}
+
 @media (max-width: 767px) {
   .layout-container {
     flex-direction: column;
@@ -136,7 +148,7 @@ export default {
   }
 
   .main-content-wrapper {
-    padding-top: 68px;
+    padding-top: 63px;
     padding-bottom: 76px;
   }
 
@@ -144,6 +156,14 @@ export default {
     padding: 0;
     width: 100%;
     min-width: 0;
+    background: #e6dcf6;
+    overflow-x: hidden;
+  }
+
+  .content-area.calendar-content-area {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
     background: #e6dcf6;
     overflow-x: hidden;
   }

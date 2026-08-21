@@ -105,7 +105,14 @@
             </li>
           </ul>
           <div class="deposit-actions">
-            <button class="secondary-action" type="button" disabled>그룹으로 이동</button>
+            <button
+              class="secondary-action"
+              type="button"
+              :disabled="!group?.groupId"
+              @click="goToLinkedGroup"
+            >
+              그룹으로 이동
+            </button>
             <button class="primary-action" type="button" @click="openDepositModal">예치금 채우기</button>
           </div>
         </template>
@@ -241,7 +248,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import BaseModal from '@/components/base/BaseModal.vue'
 import TransactionHistory from '@/components/asset/TransactionHistory.vue'
 import kbIcon from '@/assets/icons/kb_icon.png'
@@ -255,6 +262,7 @@ import {
 } from '@/api/round'
 
 const route = useRoute()
+const router = useRouter()
 const account = ref(null)
 const loading = ref(true)
 const error = ref('')
@@ -303,6 +311,14 @@ const successfulSettlementCount = computed(
 )
 
 onMounted(loadDetail)
+
+function goToLinkedGroup() {
+  if (!group.value?.groupId) {
+    showToast('연결된 그룹 정보를 찾을 수 없습니다.')
+    return
+  }
+  router.push({ name: 'GroupDetail', params: { id: group.value.groupId } })
+}
 
 async function loadDetail() {
   loading.value = true
