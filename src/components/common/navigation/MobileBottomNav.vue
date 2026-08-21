@@ -64,6 +64,9 @@ export default {
     activeTab() {
       if (this.$route.path.startsWith('/groups')) return '/home'
       if (this.$route.path.startsWith('/asset')) return '/asset'
+      if (this.$route.matched.some((record) => record.meta.mypageSurface)) {
+        return '/mypage'
+      }
       return this.$route.path
     },
   },

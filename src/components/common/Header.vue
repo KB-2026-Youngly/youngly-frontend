@@ -373,7 +373,7 @@ onBeforeUnmount(() => {
 }
 
 .header-logo {
-  display: block;
+  display: none;
   width: auto;
   height: 50px;
   margin-left: -5px;
@@ -727,6 +727,7 @@ onBeforeUnmount(() => {
   }
 
   .header-logo {
+    display: block;
     height: 42px;
     margin-left: -4px;
   }

@@ -1,7 +1,7 @@
 <template>
   <nav class="desktop-sidebar" :class="'sidebar-theme-' + activeSidebarTheme">
     <div class="sidebar-logo">
-      <div class="pixel-logo">로고 칸</div>
+      <img class="sidebar-logo__image" :src="headerLogoUrl" alt="Youngly" />
     </div>
 
     <ul class="nav-links">
@@ -47,6 +47,7 @@
 </template>
 
 <script>
+import headerLogoUrl from '@/assets/icons/yl_header_logo.png'
 import PixelNavIcon from './PixelNavIcon.vue'
 
 export default {
@@ -65,7 +66,7 @@ export default {
     },
   },
   data() {
-    return {}
+    return { headerLogoUrl }
   },
   computed: {
     activeTab() {
@@ -124,43 +125,20 @@ export default {
 }
 
 .sidebar-logo {
-  margin-bottom: 28px;
   display: flex;
+  height: 68px;
+  margin-bottom: 28px;
+  align-items: center;
   justify-content: center;
 }
 
-/* 딥 라벤더 픽셀 로고 */
-.pixel-logo {
-  font-family: monospace, sans-serif;
-  font-weight: 900;
-  font-size: 18px;
-  padding: 10px 18px;
-  text-align: center;
-  letter-spacing: -0.5px;
-  background-color: #7c5cbf;
-  color: #ffffff;
-  clip-path: polygon(
-    7px 0,
-    calc(100% - 7px) 0,
-    calc(100% - 7px) 3px,
-    calc(100% - 4px) 3px,
-    calc(100% - 4px) 7px,
-    100% 7px,
-    100% calc(100% - 7px),
-    calc(100% - 4px) calc(100% - 7px),
-    calc(100% - 4px) calc(100% - 3px),
-    calc(100% - 7px) calc(100% - 3px),
-    calc(100% - 7px) 100%,
-    7px 100%,
-    7px calc(100% - 3px),
-    4px calc(100% - 3px),
-    4px calc(100% - 7px),
-    0 calc(100% - 7px),
-    0 7px,
-    4px 7px,
-    4px 3px,
-    7px 3px
-  );
+.sidebar-logo__image {
+  display: block;
+  width: auto;
+  max-width: 88%;
+  height: auto;
+  max-height: 82%;
+  object-fit: contain;
 }
 
 .nav-links {

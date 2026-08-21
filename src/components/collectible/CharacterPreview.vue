@@ -3,8 +3,16 @@
     class="character-preview"
     :class="[`character-preview--${size}`, { 'character-preview--cover': usesCoverImage }]"
   >
+    <div
+      v-if="!character"
+      class="character-preview__empty-avatar"
+      role="img"
+      aria-label="기본 캐릭터 이미지"
+    >
+      <img :src="defaultCharacterImage" alt="" />
+    </div>
     <img
-      v-if="resolvedImageUrl && !imageFailed"
+      v-else-if="resolvedImageUrl && !imageFailed"
       :src="resolvedImageUrl"
       :alt="`${displayName || '캐릭터'} 이미지`"
       @error="imageFailed = true"
@@ -19,6 +27,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { ImageOff } from 'lucide-vue-next'
+import defaultCharacterImage from '@/assets/icons/loginIcon/starfriend.png'
 import {
   resolveCharacterDisplayName,
   resolveCharacterImage,
@@ -71,6 +80,25 @@ watch(resolvedImageUrl, () => {
 
 .character-preview--cover img {
   object-fit: contain !important;
+}
+
+.character-preview__empty-avatar {
+  display: grid;
+  width: min(82%, 84px);
+  overflow: hidden;
+  border-radius: 50%;
+  aspect-ratio: 1;
+  place-items: center;
+  background: #f6f1fb;
+  box-sizing: border-box;
+}
+
+.character-preview__empty-avatar img {
+  padding: 8%;
+}
+
+.character-preview--hero .character-preview__empty-avatar {
+  width: min(72%, 160px);
 }
 
 .character-preview__fallback {
