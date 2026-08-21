@@ -243,17 +243,6 @@ onBeforeUnmount(()=>{document.removeEventListener('click',closeGroupMenu);window
     border-radius: 19px 19px 0 0;
     justify-content: center;
   }
-  :global(.calendar-modal .base-modal__header::before) {
-    content: '';
-    position: absolute;
-    top: 8px;
-    left: 50%;
-    width: 42px;
-    height: 4px;
-    border-radius: 999px;
-    background: rgba(34, 34, 34, 0.45);
-    transform: translateX(-50%);
-  }
   :global(.calendar-modal .base-modal__title) { font-size: 16px; }
   :global(.calendar-modal .base-modal__close) { display: none; }
   :global(.calendar-modal .base-modal__body) { height: calc(72dvh - 54px); box-sizing: border-box; display: flex; flex-direction: column; padding: 8px 18px calc(16px + env(safe-area-inset-bottom)); overflow: hidden; }
@@ -633,4 +622,8 @@ onBeforeUnmount(()=>{document.removeEventListener('click',closeGroupMenu);window
 .day strong{font-weight:400}
 .day strong,.day.has strong{font-size:20px}
 @media(max-width:767px){.day strong,.day.has strong{font-size:18px}}
+/* 그룹 수정 BaseSelect와 같은 드롭다운 규격 */
+.group-trigger{min-height:48px;padding:0 12px 0 14px;gap:14px;border:1.5px solid #d6cbe2;border-radius:14px;background:#f8f5fc;color:#4d405a;font-size:14px;font-weight:700;box-shadow:none}.group-trigger:hover,.group-trigger[aria-expanded='true']{border-color:#8063aa;background:#fff;box-shadow:0 0 0 3px rgba(105,82,159,.1)}.group-trigger strong{font-size:14px;font-weight:700}.group-trigger svg{color:#69529f;transition:transform .18s}.group-trigger[aria-expanded='true'] svg{transform:rotate(180deg)}
+:global(.calendar-filter-menu--portal){padding:6px;border:1px solid #ddd3e7;border-radius:13px;box-shadow:0 12px 30px rgba(54,39,76,.18)}:global(.calendar-filter-menu--portal button){min-height:40px;padding:0 10px;border-radius:8px;color:#62576c;font-size:13px;font-weight:700}:global(.calendar-filter-menu--portal button:hover){background:#f6f1fb;color:#5e428c}:global(.calendar-filter-menu--portal button.selected){background:#eee6f8;color:#5d408d;font-weight:900}:global(.calendar-filter-menu--portal button svg){color:#69529f}
+@media(max-width:767px){.group-trigger{min-height:48px;font-size:14px}.group-trigger strong{font-size:14px}}
 </style>
