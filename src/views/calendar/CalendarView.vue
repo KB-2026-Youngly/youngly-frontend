@@ -33,43 +33,58 @@ const dailySummary=computed(()=>daily.value.reduce((summary,post)=>{summary[post
 const key=d=>`${current.value.getFullYear()}-${String(current.value.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,posts=d=>monthPosts.value.filter(p=>p.postedAt.slice(0,10)===key(d)),isToday=d=>{const n=new Date();return n.getFullYear()===current.value.getFullYear()&&n.getMonth()===current.value.getMonth()&&n.getDate()===d},aria=d=>`${label.value} ${d}일${posts(d).length?`, 내 인증 ${posts(d).length}건`:', 인증 없음'}`,move=n=>{current.value=new Date(current.value.getFullYear(),current.value.getMonth()+n,1);selected.value=''},open=d=>{if(!posts(d).length)return;selected.value=key(d);modal.value=true},selectGroup=id=>{groupId.value=id;groupMenuOpen.value=false},status=s=>({APPROVED:'승인됨',REJECTED:'반려됨',PENDING:'심사중'})[s]
 
 const dateParam=(date)=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
+const responseList=(response,keys=[])=>{
+  const payload=response?.data
+  if(Array.isArray(payload))return payload
+  for(const key of keys){if(Array.isArray(payload?.[key]))return payload[key]}
+  if(Array.isArray(payload?.data))return payload.data
+  if(Array.isArray(payload?.content))return payload.content
+  return []
+}
+const normalizeCalendarPost=(post)=>({
+  ...post,
+  postId:post.postId??post.id,
+  groupId:String(post.groupId??post.group?.groupId??''),
+  groupName:post.groupName??post.group?.groupName??'그룹',
+  photoUrl:post.photoUrl??post.imageUrl??post.image??'',
+  content:post.content??post.comment??'',
+  postStatus:String(post.postStatus??post.status??'PENDING').toUpperCase(),
+  postedAt:String(post.postedAt??post.createdAt??post.certifiedAt??''),
+  likeCount:Number(post.likeCount??post.likes??0),
+  dislikeCount:Number(post.dislikeCount??post.dislikes??0),
+})
 const syncGroupMenuPosition=()=>{const rect=groupTriggerRef.value?.getBoundingClientRect();if(!rect)return;groupMenuStyle.value={position:'fixed',top:`${rect.bottom+7}px`,left:`${rect.left}px`,width:`${rect.width}px`}}
 const toggleGroupMenu=async()=>{groupMenuOpen.value=!groupMenuOpen.value;if(groupMenuOpen.value){await nextTick();syncGroupMenuPosition()}}
 const updateGroupMenuPosition=()=>{if(groupMenuOpen.value)syncGroupMenuPosition()}
 const loadMonthPosts=async()=>{
   const from=new Date(current.value.getFullYear(),current.value.getMonth(),1)
   const to=new Date(current.value.getFullYear(),current.value.getMonth()+1,0)
-  try {
-    const [{ data: posts }, { data: fetchedGroups }] = await Promise.all([
-      getMyCertificationPosts({ from: dateParam(from), to: dateParam(to) }),
-      getGroups(),
-    ])
+  const [postsResult,groupsResult]=await Promise.allSettled([
+    getMyCertificationPosts({from:dateParam(from),to:dateParam(to)}),
+    getGroups(),
+  ])
 
-    apiPosts.value = Array.isArray(posts)
-      ? posts.map((post) => ({
-          ...post,
-          myReaction: post.myReaction?.toUpperCase() || null,
-        }))
-      : []
-
-    calendarGroups.value = Array.isArray(fetchedGroups)
-      ? fetchedGroups
-          .filter((group) => group.groupId && group.groupName)
-          .map((group) => ({
-            groupId: String(group.groupId),
-            groupName: group.groupName,
-          }))
-      : []
-
-    if (groupId.value !== 'all' && !calendarGroups.value.some(
-      (group) => String(group.groupId) === String(groupId.value),
-    )) groupId.value = 'all'
-  } catch (error) {
-    console.error('캘린더 인증 기록 조회 실패:', error)
-    apiPosts.value = []
-    calendarGroups.value = []
-    groupId.value = 'all'
+  if(postsResult.status==='fulfilled'){
+    apiPosts.value=responseList(postsResult.value,['posts','items','results'])
+      .map(normalizeCalendarPost)
+      .filter(post=>post.postedAt&&post.groupId)
+  }else{
+    console.error('캘린더 인증 기록 조회 실패:',postsResult.reason)
+    apiPosts.value=[]
   }
+
+  if(groupsResult.status==='fulfilled'){
+    calendarGroups.value=responseList(groupsResult.value,['groups','items','results'])
+      .filter(group=>group.groupId&&group.groupName)
+      .map(group=>({groupId:String(group.groupId),groupName:group.groupName}))
+  }else{
+    console.error('캘린더 그룹 목록 조회 실패:',groupsResult.reason)
+    const groupMap=new Map()
+    apiPosts.value.forEach(post=>groupMap.set(post.groupId,{groupId:post.groupId,groupName:post.groupName}))
+    calendarGroups.value=Array.from(groupMap.values())
+  }
+
+  if(groupId.value!=='all'&&!calendarGroups.value.some(group=>String(group.groupId)===String(groupId.value)))groupId.value='all'
 }
 
 watch(current,loadMonthPosts)

@@ -75,8 +75,7 @@
                 <span>?</span>
                 <img :src="pixelFriendsCharacter" alt="" />
               </div>
-              <strong>앗, 그룹을 놓쳤어요</strong>
-              <span>{{ groupsError }}</span>
+              <strong>앗, 그룹을 못찾았어요</strong>
               <button type="button" @click="loadGroups">
                 <RefreshCw :size="15" :stroke-width="2.4" aria-hidden="true" />
                 다시 찾아보기
@@ -118,18 +117,18 @@
             @dragend="finishGroupDrag"
           >
             <div class="group-card-surface pixel-step-surface">
-            <!-- 좌측: 크기를 1/3로 줄인 오버랩 프로필 -->
+            <!-- 좌측: 최대 4개를 2×2로 보여주는 참여자 프로필 -->
             <div class="profiles-wrap">
               <div
                 class="profile-circle"
-                v-for="(profile, index) in group.profiles.slice(0, 2)"
+                v-for="(profile, index) in group.profiles.slice(0, group.profiles.length > 4 ? 3 : 4)"
                 :key="index"
                 :style="{ '--profile-fill': getProfileColor(index) }"
               >
                 {{ profile }}
               </div>
-              <div v-if="group.profiles.length > 2" class="profile-circle profile-circle--more">+{{ group.profiles.length - 2 }}</div>
-              <div v-if="(group.status === '팀원 모집중' || group.isPending) && group.vacancyCount" class="profile-circle profile-circle--empty">+{{ group.vacancyCount }}</div>
+              <div v-if="group.profiles.length > 4" class="profile-circle profile-circle--more">+{{ group.profiles.length - 3 }}</div>
+              <div v-if="group.profiles.length < 4 && (group.status === '팀원 모집중' || group.isPending) && group.vacancyCount" class="profile-circle profile-circle--empty">+{{ group.vacancyCount }}</div>
             </div>
 
             <!-- 중앙: 텍스트 정보 -->
@@ -1379,15 +1378,10 @@ onBeforeUnmount(() => {
   top: -3px;
   right: 0;
   z-index: 2;
-  display: grid;
-  width: 25px;
-  height: 25px;
-  place-items: center;
-  border: 1.5px solid #d99b9b;
-  border-radius: 50%;
-  background: #fff;
+  display: block;
   color: #b65050;
-  font-size: 14px;
+  font-size: 22px;
+  line-height: 1;
   font-weight: 900;
 }
 
@@ -3409,6 +3403,51 @@ onBeforeUnmount(() => {
 .floating-add-button:focus-visible {
   outline: 3px solid #fff;
   outline-offset: 3px;
+}
+
+/* 그룹 목록: 참여자 4칸과 그룹 정보를 예시처럼 왼쪽에 밀착 배치 */
+.group-card-surface {
+  gap: 10px;
+  padding: 10px 12px 10px 10px;
+}
+
+.profiles-wrap {
+  display: grid;
+  flex: 0 0 68px;
+  grid-template-columns: repeat(2, 30px);
+  grid-auto-rows: 30px;
+  width: 68px;
+  min-width: 68px;
+  gap: 4px;
+  align-content: center;
+  justify-content: start;
+  padding-left: 0;
+}
+
+.profiles-wrap .profile-circle,
+.profiles-wrap .profile-circle--more,
+.profiles-wrap .profile-circle--empty {
+  width: 30px;
+  height: 30px;
+  margin-left: 0 !important;
+}
+
+.group-card-surface .group-info {
+  min-width: 0;
+  gap: 7px;
+  margin-left: 3px;
+  transform: translateY(-2px);
+}
+
+.group-card-surface .tags {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 767px) {
+  .group-card-surface {
+    gap: 9px;
+    padding-left: 9px;
+  }
 }
 
 

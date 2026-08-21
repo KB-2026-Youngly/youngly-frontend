@@ -311,7 +311,7 @@
                   </button>
                 </div>
                   <div
-                    v-if="canAccessPost(member)"
+                    v-if="canAccessPost(member) && member.latestComment?.trim()"
                     class="latest-comment-row"
                   >
                     <span
@@ -784,6 +784,7 @@ import {
   getGroupDetail,
   getGroupUsers,
   kickGroupUser,
+  pokeGroupUser,
   updateGroup,
   getJoinRequests,
   approveJoinRequest,
@@ -850,7 +851,19 @@ const challengeDay = computed(() => {
   )
 })
 
-const challengeDuration = 28
+const challengeDuration = computed(() => {
+  const round = currentRound.value
+
+  if (round?.startDate && round?.endDate) {
+    const start = new Date(`${round.startDate}T00:00:00`)
+    const end = new Date(`${round.endDate}T00:00:00`)
+    const duration = Math.floor((end - start) / 86400000) + 1
+
+    if (Number.isFinite(duration) && duration > 0) return duration
+  }
+
+  return Number(groupInfo.roundCycleDays) || 28
+})
 
 const displayedMembers = computed(() =>
   allMembersJoined.value ? members : members.slice(0, 1)
@@ -1606,13 +1619,28 @@ const setStartDate = async () => {
   }
 }
 
-const handlePendingCard = (member) => {
+const wakingMemberId = ref(null)
+
+const handlePendingCard = async (member) => {
   if (member.isMe) {
     router.push({ name: 'FeedWrite', query: { groupId: String(route.params.id || '') } })
     return
   }
 
-  alert(`${member.name}님을 깨웠습니다! (mock)`)
+  const groupId = String(route.params.id || '')
+  if (!groupId || !member?.groupUserId || wakingMemberId.value) return
+
+  wakingMemberId.value = member.groupUserId
+
+  try {
+    await pokeGroupUser(groupId, member.groupUserId)
+    alert(`${member.name}님에게 깨우기 알림을 보냈습니다.`)
+  } catch (error) {
+    console.error('친구 깨우기 실패:', error)
+    alert(error?.response?.data?.message || '깨우기 알림을 보내지 못했습니다.')
+  } finally {
+    wakingMemberId.value = null
+  }
 }
 
 const reviewVerification = async (member) => {

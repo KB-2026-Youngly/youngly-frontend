@@ -457,10 +457,10 @@ onBeforeUnmount(() => {
   right: 0;
   width: 9px;
   height: 9px;
-  border: 2px solid #ffffff;
+  border: 0;
   border-radius: 50%;
   background-color: #ff4b4b;
-  box-shadow: 0 0 0 1.5px #2d1f4f;
+  box-shadow: none;
 }
 
 .profile-menu {
@@ -488,7 +488,7 @@ onBeforeUnmount(() => {
   height: 44px;
   overflow: hidden;
   box-sizing: border-box;
-  border: 2px solid #4b2b78;
+  border: 2px solid #ac99d2;
   border-radius: 50%;
   clip-path: none;
   background: #eee7f8 !important;
