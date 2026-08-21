@@ -632,6 +632,31 @@
           />
         </label>
 
+        <div v-if="groupEditDepositRatios.length" class="group-edit-field group-edit-ratio-section">
+          <span>순위별 연금 적립 비율</span>
+          <div class="group-edit-ratio-card">
+            <p>순위별로 예치금 중 연금에 적립할 비율을 설정해 주세요.</p>
+            <div class="group-edit-ratio-grid">
+              <label v-for="(_, index) in groupEditDepositRatios" :key="index">
+                <span>{{ index + 1 }}등</span>
+                <span class="group-edit-ratio-input">
+                  <input
+                    v-model.number="groupEditDepositRatios[index]"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    required
+                    inputmode="numeric"
+                    :aria-label="`${index + 1}등 연금 적립 비율`"
+                  />
+                  <small>%</small>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+
         <label class="group-edit-field">
           <span class="group-edit-field-label">
             실패 면제권
@@ -1046,6 +1071,24 @@ const groupEditForm = reactive({
   failurePassCount: 0,
   additionalRule: '',
 })
+const groupEditDepositRatios = ref([])
+
+const parseDepositRatioRule = (rule, memberLimit) => {
+  const ratios = new Map(
+    String(rule || '')
+      .split('/')
+      .map((entry) => entry.split(':').map(Number))
+      .filter(([rank, ratio]) => Number.isInteger(rank) && Number.isFinite(ratio)),
+  )
+  return Array.from(
+    { length: Math.max(0, Number(memberLimit) || 0) },
+    (_, index) => Math.min(100, Math.max(0, ratios.get(index + 1) ?? 50)),
+  )
+}
+
+const makeDepositRatioRule = () => groupEditDepositRatios.value
+  .map((ratio, index) => `${index + 1}:${Math.min(100, Math.max(0, Number(ratio) || 0))}`)
+  .join('/')
 
 const groupInfo = reactive({
   id: '',
@@ -1172,6 +1215,10 @@ const applyGroupDetail = (detail) => {
   groupInfo.roundCycleDays = Number(detail.roundCycleDays) || groupInfo.roundCycleDays
   groupInfo.futureDepositRatioRule =
   detail.futureDepositRatioRule || ''
+  groupEditDepositRatios.value = parseDepositRatioRule(
+    groupInfo.futureDepositRatioRule,
+    groupInfo.memberLimit,
+  )
 
   groupEditForm.title = groupInfo.title
   groupEditForm.category = groupInfo.category
@@ -2014,7 +2061,7 @@ const saveGroupEdit = async () => {
       // 기존 설정 유지
       durationDays: groupInfo.durationDays,
       roundCycleDays: groupInfo.roundCycleDays,
-      futureDepositRatioRule: groupInfo.futureDepositRatioRule,
+      futureDepositRatioRule: makeDepositRatioRule(),
     })
 
     await loadGroupInfo()
@@ -5034,5 +5081,67 @@ button {
   font-weight: 700;
 
   text-align: center;
+}
+
+.group-edit-ratio-card {
+  padding: 12px;
+  border: 2px solid #d8cdea;
+  border-radius: 12px;
+  background: #f8f5fc;
+}
+
+.group-edit-ratio-card > p {
+  margin: 0 0 12px;
+  color: #746d7c;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.group-edit-ratio-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.group-edit-ratio-grid > label {
+  width: 68px;
+  min-width: 0;
+  display: grid;
+  flex: 0 0 68px;
+  gap: 6px;
+}
+
+.group-edit-ratio-grid > label > span:first-child {
+  color: #51485b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.group-edit-ratio-input {
+  position: relative;
+  display: block;
+  width: 68px;
+}
+
+.group-edit-ratio-input input {
+  width: 100% !important;
+  min-width: 0;
+  height: 36px !important;
+  box-sizing: border-box;
+  padding: 0 27px 0 9px !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  font-size: 13px !important;
+}
+
+.group-edit-ratio-input small {
+  position: absolute;
+  top: 50%;
+  right: 9px;
+  color: #7156ad;
+  font-size: 12px;
+  font-weight: 800;
+  pointer-events: none;
+  transform: translateY(-50%);
 }
 </style>

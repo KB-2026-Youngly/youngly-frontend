@@ -30,6 +30,7 @@
         aria-label="개인연금 계좌 변경"
         @click="openEditModal"
       >
+        <Pencil :size="19" :stroke-width="2" aria-hidden="true" />
         ✎
       </button>
       <div class="linked-card-heading">
@@ -113,6 +114,7 @@
           @pointerdown.stop
           @click.stop="openMoimEditModal(account)"
         >
+          <Pencil :size="19" :stroke-width="2" aria-hidden="true" />
           ✎
         </button>
         <div class="moim-card-bank">
@@ -429,6 +431,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Pencil } from 'lucide-vue-next'
 import BaseModal from '@/components/base/BaseModal.vue'
 import FloatingActionButton from '@/components/common/FloatingActionButton.vue'
 import TransactionHistory from '@/components/asset/TransactionHistory.vue'
@@ -498,7 +501,7 @@ const pensionModalOpen = ref(false)
 const modalStep = ref('choice')
 const pensionAccounts = ref([])
 const selectedPensionId = ref('')
-const useForFutureSavings = ref(false)
+const useForFutureSavings = ref(true)
 const loadingAccounts = ref(false)
 const submitting = ref(false)
 const modalError = ref('')
@@ -1059,7 +1062,7 @@ function resetModal() {
   modalStep.value = 'choice'
   pensionAccounts.value = []
   selectedPensionId.value = ''
-  useForFutureSavings.value = false
+  useForFutureSavings.value = true
   modalError.value = ''
   isEditing.value = false
 }
@@ -1285,17 +1288,16 @@ function resetModal() {
   top: 30px;
   right: 31px;
   z-index: 2;
-  border: 1px solid #dad3e4;
-  border-radius: 9px;
-  background: #fff;
-  color: #69529f;
-  font-size: 18px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #a88bcc;
+  font-size: 0;
   cursor: pointer;
   transition: 0.18s;
 }
 .edit-account-button:hover {
-  border-color: #69529f;
-  background: #f5f1fb;
+  background: transparent;
 }
 .linked-card-heading {
   display: flex;
@@ -1468,16 +1470,15 @@ function resetModal() {
   position: absolute;
   top: 30px;
   right: 31px;
-  border: 1px solid #d8d0e2;
-  border-radius: 9px;
-  background: #fff;
-  color: #69529f;
-  font-size: 18px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #a88bcc;
+  font-size: 0;
   cursor: pointer;
 }
 .moim-edit-button:hover {
-  border-color: #69529f;
-  background: #f4f0fa;
+  background: transparent;
 }
 .moim-card-bank {
   display: flex;
