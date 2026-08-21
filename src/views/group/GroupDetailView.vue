@@ -45,6 +45,20 @@
         </section>
       </div>
 
+      <section
+        v-if="inviteCode && groupInfo.status === 'RECRUITING' && !allMembersJoined"
+        class="detail-invite-code"
+        aria-label="그룹 초대 코드"
+      >
+        <div>
+          <small>모집 중 · {{ groupInfo.memberCount }}/{{ groupInfo.memberLimit }}명</small>
+          <strong>{{ inviteCode }}</strong>
+        </div>
+        <button type="button" @click="copyInviteCode">
+          {{ copyComplete ? '복사됨' : '코드 복사' }}
+        </button>
+      </section>
+
       <div v-if="currentRound && currentRoundStarted" class="detail-card-shadow yl-stepped-card-shadow">
         <section
           class="ranking-panel pixel-frame yl-card-frame pixel-step-card pixel-step-solid"
@@ -2314,6 +2328,51 @@ button {
 }
 .summary-copy p {
   margin: 0;
+}
+
+.detail-invite-code {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 14px 0 18px;
+  padding: 13px 15px;
+  border: 1.5px solid #cbbbe0;
+  border-radius: 13px;
+  background: #f7f3fb;
+}
+
+.detail-invite-code > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.detail-invite-code small {
+  color: #7b7085;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.detail-invite-code strong {
+  color: #3f3152;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.detail-invite-code button {
+  min-width: 76px;
+  height: 36px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 9px;
+  background: #7156ad;
+  color: #fff;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
 }
 .summary-top-row {
   display: flex;

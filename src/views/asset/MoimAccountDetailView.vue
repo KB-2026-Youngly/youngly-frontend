@@ -228,14 +228,21 @@
       </div>
     </BaseModal>
 
-    <BaseModal v-model="confirmModalOpen" title="예치금 이체 확인" size="small" :close-on-overlay="!depositSubmitting">
+    <BaseModal
+      v-model="confirmModalOpen"
+      title="예치금 이체 확인"
+      size="small"
+      :close-on-overlay="!depositSubmitting"
+      :close-on-esc="!depositSubmitting"
+      @close="restoreDepositModal"
+    >
       <div class="confirm-copy">
         <span class="confirm-icon">↗</span>
         <p><strong class="yl-money">{{ formatCurrency(depositAmount) }}원</strong>을<br /><b>{{ group?.groupName }}</b> 모임통장에 채우시겠습니까?</p>
       </div>
       <p v-if="depositError" class="inline-error">{{ depositError }}</p>
       <div class="confirm-actions">
-        <button type="button" :disabled="depositSubmitting" @click="confirmModalOpen = false">취소</button>
+        <button type="button" :disabled="depositSubmitting" @click="cancelDepositConfirm">취소</button>
         <button type="button" :disabled="depositSubmitting" @click="submitDeposit">
           {{ depositSubmitting ? '이체 중...' : '확인' }}
         </button>
@@ -247,7 +254,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseModal from '@/components/base/BaseModal.vue'
 import TransactionHistory from '@/components/asset/TransactionHistory.vue'
@@ -483,14 +490,29 @@ async function openDepositModal() {
   }
 }
 
-function openDepositConfirm() {
+async function openDepositConfirm() {
   depositError.value = ''
   if (!canRequestDeposit.value) return
   if (Number(depositAmount.value) > Number(personalAccount.value.balance || 0)) {
     depositError.value = '출금 계좌의 잔액보다 큰 금액은 채울 수 없습니다.'
     return
   }
+  depositModalOpen.value = false
+  await nextTick()
   confirmModalOpen.value = true
+}
+
+async function restoreDepositModal() {
+  if (depositSubmitting.value || depositModalOpen.value) return
+  await nextTick()
+  depositModalOpen.value = true
+}
+
+async function cancelDepositConfirm() {
+  if (depositSubmitting.value) return
+  confirmModalOpen.value = false
+  await nextTick()
+  depositModalOpen.value = true
 }
 
 function handleDepositAmountInput(event) {

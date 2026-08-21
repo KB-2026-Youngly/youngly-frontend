@@ -270,6 +270,29 @@
           />
         </label>
 
+        <fieldset v-if="depositRatios.length" class="deposit-ratio-field">
+          <legend>순위별 연금 적립 비율</legend>
+          <p>모집 인원만큼 순위가 생성돼요. 30%로 설정하면 해당 순위 참여자의 예치금 중 30%가 연금으로 적립돼요.</p>
+          <div class="deposit-ratio-grid">
+            <label v-for="(_, index) in depositRatios" :key="index">
+              <span>{{ index + 1 }}등</span>
+              <span class="ratio-input-control">
+                <input
+                  v-model.number="depositRatios[index]"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  required
+                  inputmode="numeric"
+                  :aria-label="`${index + 1}등 연금 적립 비율`"
+                />
+                <small>%</small>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+
         <label class="form-field form-field--full">
           <span class="field-label-with-tooltip">
             실패 면제권
@@ -380,7 +403,7 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import {
   BookOpen,
   ArrowRight,
@@ -728,6 +751,18 @@ const newGroup = ref({
 });
 const selectedAccountId = ref('');
 const groupAccounts = ref([]);
+const depositRatios = ref([]);
+
+watch(
+  () => newGroup.value.memberLimit,
+  (memberLimit) => {
+    const count = Math.min(100, Math.max(0, Number(memberLimit) || 0));
+    depositRatios.value = Array.from(
+      { length: count },
+      (_, index) => depositRatios.value[index] ?? 50,
+    );
+  },
+);
 
 const groups = ref([]);
 const groupsLoading = ref(false);
@@ -971,10 +1006,9 @@ const participantLabel = (group) => {
     : `${joinedCount}명`;
 };
 
-const makeDepositRatioRule = (memberLimit) => Array.from(
-  { length: Number(memberLimit) || 1 },
-  (_, index) => `${index + 1}:${Math.min(40 + index * 20, 100)}`,
-).join('/');
+const makeDepositRatioRule = () => depositRatios.value
+  .map((ratio, index) => `${index + 1}:${Math.min(100, Math.max(0, Number(ratio) || 0))}`)
+  .join('/');
 
 const resetNewGroup = () => {
   newGroup.value = {
@@ -987,6 +1021,7 @@ const resetNewGroup = () => {
     failurePassCount: 0,
     additionalRule: '',
   };
+  depositRatios.value = [];
 };
 
 const getApiErrorMessage = (error, fallback) => (
@@ -1006,7 +1041,7 @@ const createGroup = async () => {
       customRule: newGroup.value.additionalRule || null,
       challengeType: categoryValues[newGroup.value.category],
       content: newGroup.value.goal || `${newGroup.value.title} 챌린지`,
-      futureDepositRatioRule: makeDepositRatioRule(newGroup.value.memberLimit),
+      futureDepositRatioRule: makeDepositRatioRule(),
       durationDays: 7,
       minCount: Number(newGroup.value.weeklyCount),
       roundCycleDays: 28,
@@ -1948,6 +1983,86 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+}
+
+.deposit-ratio-field {
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  border: 2px solid #d8cdea;
+  border-radius: 14px;
+  background: #f8f5fc;
+}
+
+.deposit-ratio-field legend {
+  padding: 0 6px;
+  color: #30283a;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.deposit-ratio-field > p {
+  margin: 0 0 14px;
+  color: #746d7c;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.deposit-ratio-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.deposit-ratio-grid label {
+  width: 68px;
+  min-width: 0;
+  flex: 0 0 68px;
+  display: grid;
+  gap: 6px;
+}
+
+.deposit-ratio-grid label > span:first-child {
+  color: #51485b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ratio-input-control {
+  position: relative;
+  display: block;
+  width: 68px;
+  min-width: 0;
+}
+
+.ratio-input-control input {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  box-sizing: border-box;
+  padding: 0 27px 0 9px;
+  border: 2px solid #bfaed5;
+  border-radius: 8px;
+  background: #fff;
+  color: #30283a;
+  font: inherit;
+  font-size: 13px;
+}
+
+.ratio-input-control input:focus {
+  outline: 3px solid rgba(113,86,173,.2);
+  border-color: #7156ad;
+}
+
+.ratio-input-control small {
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  color: #7156ad;
+  font-size: 13px;
+  font-weight: 800;
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
 .category-options {
