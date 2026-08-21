@@ -27,7 +27,9 @@
           <CharacterPreview :character="equippedCharacter" size="hero" />
         </div>
         <div v-if="!equippedUsesCoverImage" class="equipped-stage__info">
-          <strong>{{ equippedCharacter?.name || '장착된 캐릭터 없음' }}</strong>
+          <strong>{{
+            resolveCharacterDisplayName(equippedCharacter) || '장착된 캐릭터 없음'
+          }}</strong>
           <span v-if="equippedCharacter" class="equipped-stage__status">
             <Check :size="14" /> 장착 중
           </span>
@@ -112,7 +114,9 @@
             <div class="equip-panel collectible-step-card">
               <div class="equip-panel__copy">
                 <small>선택한 캐릭터</small>
-                <strong>{{ selectedCharacter?.name || '캐릭터를 선택해 주세요' }}</strong>
+                <strong>{{
+                  resolveCharacterDisplayName(selectedCharacter) || '캐릭터를 선택해 주세요'
+                }}</strong>
               </div>
               <EquipButton
                 :loading="equippingCharacterId != null"
@@ -203,6 +207,7 @@ const equipEffectCharacterId = ref(null)
 let equipEffectTimer = null
 const MIN_DRAW_ANIMATION_MS = 1800
 const ALL_CHARACTER_FILTER = '__all__'
+const CHARACTER_FILTER_NAMES = Object.freeze(['키키', '아거', '비비', '콜리', '라무'])
 const activeCharacterFilter = ref(ALL_CHARACTER_FILTER)
 
 const getCharacterItemName = (character) =>
@@ -236,8 +241,8 @@ const sortCharacterGroup = (group) => {
 }
 
 const groupedCharacters = computed(() => {
-  const groups = new Map()
-  const charactersWithoutItemName = []
+  const groups = new Map(CHARACTER_FILTER_NAMES.map((characterName) => [characterName, []]))
+  const unmatchedCharacters = []
 
   characters.value.forEach((character, originalIndex) => {
     const entry = {
@@ -246,25 +251,25 @@ const groupedCharacters = computed(() => {
       imageSequence: getCharacterImageSequence(character),
     }
     const itemName = getCharacterItemName(character)
+    const characterName = CHARACTER_FILTER_NAMES.find((name) => itemName.endsWith(name))
 
-    if (!itemName) {
-      charactersWithoutItemName.push(entry)
+    if (!characterName) {
+      unmatchedCharacters.push(entry)
       return
     }
 
-    if (!groups.has(itemName)) groups.set(itemName, [])
-    groups.get(itemName).push(entry)
+    groups.get(characterName).push(entry)
   })
 
-  return { groups, charactersWithoutItemName }
+  return { groups, unmatchedCharacters }
 })
 
 const characterFilters = computed(() =>
   [
-    { value: ALL_CHARACTER_FILTER, label: '전체 캐릭터', count: characters.value.length },
-    ...[...groupedCharacters.value.groups].map(([itemName, group]) => ({
-      value: itemName,
-      label: itemName,
+    { value: ALL_CHARACTER_FILTER, label: '전체', count: characters.value.length },
+    ...[...groupedCharacters.value.groups].map(([characterName, group]) => ({
+      value: characterName,
+      label: characterName,
       count: group.length,
     })),
   ],
@@ -283,7 +288,7 @@ const filteredCharacters = computed(() => {
 
   return [...groupedCharacters.value.groups.values()]
     .flatMap(sortCharacterGroup)
-    .concat(groupedCharacters.value.charactersWithoutItemName)
+    .concat(groupedCharacters.value.unmatchedCharacters)
     .map(({ character }) => character)
 })
 watch(characterFilters, (filters) => {
