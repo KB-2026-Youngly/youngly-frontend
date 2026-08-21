@@ -196,6 +196,18 @@ const routes = [
     ],
   },
   {
+    path: '/demo-time',
+    component: DefaultLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'DemoTimeControl',
+        component: () => import('@/views/demo/DemoTimeControlView.vue'),
+      },
+    ],
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/error/NotFoundView.vue'),

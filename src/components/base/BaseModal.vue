@@ -60,6 +60,7 @@
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
+import { acquirePageScrollLock, releasePageScrollLock } from '@/utils/pageScrollLock'
 
 const props = defineProps({
   modelValue: {
@@ -120,9 +121,6 @@ let touchPullStartY = null
 let touchPullActive = false
 
 let previousActiveElement = null
-let previousBodyStyles = null
-let previousRootOverflow = ''
-let lockedScrollY = 0
 let isPageLocked = false
 let hasAnnouncedBottomSheet = false
 
@@ -281,19 +279,7 @@ const lockPage = async () => {
   if (typeof document === 'undefined' || isPageLocked) return
 
   previousActiveElement = document.activeElement
-  lockedScrollY = window.scrollY
-  previousBodyStyles = {
-    overflow: document.body.style.overflow,
-    position: document.body.style.position,
-    top: document.body.style.top,
-    width: document.body.style.width,
-  }
-  previousRootOverflow = document.documentElement.style.overflow
-  document.documentElement.style.overflow = 'hidden'
-  document.body.style.overflow = 'hidden'
-  document.body.style.position = 'fixed'
-  document.body.style.top = `-${lockedScrollY}px`
-  document.body.style.width = '100%'
+  acquirePageScrollLock()
   isPageLocked = true
 
   await nextTick()
@@ -306,15 +292,9 @@ const lockPage = async () => {
 const unlockPage = () => {
   if (typeof document === 'undefined' || !isPageLocked) return
 
-  document.documentElement.style.overflow = previousRootOverflow
-  document.body.style.overflow = previousBodyStyles?.overflow || ''
-  document.body.style.position = previousBodyStyles?.position || ''
-  document.body.style.top = previousBodyStyles?.top || ''
-  document.body.style.width = previousBodyStyles?.width || ''
-  window.scrollTo(0, lockedScrollY)
+  const pageWasUnlocked = releasePageScrollLock()
   isPageLocked = false
-  previousBodyStyles = null
-  previousActiveElement?.focus?.()
+  if (pageWasUnlocked) previousActiveElement?.focus?.()
   previousActiveElement = null
 }
 

@@ -122,6 +122,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { BookOpen, CalendarCheck2, Camera, CameraOff, Dumbbell, GraduationCap, Shapes, SwitchCamera, X } from 'lucide-vue-next'
 import { getGroups, getGroupDetail, getGroupRounds } from '@/api/group'
 import { createVerificationPost, getVerificationFeed } from '@/api/post'
+import { demoNow } from '@/utils/demoTime'
 
 const route = useRoute()
 const router = useRouter()
@@ -220,7 +221,7 @@ const loadVerificationGroups = async () => {
         try {
           const feedResponse = await getVerificationFeed({
             roundId: ongoingRound.roundId,
-            date: formatLocalDate(new Date()),
+            date: formatLocalDate(demoNow()),
           })
           const currentUserIds = getCurrentUserIds()
           const posts = Array.isArray(feedResponse.data) ? feedResponse.data : []
@@ -396,6 +397,12 @@ const openNativeCamera = () => {
   nativeCameraInput.value.click()
 }
 
+const setCameraNavigationHidden = (hidden) => {
+  window.dispatchEvent(new CustomEvent('youngly-bottom-nav-visibility', {
+    detail: { id: 'feed-write-camera', hidden },
+  }))
+}
+
 const openCamera = async () => {
   // IP 주소로 접속한 HTTP 페이지에서는 getUserMedia가 차단되므로
   // 오류 화면 대신 운영체제의 카메라를 즉시 연다.
@@ -405,6 +412,7 @@ const openCamera = async () => {
   }
 
   cameraOpen.value = true
+  setCameraNavigationHidden(true)
   document.body.style.overflow = 'hidden'
   await nextTick()
   await startCamera()
@@ -413,6 +421,7 @@ const openCamera = async () => {
 const closeCamera = () => {
   stopCameraStream()
   cameraOpen.value = false
+  setCameraNavigationHidden(false)
   cameraLoading.value = false
   document.body.style.overflow = ''
 }
@@ -491,6 +500,7 @@ const submitVerification = async () => {
 onMounted(loadVerificationGroups)
 onBeforeUnmount(() => {
   stopCameraStream()
+  setCameraNavigationHidden(false)
   document.body.style.overflow = ''
   if (imagePreview.value) URL.revokeObjectURL(imagePreview.value)
 })
@@ -759,10 +769,22 @@ onBeforeUnmount(() => {
   width: min(100%, 720px);
   aspect-ratio: 1.15 / 1;
   overflow: hidden;
-  border: 3px solid #a77cdb;
-  border-radius: 22px;
+  border: 3px solid #ac99d2;
+  border-radius: 0;
   background: #17141b;
-  box-shadow: 0 8px 0 #d3c3e8;
+  box-shadow: none;
+  filter: drop-shadow(6px 7px 0 #c8b7e5);
+  clip-path: polygon(
+    12px 0, calc(100% - 12px) 0,
+    calc(100% - 12px) 3px, calc(100% - 4px) 3px,
+    calc(100% - 4px) 12px, 100% 12px,
+    100% calc(100% - 12px), calc(100% - 4px) calc(100% - 12px),
+    calc(100% - 4px) calc(100% - 4px), calc(100% - 12px) calc(100% - 4px),
+    calc(100% - 12px) 100%, 12px 100%,
+    12px calc(100% - 4px), 4px calc(100% - 4px),
+    4px calc(100% - 12px), 0 calc(100% - 12px),
+    0 12px, 4px 12px, 4px 3px, 12px 3px
+  );
 }
 
 .camera-frame video {
@@ -776,7 +798,7 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 18px;
+  border-radius: 0;
   pointer-events: none;
 }
 

@@ -235,7 +235,9 @@
           >
             <div class="feed-card-surface pixel-step-surface">
               <div class="feed-owner">
-                <span class="avatar">{{ member.initial }}</span>
+                <span class="avatar">
+                  <UserProfileAvatar :image-url="member.profileImageUrl" />
+                </span>
                 <span class="feed-owner__info">
                   <span class="feed-owner__name"
                     >{{ member.name }} <em v-if="member.isMe" class="me-label">나</em></span
@@ -316,10 +318,11 @@
                   >
                     <span
                       class="latest-comment-avatar"
-                      :title="member.latestCommentAuthor || '김민준'"
+                      :title="member.latestCommentAuthor"
                       aria-hidden="true"
-                      >{{ member.latestCommentInitial || '김' }}</span
                     >
+                      <UserProfileAvatar :image-url="member.latestCommentProfileImageUrl" />
+                    </span>
                     <p class="latest-comment">{{ member.latestComment }}</p>
                   </div>
                   <span
@@ -337,12 +340,28 @@
                     class="pending-verification"
                     @click="handlePendingCard(member)"
                   >
-                    <strong>
-                      {{
-                        member.isMe
-                          ? '눌러서 인증하러 가기 📷 ›'
-                          : '눌러서 깨우기 ⏰ ›'
-                      }}
+                    <strong class="pending-verification__action">
+                      <span>{{ member.isMe ? '눌러서 인증하러 가기' : '눌러서 깨우기' }}</span>
+                      <Camera
+                        v-if="member.isMe"
+                        class="pending-verification__icon"
+                        :size="22"
+                        :stroke-width="2.1"
+                        aria-hidden="true"
+                      />
+                      <AlarmClock
+                        v-else
+                        class="pending-verification__icon"
+                        :size="22"
+                        :stroke-width="2.1"
+                        aria-hidden="true"
+                      />
+                      <ArrowRight
+                        class="pending-verification__arrow"
+                        :size="18"
+                        :stroke-width="2.3"
+                        aria-hidden="true"
+                      />
                     </strong>
                   </button>
 
@@ -598,8 +617,10 @@
           <h3>모집 인원</h3>
           <ul>
             <li v-for="member in editMembers" :key="`edit-${member.name}`">
-              <span class="member-editor-avatar">{{ member.initial }}</span>
-              <strong>{{ member.isMe ? 'Yuna Park' : member.name }}</strong>
+              <span class="member-editor-avatar">
+                <UserProfileAvatar :image-url="member.profileImageUrl" />
+              </span>
+              <strong>{{ member.name }}</strong>
               <button type="button" @click="removeMember(member)">내보내기</button>
             </li>
           </ul>
@@ -714,7 +735,7 @@
             title="게시글 삭제"
             @click="deleteOwnPost"
           >
-            🗑
+            <Trash2 :size="20" :stroke-width="2" aria-hidden="true" />
           </button>
         </div>
       </template>
@@ -723,8 +744,9 @@
           <img :src="selectedPost.image" :alt="`${selectedPost.name} 인증 사진`" />
           <div></div>
           <p>
-            <span class="post-detail-avatar">{{ selectedPost.initial }}</span
-            ><b>{{ selectedPost.name }}</b>
+            <span class="post-detail-avatar">
+              <UserProfileAvatar :image-url="selectedPost.profileImageUrl" />
+            </span><b>{{ selectedPost.name }}</b>
           </p>
           <strong>{{ selectedPost.message }}</strong>
         </div>
@@ -740,8 +762,10 @@
           </h3>
           <ul>
             <li v-for="commentItem in postComments" :key="commentItem.id">
-              <b>{{ commentItem.author }}</b
-              >{{ commentItem.text }}
+              <span class="post-comment-avatar" aria-hidden="true">
+                <UserProfileAvatar :image-url="commentItem.profileImageUrl" />
+              </span>
+              <span><b>{{ commentItem.author }}</b>{{ commentItem.text }}</span>
             </li>
           </ul>
           <form @submit.prevent="addPostComment">
@@ -788,8 +812,10 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
+  AlarmClock,
   ArrowRight,
   BookOpen,
+  Camera,
   CalendarCheck2,
   Check,
   CircleCheck,
@@ -801,10 +827,12 @@ import {
   Shapes,
   ThumbsDown,
   ThumbsUp,
+  Trash2,
   X,
 } from 'lucide-vue-next'
 import BaseModal from '@/components/base/BaseModal.vue'
 import BaseSelect from '@/components/base/BaseSelect.vue'
+import UserProfileAvatar from '@/components/common/UserProfileAvatar.vue'
 import {
   getGroupDetail,
   getGroupUsers,
@@ -835,6 +863,7 @@ import {
 } from '@/api/post'
 
 import { useUserStore } from '@/stores/user'
+import { demoNow, demoNowMs, demoTodayString } from '@/utils/demoTime'
 
 const members = reactive([])
 const router = useRouter()
@@ -865,7 +894,7 @@ const challengeDay = computed(() => {
   if (!currentRound.value?.startDate) return 0
 
   const start = new Date(`${currentRound.value.startDate}T00:00:00`)
-  const today = new Date()
+  const today = demoNow()
 
   start.setHours(0, 0, 0, 0)
   today.setHours(0, 0, 0, 0)
@@ -928,25 +957,23 @@ const rankingError = ref('')
 const currentRoundPosts = ref([])
 const currentRound = ref(null)
 const currentUserId = computed(() => userStore.user?.userId || '')
-
-
 const currentRoundStarted = computed(() => {
   if (!currentRound.value?.startDate) return false
-  return Date.now() >= new Date(`${currentRound.value.startDate}T00:00:00`).getTime()
+  return demoNowMs() >= new Date(`${currentRound.value.startDate}T00:00:00`).getTime()
 })
 const currentRoundProgress = computed(() => {
   const round = currentRound.value
   if (!round?.startDate || !round?.endDate) return 0
   const start = new Date(`${round.startDate}T00:00:00`)
   const end = new Date(`${round.endDate}T23:59:59`)
-  return Math.max(0, Math.min(100, ((Date.now() - start) / Math.max(end - start, 1)) * 100))
+  return Math.max(0, Math.min(100, ((demoNowMs() - start) / Math.max(end - start, 1)) * 100))
 })
 const currentRoundWeek = computed(() => {
   const startDate = currentRound.value?.startDate
   if (!startDate) return 1
   const elapsedDays = Math.max(
     0,
-    Math.floor((Date.now() - new Date(`${startDate}T00:00:00`).getTime()) / 86400000),
+    Math.floor((demoNowMs() - new Date(`${startDate}T00:00:00`).getTime()) / 86400000),
   )
   return Math.floor(elapsedDays / 7) + 1
 })
@@ -961,7 +988,7 @@ const currentRoundRemainingLabel = computed(() => {
   if (!endDate) return '기간 확인 중'
   const remaining = Math.max(
     0,
-    Math.ceil((new Date(`${endDate}T23:59:59`).getTime() - Date.now()) / 86400000),
+    Math.ceil((new Date(`${endDate}T23:59:59`).getTime() - demoNowMs()) / 86400000),
   )
   return remaining === 0 ? '오늘 종료' : `${remaining}일 남음`
 })
@@ -995,7 +1022,7 @@ const selectedRoundProgress = computed(() => {
   const end = new Date(`${round.endDate}T23:59:59`)
   return Math.max(
     0,
-    Math.min(100, ((Date.now() - start.getTime()) / Math.max(end - start, 1)) * 100),
+    Math.min(100, ((demoNowMs() - start.getTime()) / Math.max(end - start, 1)) * 100),
   )
 })
 const rankingRemainingLabel = computed(() => {
@@ -1003,7 +1030,7 @@ const rankingRemainingLabel = computed(() => {
   if (!endDate) return '기간 확인 중'
   const remaining = Math.max(
     0,
-    Math.ceil((new Date(`${endDate}T23:59:59`).getTime() - Date.now()) / 86400000),
+    Math.ceil((new Date(`${endDate}T23:59:59`).getTime() - demoNowMs()) / 86400000),
   )
   return remaining === 0 ? '오늘 종료' : `${remaining}일 남음`
 })
@@ -1104,7 +1131,7 @@ const groupInfo = reactive({
   futureDepositRatioRule: '',
 })
 
-const now = ref(new Date())
+const now = ref(demoNow())
 
 let countdownTimer = null
 
@@ -1150,7 +1177,7 @@ const isReviewExpired = (member) => {
 }
 
 const selectedDate = ref(
-  new Date().toLocaleDateString('sv-SE')
+  demoTodayString()
 )
 
 const inviteSlots = computed(() => {
@@ -1277,22 +1304,27 @@ const loadGroupMembers = async () => {
   try {
     const response = await getGroupUsers(groupId)
 
-    const currentUser = JSON.parse(
-  localStorage.getItem('youngly_user') || '{}'
-)
+    const currentUser = JSON.parse(localStorage.getItem('youngly_user') || '{}')
+    const loggedInUserId =
+      userStore.user?.userId ||
+      currentUser.userId ||
+      currentUser.id ||
+      currentUser.loginId ||
+      ''
 
 
-const loadedMembers = (response.data || []).map((member) => ({
-  groupUserId: member.groupUserId,
-  userId: member.userId,
-  name: member.nickname,
-  initial: member.nickname?.charAt(0) || '',
-  profileImageUrl: member.profileImageUrl,
-  isLeader: member.leader,
-
-  // 로그인한 사용자와 비교
-  isMe: String(member.userId) === String(currentUser.userId),
-}))
+    const loadedMembers = (response.data || []).map((member) => {
+      const name = member.nickname || member.loginId || member.userId || '회원'
+      return {
+        groupUserId: member.groupUserId,
+        userId: member.userId,
+        name,
+        initial: name.charAt(0),
+        profileImageUrl: member.profileImageUrl || '',
+        isLeader: Boolean(member.leader),
+        isMe: Boolean(loggedInUserId) && String(member.userId) === String(loggedInUserId),
+      }
+    })
 
     members.splice(0, members.length, ...loadedMembers)
     editMembers.splice(
@@ -1415,6 +1447,9 @@ const loadVerificationFeed = async () => {
       member.reviewStatus = ''
       member.myReaction = null
       member.myApproval = null
+      member.latestComment = ''
+      member.latestCommentAuthor = ''
+      member.latestCommentProfileImageUrl = ''
     })
 
     // 해당 날짜에 인증한 참여자 정보 덮어쓰기
@@ -1443,6 +1478,31 @@ const loadVerificationFeed = async () => {
           : post.postStatus === 'REJECTED'
             ? 'rejected'
             : ''
+    })
+
+    const postsWithComments = posts.filter(
+      (post) => Number(post.commentCount) > 0 && post.latestCommentContent,
+    )
+    const commentDetails = await Promise.allSettled(
+      postsWithComments.map((post) => getVerificationPostDetail(post.postId)),
+    )
+
+    commentDetails.forEach((result, index) => {
+      if (result.status !== 'fulfilled') return
+      const post = postsWithComments[index]
+      const member = members.find((item) => String(item.userId) === String(post.userId))
+      const comments = Array.isArray(result.value.data?.comments)
+        ? result.value.data.comments
+        : []
+      const latestComment = [...comments].sort((first, second) =>
+        String(second.createdAt || '').localeCompare(String(first.createdAt || '')),
+      )[0]
+      if (!member || !latestComment) return
+
+      member.latestComment = latestComment.content || member.latestComment
+      member.latestCommentAuthor =
+        latestComment.nickname || latestComment.userId || '회원'
+      member.latestCommentProfileImageUrl = latestComment.profileImageUrl || ''
     })
   } catch (error) {
     console.error('인증 피드 조회 실패:', error)
@@ -1491,6 +1551,34 @@ const handleInvite = () => {
   inviteModalOpen.value = true
 }
 
+const loadRoundOverviewData = async (round, roundIndex) => {
+  if (!round) return
+
+  currentRound.value = round
+  selectedRoundIndex.value = roundIndex
+
+  const [rankingResult, postsResult] = await Promise.allSettled([
+    getRoundRanking(round.roundId),
+    getMyCertificationPosts({
+      from: round.startDate,
+      to: round.endDate,
+      groupId: String(route.params.id || ''),
+    }),
+  ])
+
+  roundRankings.value =
+    rankingResult.status === 'fulfilled' && Array.isArray(rankingResult.value.data)
+      ? rankingResult.value.data
+      : []
+
+  currentRoundPosts.value =
+    postsResult.status === 'fulfilled' && Array.isArray(postsResult.value.data)
+      ? postsResult.value.data.filter(
+          (post) => Number(post.roundId) === Number(round.roundId),
+        )
+      : []
+}
+
 const loadCurrentRoundOverview = async () => {
   try {
     const { data } = await getGroupRounds(route.params.id)
@@ -1507,7 +1595,7 @@ const loadCurrentRoundOverview = async () => {
     const latestStartedIndex = rankingRounds.value.findLastIndex(
       (round) =>
         round.startDate &&
-        Date.now() >= new Date(`${round.startDate}T00:00:00`).getTime()
+        demoNowMs() >= new Date(`${round.startDate}T00:00:00`).getTime()
     )
 
     const overviewIndex =
@@ -1520,36 +1608,8 @@ const loadCurrentRoundOverview = async () => {
       return
     }
 
-    selectedRoundIndex.value = overviewIndex
-
     const round = rankingRounds.value[overviewIndex]
-
-    currentRound.value = round
-
-    const [rankingResult, postsResult] =
-      await Promise.allSettled([
-        getRoundRanking(round.roundId),
-        getMyCertificationPosts({
-          from: round.startDate,
-          to: round.endDate,
-          groupId: String(route.params.id || ''),
-        }),
-      ])
-
-    roundRankings.value =
-      rankingResult.status === 'fulfilled' &&
-      Array.isArray(rankingResult.value.data)
-        ? rankingResult.value.data
-        : []
-
-    currentRoundPosts.value =
-      postsResult.status === 'fulfilled' &&
-      Array.isArray(postsResult.value.data)
-        ? postsResult.value.data.filter(
-            (post) =>
-              Number(post.roundId) === Number(round.roundId)
-          )
-        : []
+    await loadRoundOverviewData(round, overviewIndex)
   } catch (error) {
   console.error('라운드 목록 조회 실패:', error)
 
@@ -1777,6 +1837,7 @@ const openPostDetail = async (member) => {
         id: comment.postCommentId,
         author: comment.nickname,
         text: comment.content,
+        profileImageUrl: comment.profileImageUrl || '',
       })
     )
 
@@ -2220,44 +2281,80 @@ const endGroupEditSwipe = () => {
 
 // 날짜 이동 함수
 const changeFeedDate = async (days) => {
+  const target = getAdjacentFeedTarget(days)
+  if (!target) return
+
+  if (target.roundIndex !== selectedRoundIndex.value) {
+    await loadRoundOverviewData(target.round, target.roundIndex)
+  }
+
+  selectedDate.value = target.date
+  await loadVerificationFeed()
+}
+
+const sortedFeedRounds = computed(() =>
+  rankingRounds.value
+    .map((round, originalIndex) => ({ round, originalIndex }))
+    .filter(({ round }) => round?.startDate && round?.endDate)
+    .sort((first, second) => first.round.startDate.localeCompare(second.round.startDate)),
+)
+
+const getAdjacentFeedTarget = (days) => {
+  if (!days || !selectedDate.value) return null
+
+  const today = demoTodayString()
   const date = new Date(`${selectedDate.value}T00:00:00`)
   date.setDate(date.getDate() + days)
+  const adjacentDate = date.toLocaleDateString('sv-SE')
 
-  const nextDate = date.toLocaleDateString('sv-SE')
-  const today = new Date().toLocaleDateString('sv-SE')
+  if (adjacentDate > today) return null
 
-  if (
-    currentRound.value?.startDate &&
-    nextDate < currentRound.value.startDate
-  ) {
-    return
+  const containingRound = sortedFeedRounds.value.find(
+    ({ round }) => adjacentDate >= round.startDate && adjacentDate <= round.endDate,
+  )
+  if (containingRound) {
+    return {
+      date: adjacentDate,
+      round: containingRound.round,
+      roundIndex: containingRound.originalIndex,
+    }
   }
 
-  if (nextDate > today) {
-    return
+  if (days < 0) {
+    const previousRound = [...sortedFeedRounds.value]
+      .reverse()
+      .find(({ round }) => round.endDate < selectedDate.value)
+    if (!previousRound) return null
+    return {
+      date: previousRound.round.endDate,
+      round: previousRound.round,
+      roundIndex: previousRound.originalIndex,
+    }
   }
 
-  selectedDate.value = nextDate
-
-  await loadVerificationFeed()
+  const nextRound = sortedFeedRounds.value.find(
+    ({ round }) => round.startDate > selectedDate.value && round.startDate <= today,
+  )
+  if (!nextRound) return null
+  return {
+    date: nextRound.round.startDate,
+    round: nextRound.round,
+    roundIndex: nextRound.originalIndex,
+  }
 }
 
 const isTodaySelected = computed(
   () =>
     selectedDate.value ===
-    new Date().toLocaleDateString('sv-SE')
+    demoTodayString()
 )
 
 const canMovePrevious = computed(() => {
-  if (!currentRound.value?.startDate) return false
-
-  return selectedDate.value > currentRound.value.startDate
+  return Boolean(getAdjacentFeedTarget(-1))
 })
 
 const canMoveNext = computed(() => {
-  const today = new Date().toLocaleDateString('sv-SE')
-
-  return selectedDate.value < today
+  return Boolean(getAdjacentFeedTarget(1))
 })
 
 const cancelGroupEditSwipe = () => {
@@ -2336,6 +2433,7 @@ onMounted(async () => {
     // 저장된 인증 mock 데이터가 없거나 잘못된 경우 기존 화면을 유지합니다.
   }
 
+  await userStore.ensureMyInfo()
   await loadGroupInfo()
   await loadGroupMembers()
   await loadCurrentRoundOverview()
@@ -2346,7 +2444,7 @@ onMounted(async () => {
   }
 
   countdownTimer = setInterval(() => {
-  now.value = new Date()
+  now.value = demoNow()
   }, 1000)
 
 })
@@ -5143,5 +5241,198 @@ button {
   font-weight: 800;
   pointer-events: none;
   transform: translateY(-50%);
+}
+
+/* 최종 UI 정리: 실제 프로필, 시작일 설정, 게시글 상세 구분선 */
+.avatar,
+.latest-comment-avatar,
+.post-detail-avatar,
+.post-comment-avatar,
+.member-editor-avatar {
+  overflow: hidden;
+  border-radius: 50% !important;
+  clip-path: none !important;
+}
+
+.member-editor-avatar {
+  border: 1.5px solid #d8cbe8 !important;
+  box-shadow: none !important;
+  background: #f3eef9;
+}
+
+.post-comment-avatar {
+  display: block;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border: 1.5px solid #d8cbe8;
+  background: #f3eef9;
+}
+
+.post-comments li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.post-comments li > span:last-child {
+  min-width: 0;
+  padding-top: 5px;
+}
+
+.post-reaction-info {
+  padding-bottom: 17px;
+  border-bottom: 1px solid #e7dfef;
+}
+
+.post-comments {
+  padding-top: 17px;
+}
+
+/* 댓글 등록 버튼은 다른 주요 액션과 같은 라운드 보라 버튼으로 통일합니다. */
+.post-comments form > button {
+  min-width: 64px;
+  height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid #7156ad !important;
+  border-radius: 12px !important;
+  background: #7156ad !important;
+  box-shadow: none !important;
+  filter: none !important;
+  clip-path: none !important;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  transform: none;
+  transition: background-color 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+.post-comments form > button:hover:not(:disabled) {
+  background: #604795 !important;
+}
+
+.post-comments form > button:active:not(:disabled) {
+  box-shadow: none !important;
+  transform: scale(0.97);
+}
+
+.post-comments form > button:disabled {
+  border-color: #d6cbe2 !important;
+  background: #c8b7e5 !important;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.post-detail-modal-header .post-delete-button,
+.post-detail-modal-header .post-delete-button:hover,
+.post-detail-modal-header .post-delete-button:active {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  clip-path: none !important;
+  color: #ac99d2;
+  transform: none !important;
+}
+
+.post-detail-modal-header .post-delete-button:hover {
+  color: #7156ad;
+}
+
+:global(.group-start-date-modal) {
+  max-width: 520px;
+  border-color: #ac99d2 !important;
+  box-shadow: 7px 7px 0 #c8b7e5 !important;
+}
+
+:global(.group-start-date-modal .base-modal__header) {
+  padding: 22px 26px 8px;
+  border-bottom: 0;
+  background: #fff;
+}
+
+:global(.group-start-date-modal .base-modal__title) {
+  color: #332d3a;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+:global(.group-start-date-modal .base-modal__body) {
+  padding: 12px 26px 26px;
+}
+
+.start-date-modal-content {
+  gap: 12px;
+}
+
+.start-date-label {
+  color: #4d405a;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.start-date-input {
+  min-height: 54px;
+  border: 1.5px solid #d6cbe2 !important;
+  border-radius: 14px !important;
+  outline: 0;
+  background: #f8f5fc !important;
+  box-shadow: none !important;
+  color: #332d3a;
+  padding: 0 15px;
+  font: inherit;
+  font-size: 15px;
+}
+
+.start-date-input:focus {
+  border-color: #8b6ab8 !important;
+  outline: 3px solid rgba(139, 106, 184, 0.16);
+  outline-offset: 1px;
+}
+
+.start-date-submit,
+.start-date-submit:active {
+  min-height: 50px;
+  margin-top: 4px;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: #7156ad;
+  box-shadow: none !important;
+  clip-path: none !important;
+  color: #fff;
+  transform: none !important;
+}
+
+.start-date-complete {
+  padding: 11px 13px;
+  border: 1.5px solid #d6cbe2;
+  border-radius: 12px;
+  background: #f3eff8;
+  color: #604795;
+}
+
+/* 미인증 피드 동작은 이모지 대신 서비스 톤의 모노톤 아이콘으로 표시합니다. */
+.pending-verification .pending-verification__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.pending-verification .pending-verification__action > span {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: 0;
+}
+
+.pending-verification__icon,
+.pending-verification__arrow {
+  flex: 0 0 auto;
+  color: #fff;
 }
 </style>

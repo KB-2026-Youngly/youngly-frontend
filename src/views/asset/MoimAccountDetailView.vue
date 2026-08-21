@@ -367,6 +367,24 @@ async function refreshAccount() {
   }
 }
 
+async function refreshAfterDeposit() {
+  const [accountsResult] = await Promise.allSettled([
+    getMoimAccounts(),
+    loadMemberDeposits(),
+  ])
+
+  if (accountsResult.status === 'fulfilled') {
+    const refreshedAccount = (Array.isArray(accountsResult.value.data)
+      ? accountsResult.value.data
+      : []
+    ).find((item) => item.moimAccountId === account.value?.moimAccountId)
+
+    if (refreshedAccount) account.value = refreshedAccount
+  }
+
+  historyRefreshKey.value += 1
+}
+
 async function loadMemberDeposits() {
   membersLoading.value = true
   membersError.value = ''
@@ -529,15 +547,19 @@ async function submitDeposit() {
   depositSubmitting.value = true
   depositError.value = ''
   try {
-    await depositToGroup(group.value.groupId, {
+    const { data } = await depositToGroup(group.value.groupId, {
       sourceAccountId: personalAccount.value.accountId,
       amount: Number(depositAmount.value),
       idempotencyKey: createIdempotencyKey(),
     })
+    myDeposit.value = data
     confirmModalOpen.value = false
     depositModalOpen.value = false
-    showToast(`${formatCurrency(depositAmount.value)}원이 예치되었습니다.`)
-    await loadDetail()
+    showToast(`${formatCurrency(depositAmount.value)}원이 충전되었습니다.`)
+    // 성공 모달은 즉시 닫고, 전체 화면을 로딩 상태로 되돌리지 않은 채
+    // 소유자 전용 계좌 동기화 API를 호출하지 않고 조회 정보만 갱신한다.
+    // 따라서 모임장과 참여자 모두 동일하게 충전 결과를 확인할 수 있다.
+    void refreshAfterDeposit()
   } catch (requestError) {
     depositError.value = apiError(requestError, '예치금을 이체하지 못했습니다.')
   } finally {

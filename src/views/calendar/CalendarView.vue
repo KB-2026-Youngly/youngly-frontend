@@ -13,12 +13,13 @@ import { Check, ChevronDown, ChevronLeft, ChevronRight, ThumbsDown, ThumbsUp } f
 import BaseModal from '@/components/base/BaseModal.vue'
 import { getMyCertificationPosts } from '@/api/post'
 import { getGroups } from '@/api/group'
+import { demoNow } from '@/utils/demoTime'
 
 const calendarGroups=ref([])
 const groupTriggerRef=ref(null)
 const groupMenuRef=ref(null)
 const groupMenuStyle=ref({})
-const today=new Date()
+const today=demoNow()
 const week=['일','월','화','수','목','금','토'],groupId=ref('all'),current=ref(new Date(today.getFullYear(),today.getMonth(),1)),selected=ref(''),modal=ref(false),groupMenuOpen=ref(false),groupFilterRef=ref(null)
 const groups=computed(()=>[{groupId:'all',groupName:'전체'},...calendarGroups.value]),groupName=computed(()=>groups.value.find(g=>g.groupId===groupId.value)?.groupName??'전체')
 const apiPosts=ref([]), monthPosts = computed(() =>
@@ -30,7 +31,7 @@ const apiPosts=ref([]), monthPosts = computed(() =>
   )
 ),label=computed(()=>`${current.value.getFullYear()}년 ${current.value.getMonth()+1}월`),offset=computed(()=>new Date(current.value.getFullYear(),current.value.getMonth(),1).getDay()),lastDay=computed(()=>new Date(current.value.getFullYear(),current.value.getMonth()+1,0).getDate()),daily=computed(()=>monthPosts.value.filter(p=>p.postedAt.slice(0,10)===selected.value).sort((a,b)=>a.postedAt.localeCompare(b.postedAt))),dateLabel=computed(()=>selected.value?`${Number(selected.value.slice(5,7))}월 ${Number(selected.value.slice(8))}일`:'')
 const dailySummary=computed(()=>daily.value.reduce((summary,post)=>{summary[post.postStatus]=(summary[post.postStatus]??0)+1;return summary},{APPROVED:0,REJECTED:0,PENDING:0}))
-const key=d=>`${current.value.getFullYear()}-${String(current.value.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,posts=d=>monthPosts.value.filter(p=>p.postedAt.slice(0,10)===key(d)),isToday=d=>{const n=new Date();return n.getFullYear()===current.value.getFullYear()&&n.getMonth()===current.value.getMonth()&&n.getDate()===d},aria=d=>`${label.value} ${d}일${posts(d).length?`, 내 인증 ${posts(d).length}건`:', 인증 없음'}`,move=n=>{current.value=new Date(current.value.getFullYear(),current.value.getMonth()+n,1);selected.value=''},open=d=>{if(!posts(d).length)return;selected.value=key(d);modal.value=true},selectGroup=id=>{groupId.value=id;groupMenuOpen.value=false},status=s=>({APPROVED:'승인됨',REJECTED:'반려됨',PENDING:'심사중'})[s]
+const key=d=>`${current.value.getFullYear()}-${String(current.value.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,posts=d=>monthPosts.value.filter(p=>p.postedAt.slice(0,10)===key(d)),isToday=d=>{const n=demoNow();return n.getFullYear()===current.value.getFullYear()&&n.getMonth()===current.value.getMonth()&&n.getDate()===d},aria=d=>`${label.value} ${d}일${posts(d).length?`, 내 인증 ${posts(d).length}건`:', 인증 없음'}`,move=n=>{current.value=new Date(current.value.getFullYear(),current.value.getMonth()+n,1);selected.value=''},open=d=>{if(!posts(d).length)return;selected.value=key(d);modal.value=true},selectGroup=id=>{groupId.value=id;groupMenuOpen.value=false},status=s=>({APPROVED:'승인됨',REJECTED:'반려됨',PENDING:'심사중'})[s]
 
 const dateParam=(date)=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
 const responseList=(response,keys=[])=>{

@@ -122,10 +122,11 @@
               <div
                 class="profile-circle"
                 v-for="(profile, index) in group.profiles.slice(0, group.profiles.length > 4 ? 3 : 4)"
-                :key="index"
+                :key="profile.id || index"
                 :style="{ '--profile-fill': getProfileColor(index) }"
+                :title="profile.name"
               >
-                {{ profile }}
+                <UserProfileAvatar :image-url="profile.profileImageUrl" />
               </div>
               <div v-if="group.profiles.length > 4" class="profile-circle profile-circle--more">+{{ group.profiles.length - 3 }}</div>
               <div v-if="group.profiles.length < 4 && (group.status === '팀원 모집중' || group.isPending) && group.vacancyCount" class="profile-circle profile-circle--empty">+{{ group.vacancyCount }}</div>
@@ -425,6 +426,7 @@ import { useRouter } from 'vue-router';
 import BaseModal from '@/components/base/BaseModal.vue';
 import BaseSelect from '@/components/base/BaseSelect.vue';
 import FloatingActionButton from '@/components/common/FloatingActionButton.vue';
+import UserProfileAvatar from '@/components/common/UserProfileAvatar.vue';
 import pixelFriendsCharacter from '@/assets/characters/pixel-friends.png';
 import {
   createGroup as createGroupRequest,
@@ -437,6 +439,7 @@ import {
 import { getMoimAccounts } from '@/api/account';
 import { getGroupRounds } from '@/api/round'
 import { getVerificationFeed } from '@/api/post'
+import { demoTodayString } from '@/utils/demoTime'
 
 const router = useRouter();
 
@@ -804,16 +807,29 @@ const categoryValues = {
   기타: 'CUSTOM',
 };
 
-const getStoredInitial = () => {
+const getStoredProfile = () => {
   try {
     const user = JSON.parse(localStorage.getItem('youngly_user') || '{}');
-    return String(user.nickname || user.loginId || '나').trim().slice(0, 1) || '나';
+    const name = String(user.nickname || user.loginId || '나').trim() || '나';
+    return {
+      id: user.userId || user.loginId || 'me',
+      name,
+      profileImageUrl: user.profileImageUrl || '',
+    };
   } catch {
-    return '나';
+    return { id: 'me', name: '나', profileImageUrl: '' };
   }
 };
 
-const toInitial = (member) => String(member?.nickname || member?.userId || '').trim().slice(0, 1);
+const toProfile = (member) => {
+  const name = String(member?.nickname || member?.loginId || member?.userId || '').trim();
+  if (!name) return null;
+  return {
+    id: member?.userId || member?.groupUserId || name,
+    name,
+    profileImageUrl: member?.profileImageUrl || '',
+  };
+};
 
 const getGroupLoadErrorMessage = (error) => {
   const status = error?.response?.status;
@@ -832,8 +848,8 @@ const buildGroupCard = async (group) => {
   const members = usersResult.status === 'fulfilled' && Array.isArray(usersResult.value.data)
     ? usersResult.value.data
     : [];
-  const profiles = members.map(toInitial).filter(Boolean);
-  if (profiles.length === 0) profiles.push(getStoredInitial());
+  const profiles = members.map(toProfile).filter(Boolean);
+  if (profiles.length === 0) profiles.push(getStoredProfile());
 
   const memberLimit = Number(detail.groupCount ?? group.groupCount ?? 0);
   const joinedCount = Number(group.memberCount ?? members.length ?? profiles.length) || profiles.length;
@@ -920,7 +936,7 @@ const loadUnverifiedCount = async () => {
         !group.isPending
     )
 
-    const today = new Date().toLocaleDateString('sv-SE')
+    const today = demoTodayString()
 
     const results = await Promise.allSettled(
       ongoingGroups.map(async (group) => {
@@ -3129,7 +3145,7 @@ onBeforeUnmount(() => {
 .alert-text h3 {
   margin: 0 0 4px;
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .alert-text p {
@@ -3196,7 +3212,7 @@ onBeforeUnmount(() => {
 .deposit-alert-text h3 {
   margin: 0 0 4px;
   color: #7e3030;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
 }
 
@@ -3225,6 +3241,14 @@ onBeforeUnmount(() => {
 
 .deposit-action-btn:active {
   transform: scale(0.97);
+}
+
+/* 상단 인증/예치금 알림 카드는 동일한 세로 규격을 사용합니다. */
+.alert-card-surface,
+.deposit-alert-card-surface {
+  box-sizing: border-box;
+  min-height: 82px;
+  padding: 13px 16px;
 }
 
 /* 초대 코드 입력창 안에는 별도 버튼 박스 없이 붙여넣기 아이콘만 노출 */
