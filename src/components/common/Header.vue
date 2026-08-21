@@ -20,12 +20,15 @@
           >
             {{ headerPageTitle }}
           </h1>
-          <img
+          <button
             v-else-if="!showBackHeader"
-            class="header-logo"
-            :src="headerLogoUrl"
-            alt="Youngly"
-          />
+            class="header-logo-link"
+            type="button"
+            aria-label="홈으로 이동"
+            @click="goBackToHome"
+          >
+            <img class="header-logo" :src="headerLogoUrl" alt="Youngly" />
+          </button>
         </div>
 
         <div class="header-right">
@@ -378,6 +381,20 @@ onBeforeUnmount(() => {
   height: 50px;
   margin-left: -5px;
   object-fit: contain;
+}
+
+.header-logo-link {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  align-items: center;
+  background: transparent;
+  cursor: pointer;
+}
+
+.header-logo-link:focus-visible {
+  outline: 3px solid rgba(113, 86, 173, 0.35);
+  outline-offset: 3px;
 }
 
 .header-back-button + .header-logo {
