@@ -750,6 +750,12 @@
         <button type="submit">반려 사유 등록</button>
       </form>
     </BaseModal>
+
+    <transition name="point-toast">
+      <div v-if="reviewPointToast" class="review-point-toast" role="status" aria-live="polite">
+        <span>{{ reviewPointToast }}</span>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -812,6 +818,18 @@ const userStore = useUserStore()
 const joinRequests = ref([])
 const joinRequestsLoading = ref(false)
 const joinRequestProcessingId = ref(null)
+const reviewPointToast = ref('')
+let reviewPointToastTimer = null
+
+const showReviewPointToast = (approvalStatus) => {
+  reviewPointToast.value = approvalStatus === 'REJECT'
+    ? '반려되었습니다. +10P 지급 완료'
+    : '승인되었습니다. +10P 지급 완료'
+  clearTimeout(reviewPointToastTimer)
+  reviewPointToastTimer = setTimeout(() => {
+    reviewPointToast.value = ''
+  }, 2200)
+}
 
 const challengeStarted = computed(
   () => currentRound.value?.roundStatus === 'ONGOING'
@@ -1606,7 +1624,7 @@ const reviewVerification = async (member) => {
       approvalStatus: 'APPROVE',
     })
 
-
+    showReviewPointToast('APPROVE')
     await loadVerificationFeed()
   } catch (error) {
     console.error('인증 승인 실패:', error)
@@ -1635,6 +1653,8 @@ const submitRejection = async () => {
       approvalStatus: 'REJECT',
       rejectReason: rejectReason.value,
     })
+
+    showReviewPointToast('REJECT')
 
     rejectModalOpen.value = false
     rejectingMember.value = null
@@ -2257,6 +2277,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  clearTimeout(reviewPointToastTimer)
   clearTimeout(feedLongPressTimer)
   clearTimeout(groupEditCloseTimer)
   removeMobileFeedDragListeners()
@@ -2275,6 +2296,28 @@ onBeforeUnmount(() => {
   color: #111;
   font-family: inherit;
 }
+
+.review-point-toast {
+  position: fixed;
+  z-index: 12000;
+  left: 50%;
+  bottom: calc(92px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(45,34,58,.94);
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(31,20,42,.24);
+  transform: translateX(-50%);
+}
+
+.review-point-toast span { font-size: 12px; font-weight: 700; }
+.point-toast-enter-active,.point-toast-leave-active { transition: opacity .2s ease,transform .2s ease; }
+.point-toast-enter-from,.point-toast-leave-to { opacity: 0; transform: translate(-50%,10px); }
 
 .group-detail-content {
   width: min(100%, 720px);
