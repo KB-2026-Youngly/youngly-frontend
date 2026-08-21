@@ -1,5 +1,7 @@
 <template>
+  <div class="state-card-shadow yl-stepped-card-shadow">
   <article class="state-card"><span class="icon" aria-hidden="true"><Sparkles :size="20" /></span><div><h2>나의 개인연금 인사이트</h2><p>간단한 투자 성향 설문을 완료하면 나에게 맞는 개인연금 인사이트를 확인할 수 있어요.</p><button type="button" @click="$emit('start')">투자 성향 설문 시작하기 <ChevronRight :size="16" aria-hidden="true" /></button></div></article>
+  </div>
 </template>
 <script setup>
 import { ChevronRight, Sparkles } from 'lucide-vue-next'

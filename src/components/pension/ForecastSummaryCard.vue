@@ -1,5 +1,6 @@
 <template>
-  <article class="summary-card">
+  <div class="insight-card-shadow yl-stepped-card-shadow">
+  <article class="summary-card yl-card-frame pixel-step-card">
     <h2>이번 달 적립 요약</h2>
     <dl>
       <div><dt>지금까지 확정된 적립금</dt><dd class="yl-money">{{ currency(forecast.settledAmountThisMonth) }}</dd><small>정산 완료 챌린지 기준</small></div>
@@ -7,6 +8,7 @@
       <div><dt>다음 적립 예정일</dt><dd>{{ formattedDate }}</dd><small>{{ dDay }}</small></div>
     </dl>
   </article>
+  </div>
 </template>
 
 <script setup>
@@ -31,6 +33,6 @@ const dDay = computed(() => {
 </script>
 
 <style scoped>
-.summary-card { min-height: 330px; padding: 28px; border: 1px solid rgba(105, 82, 159, .14); border-radius: 20px; background: #fff; box-shadow: 0 10px 28px rgba(49, 37, 72, .07); }.summary-card h2 { margin: 0; color: var(--yl-purple-dark,#4f2f84); font-size: 20px; font-weight: 900; }.summary-card dl { margin: 20px 0 0; }.summary-card dl > div { padding: 17px 0; border-top: 1px solid #eee8f2; }.summary-card dt { color: #766e7d; font-size: 12px; }.summary-card dd { margin: 7px 0 3px; color: var(--yl-purple-dark,#4f2f84); font-size: 20px; font-weight: 900; }.summary-card small { color: #958b9c; font-size: 11px; }@media (max-width: 767px) { .summary-card { min-height: 0; padding: 20px 17px; } }
+.summary-card { --pixel-outline-width:2px; --pixel-outline-color:#ac99d2; --pixel-fill:#fff; min-height: 330px; padding: 28px; }.summary-card h2 { margin: 0; color: var(--yl-purple-dark,#4f2f84); font-size: 20px; font-weight: 900; }.summary-card dl { margin: 20px 0 0; }.summary-card dl > div { padding: 17px 0; border-top: 1px solid #eee8f2; }.summary-card dt { color: #766e7d; font-size: 12px; }.summary-card dd { margin: 7px 0 3px; color: var(--yl-purple-dark,#4f2f84); font-size: 20px; font-weight: 900; }.summary-card small { color: #958b9c; font-size: 11px; }@media (max-width: 767px) { .summary-card { min-height: 0; padding: 20px 17px; } }
 .summary-card dt{color:#4f4857}.summary-card small{color:#5d5564}.summary-card h2{font-size:18px}.summary-card dd{font-size:19px}
 </style>

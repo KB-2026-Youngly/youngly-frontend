@@ -260,7 +260,7 @@ onBeforeUnmount(()=>{document.removeEventListener('click',closeGroupMenu);window
   color: #fff;
   background: transparent;
   font-size: 15px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 1px 0 1px rgba(0, 0, 0, .75);
+  text-shadow: none;
 }
 @media (max-width: 767px) { .day.has strong { font-size: 13px; } }
 
@@ -613,4 +613,9 @@ onBeforeUnmount(()=>{document.removeEventListener('click',closeGroupMenu);window
 :global(.calendar-filter-menu--portal button.selected){font-weight:900}
 :global(.group-menu-enter-active),:global(.group-menu-leave-active){transition:opacity .16s ease,transform .16s ease}
 :global(.group-menu-enter-from),:global(.group-menu-leave-to){opacity:0;transform:translateY(-4px)}
+.photo em{top:calc(50% + 30px);right:auto;bottom:auto;left:50%;width:auto;height:auto;padding:0;border:0;border-radius:0;background:transparent;color:var(--yl-yellow);font-size:16px;font-weight:400;line-height:1;text-shadow:none;transform:translateX(-50%)}
+@media(max-width:767px){.photo em{top:calc(50% + 24px);font-size:14px}}
+.day strong{font-weight:400}
+.day strong,.day.has strong{font-size:20px}
+@media(max-width:767px){.day strong,.day.has strong{font-size:18px}}
 </style>
