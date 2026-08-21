@@ -21,7 +21,14 @@ const groupMenuStyle=ref({})
 const today=new Date()
 const week=['일','월','화','수','목','금','토'],groupId=ref('all'),current=ref(new Date(today.getFullYear(),today.getMonth(),1)),selected=ref(''),modal=ref(false),groupMenuOpen=ref(false),groupFilterRef=ref(null)
 const groups=computed(()=>[{groupId:'all',groupName:'전체'},...calendarGroups.value]),groupName=computed(()=>groups.value.find(g=>g.groupId===groupId.value)?.groupName??'전체')
-const apiPosts=ref([]),monthPosts=computed(()=>apiPosts.value.filter(p=>groupId.value==='all'||p.groupId===groupId.value)),label=computed(()=>`${current.value.getFullYear()}년 ${current.value.getMonth()+1}월`),offset=computed(()=>new Date(current.value.getFullYear(),current.value.getMonth(),1).getDay()),lastDay=computed(()=>new Date(current.value.getFullYear(),current.value.getMonth()+1,0).getDate()),daily=computed(()=>monthPosts.value.filter(p=>p.postedAt.slice(0,10)===selected.value).sort((a,b)=>a.postedAt.localeCompare(b.postedAt))),dateLabel=computed(()=>selected.value?`${Number(selected.value.slice(5,7))}월 ${Number(selected.value.slice(8))}일`:'')
+const apiPosts=ref([]), monthPosts = computed(() =>
+  apiPosts.value.filter(
+    (post) =>
+      groupId.value === 'all' ||
+      String(post.groupId) ===
+        String(groupId.value)
+  )
+),label=computed(()=>`${current.value.getFullYear()}년 ${current.value.getMonth()+1}월`),offset=computed(()=>new Date(current.value.getFullYear(),current.value.getMonth(),1).getDay()),lastDay=computed(()=>new Date(current.value.getFullYear(),current.value.getMonth()+1,0).getDate()),daily=computed(()=>monthPosts.value.filter(p=>p.postedAt.slice(0,10)===selected.value).sort((a,b)=>a.postedAt.localeCompare(b.postedAt))),dateLabel=computed(()=>selected.value?`${Number(selected.value.slice(5,7))}월 ${Number(selected.value.slice(8))}일`:'')
 const dailySummary=computed(()=>daily.value.reduce((summary,post)=>{summary[post.postStatus]=(summary[post.postStatus]??0)+1;return summary},{APPROVED:0,REJECTED:0,PENDING:0}))
 const key=d=>`${current.value.getFullYear()}-${String(current.value.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,posts=d=>monthPosts.value.filter(p=>p.postedAt.slice(0,10)===key(d)),isToday=d=>{const n=new Date();return n.getFullYear()===current.value.getFullYear()&&n.getMonth()===current.value.getMonth()&&n.getDate()===d},aria=d=>`${label.value} ${d}일${posts(d).length?`, 내 인증 ${posts(d).length}건`:', 인증 없음'}`,move=n=>{current.value=new Date(current.value.getFullYear(),current.value.getMonth()+n,1);selected.value=''},open=d=>{if(!posts(d).length)return;selected.value=key(d);modal.value=true},selectGroup=id=>{groupId.value=id;groupMenuOpen.value=false},status=s=>({APPROVED:'승인됨',REJECTED:'반려됨',PENDING:'심사중'})[s]
 
@@ -32,15 +39,39 @@ const updateGroupMenuPosition=()=>{if(groupMenuOpen.value)syncGroupMenuPosition(
 const loadMonthPosts=async()=>{
   const from=new Date(current.value.getFullYear(),current.value.getMonth(),1)
   const to=new Date(current.value.getFullYear(),current.value.getMonth()+1,0)
-  const [{ data: posts },{ data: groups }]=await Promise.all([
-    getMyCertificationPosts({from:dateParam(from),to:dateParam(to)}),
-    getGroups(),
-  ])
-  apiPosts.value=Array.isArray(posts)?posts.map(post=>({...post,myReaction:post.myReaction?.toUpperCase()||null})):[]
-  const fetchedGroups=Array.isArray(groups)?groups.filter(group=>group.groupId&&group.groupName).map(group=>({groupId:group.groupId,groupName:group.groupName})):[]
-  calendarGroups.value=fetchedGroups
-  if(groupId.value!=='all'&&!calendarGroups.value.some(group=>group.groupId===groupId.value))groupId.value='all'
+  try {
+    const [{ data: posts }, { data: fetchedGroups }] = await Promise.all([
+      getMyCertificationPosts({ from: dateParam(from), to: dateParam(to) }),
+      getGroups(),
+    ])
+
+    apiPosts.value = Array.isArray(posts)
+      ? posts.map((post) => ({
+          ...post,
+          myReaction: post.myReaction?.toUpperCase() || null,
+        }))
+      : []
+
+    calendarGroups.value = Array.isArray(fetchedGroups)
+      ? fetchedGroups
+          .filter((group) => group.groupId && group.groupName)
+          .map((group) => ({
+            groupId: String(group.groupId),
+            groupName: group.groupName,
+          }))
+      : []
+
+    if (groupId.value !== 'all' && !calendarGroups.value.some(
+      (group) => String(group.groupId) === String(groupId.value),
+    )) groupId.value = 'all'
+  } catch (error) {
+    console.error('캘린더 인증 기록 조회 실패:', error)
+    apiPosts.value = []
+    calendarGroups.value = []
+    groupId.value = 'all'
+  }
 }
+
 watch(current,loadMonthPosts)
 const closeGroupMenu=(event)=>{if(!groupFilterRef.value?.contains(event.target)&&!groupMenuRef.value?.contains(event.target))groupMenuOpen.value=false}
 let calendarSheetElement=null

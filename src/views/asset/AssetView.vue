@@ -183,14 +183,12 @@
           >
         </div>
       </transition>
-      <button
-        class="floating-add-button"
-        type="button"
-        :aria-expanded="floatingMenuOpen"
+      <FloatingActionButton
+        :aria-label="floatingMenuOpen ? '모임통장 메뉴 닫기' : '모임통장 메뉴 열기'"
+        :active="floatingMenuOpen"
+        :expanded="floatingMenuOpen"
         @click="floatingMenuOpen = !floatingMenuOpen"
-      >
-        {{ floatingMenuOpen ? '×' : '+' }}
-      </button>
+      />
     </div>
 
     <BaseModal
@@ -433,6 +431,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseModal from '@/components/base/BaseModal.vue'
+import FloatingActionButton from '@/components/common/FloatingActionButton.vue'
 import TransactionHistory from '@/components/asset/TransactionHistory.vue'
 import {
   deactivateMoimAccount,

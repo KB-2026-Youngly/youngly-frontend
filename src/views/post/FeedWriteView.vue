@@ -23,7 +23,7 @@
                     v-model="selectedGroupIds"
                     type="checkbox"
                     :value="group.id"
-                    :disabled="group.verifiedToday || group.verificationCheckFailed"
+                    :disabled="group.verifiedToday"
                   />
                   <span class="group-icon" aria-hidden="true">
                     <component :is="group.icon" :size="16" :stroke-width="2" />
@@ -44,16 +44,14 @@
         <div class="section-card-shadow yl-stepped-card-shadow">
           <section class="verification-section-card yl-card-frame pixel-step-card pixel-step-solid">
             <div class="verification-section-surface pixel-step-surface">
-              <h2 class="section-title">인증 사진 업로드</h2>
+              <h2 class="section-title">인증 사진 촬영</h2>
               <button class="photo-upload" :class="{ 'has-image': imagePreview }" type="button" @click="openCamera">
-                <img v-if="imagePreview" :src="imagePreview" alt="업로드한 인증 사진 미리보기" />
+                <img v-if="imagePreview" :src="imagePreview" alt="촬영한 인증 사진 미리보기" />
                 <template v-else>
                   <Camera class="camera-icon" :size="38" :stroke-width="1.8" aria-hidden="true" />
-                  <strong>인증 사진 촬영 또는 업로드</strong>
-                  <small>카메라 또는 사진첩 열기</small>
+                  <small>카메라 열기</small>
                 </template>
               </button>
-              <input ref="galleryInput" class="gallery-input" type="file" accept="image/*" @change="handleImageChange" />
               <input ref="nativeCameraInput" class="gallery-input" type="file" accept="image/*" capture="environment" @change="handleImageChange" />
             </div>
           </section>
@@ -98,17 +96,12 @@
               <CameraOff :size="38" :stroke-width="1.8" aria-hidden="true" />
               <strong>카메라를 열 수 없어요</strong>
               <small>{{ cameraError }}</small>
-              <button type="button" @click="openGallery">사진첩 열기</button>
             </div>
           </div>
           <p class="camera-guide">프레임 안에 인증 내용을 맞춰 주세요</p>
         </main>
 
         <footer class="camera-controls">
-          <button class="camera-side-button" type="button" aria-label="사진첩 열기" @click="openGallery">
-            <Images :size="25" :stroke-width="2" />
-            <span>사진첩</span>
-          </button>
           <button class="camera-capture-button" type="button" aria-label="사진 촬영" :disabled="cameraLoading || !!cameraError" @click="capturePhoto">
             <span></span>
           </button>
@@ -126,7 +119,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BookOpen, CalendarCheck2, Camera, CameraOff, Dumbbell, GraduationCap, Images, Shapes, SwitchCamera, X } from 'lucide-vue-next'
+import { BookOpen, CalendarCheck2, Camera, CameraOff, Dumbbell, GraduationCap, Shapes, SwitchCamera, X } from 'lucide-vue-next'
 import { getGroups, getGroupDetail, getGroupRounds } from '@/api/group'
 import { createVerificationPost, getVerificationFeed } from '@/api/post'
 
@@ -139,7 +132,6 @@ const groupsError = ref('')
 const selectedGroupIds = ref([])
 const imageFile = ref(null)
 const imagePreview = ref('')
-const galleryInput = ref(null)
 const nativeCameraInput = ref(null)
 const cameraVideo = ref(null)
 const captureCanvas = ref(null)
@@ -258,11 +250,11 @@ const loadVerificationGroups = async () => {
       .map((result) => result.value)
 
     selectedGroupIds.value = selectedGroupIds.value.filter((groupId) => (
-      groups.value.some((group) => group.id === groupId && !group.verifiedToday && !group.verificationCheckFailed)
+      groups.value.some((group) => group.id === groupId && !group.verifiedToday)
     ))
 
     if (requestedGroupId && groups.value.some((group) => (
-      group.id === requestedGroupId && !group.verifiedToday && !group.verificationCheckFailed
+      group.id === requestedGroupId && !group.verifiedToday
     ))) {
       selectedGroupIds.value = [requestedGroupId]
     }
@@ -375,7 +367,7 @@ const startCamera = async () => {
   } catch (error) {
     cameraError.value = error?.name === 'NotAllowedError'
       ? '카메라 권한을 허용해 주세요.'
-      : '카메라 연결을 확인하거나 사진첩을 이용해 주세요.'
+      : '카메라 연결 상태를 확인해 주세요.'
   } finally {
     cameraLoading.value = false
   }
@@ -408,9 +400,6 @@ const closeCamera = () => {
   document.body.style.overflow = ''
 }
 
-const openGallery = () => {
-  galleryInput.value?.click()
-}
 
 const switchCamera = async () => {
   cameraFacingMode.value = cameraFacingMode.value === 'environment' ? 'user' : 'environment'
@@ -649,7 +638,8 @@ onBeforeUnmount(() => {
   position: relative;
   display: grid;
   width: 100%;
-  min-height: 220px;
+  min-height: 0;
+  aspect-ratio: 1.15 / 1;
   box-sizing: border-box;
   place-content: center;
   gap: 8px;
@@ -680,7 +670,7 @@ onBeforeUnmount(() => {
 .photo-upload img {
   display: block;
   width: 100%;
-  height: 280px;
+  height: 100%;
   object-fit: cover;
 }
 
@@ -820,15 +810,18 @@ onBeforeUnmount(() => {
 }
 
 .camera-controls {
-  display: grid;
-  grid-template-columns: 1fr 90px 1fr;
+  position: relative;
+  display: flex;
   align-items: center;
+  justify-content: center;
   padding: 12px 24px max(18px, env(safe-area-inset-bottom));
 }
 
 .camera-side-button {
+  position: absolute;
+  right: 24px;
+
   justify-items: center;
-  justify-self: center;
   gap: 5px;
   min-width: 58px;
   padding: 8px;
