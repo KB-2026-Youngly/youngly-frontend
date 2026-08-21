@@ -6,8 +6,7 @@
     <img
       v-if="resolvedImageUrl && !imageFailed"
       :src="resolvedImageUrl"
-      :alt="`${character.name || '캐릭터'} 이미지`"
-      :style="coverImageStyle"
+      :alt="`${displayName || '캐릭터'} 이미지`"
       @error="imageFailed = true"
     />
     <div v-else class="character-preview__fallback" role="img" :aria-label="fallbackLabel">
@@ -21,6 +20,7 @@
 import { computed, ref, watch } from 'vue'
 import { ImageOff } from 'lucide-vue-next'
 import {
+  resolveCharacterDisplayName,
   resolveCharacterImage,
   resolveCoverCharacterImageConfig,
 } from '@/constants/characterImages'
@@ -38,17 +38,11 @@ const props = defineProps({
 })
 
 const imageFailed = ref(false)
-const fallbackLabel = computed(() => `${props.character?.name || '캐릭터'} 이미지 없음`)
+const displayName = computed(() => resolveCharacterDisplayName(props.character))
+const fallbackLabel = computed(() => `${displayName.value || '캐릭터'} 이미지 없음`)
 const resolvedImageUrl = computed(() => resolveCharacterImage(props.character))
 const coverImageConfig = computed(() => resolveCoverCharacterImageConfig(props.character))
 const usesCoverImage = computed(() => Boolean(coverImageConfig.value))
-const coverImageStyle = computed(() =>
-  coverImageConfig.value
-    ? {
-        objectPosition: coverImageConfig.value.objectPosition,
-      }
-    : undefined,
-)
 
 watch(resolvedImageUrl, () => {
   imageFailed.value = false
@@ -68,12 +62,15 @@ watch(resolvedImageUrl, () => {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: contain !important;
+}
+
+.character-preview--cover {
+  background: #f6f1fb;
 }
 
 .character-preview--cover img {
-  object-fit: cover;
-  object-position: center center;
+  object-fit: contain !important;
 }
 
 .character-preview__fallback {

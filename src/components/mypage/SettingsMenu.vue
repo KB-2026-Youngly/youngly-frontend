@@ -180,32 +180,33 @@ const emit = defineEmits(['select'])
   color: var(--color-text-muted, #77717f);
 }
 
-@media (max-width: 480px) {
+@media (max-width: 767px) {
   .settings-menu {
     padding: 2px;
   }
 
   .settings-menu-shell {
-    --yl-stepped-shadow-offset: 5px;
+    --yl-stepped-shadow-offset: 4px;
   }
 
   .settings-menu__surface {
-    padding: 5px 16px;
+    padding: 4px 14px;
   }
 
   .settings-menu__item {
-    grid-template-columns: 38px minmax(0, 1fr) 22px;
-    min-height: 60px;
-    gap: 10px;
+    grid-template-columns: 36px minmax(0, 1fr) 20px;
+    min-height: 56px;
+    gap: 9px;
   }
 
   .settings-menu__icon {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
   }
 
   .settings-menu__copy strong {
-    font-size: 14px;
+    font-size: 13px;
   }
 }
 </style>

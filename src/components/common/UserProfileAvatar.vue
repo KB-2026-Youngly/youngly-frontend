@@ -1,5 +1,9 @@
 <template>
-  <span class="user-profile-avatar" aria-hidden="true">
+  <span
+    class="user-profile-avatar"
+    :class="{ 'user-profile-avatar--cover': usesCoverImage }"
+    aria-hidden="true"
+  >
     <img :src="displayImageUrl" alt="" @error="handleImageError" />
   </span>
 </template>
@@ -7,7 +11,10 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import defaultCharacterImage from '@/assets/icons/loginIcon/starfriend.png'
-import { resolveCharacterProfileImage } from '@/constants/characterImages'
+import {
+  resolveCharacterProfileImage,
+  resolveCharacterProfileImageConfig,
+} from '@/constants/characterImages'
 
 const props = defineProps({
   imageUrl: {
@@ -18,6 +25,8 @@ const props = defineProps({
 
 const imageFailed = ref(false)
 const resolvedImageUrl = computed(() => resolveCharacterProfileImage(props.imageUrl))
+const coverImageConfig = computed(() => resolveCharacterProfileImageConfig(props.imageUrl))
+const usesCoverImage = computed(() => Boolean(coverImageConfig.value) && !imageFailed.value)
 const displayImageUrl = computed(() =>
   resolvedImageUrl.value && !imageFailed.value ? resolvedImageUrl.value : defaultCharacterImage,
 )
@@ -49,5 +58,13 @@ watch(resolvedImageUrl, () => {
   padding: 4px;
   object-fit: contain;
   box-sizing: border-box;
+}
+
+.user-profile-avatar--cover img {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  object-fit: contain !important;
+  background: #f6f1fb;
 }
 </style>

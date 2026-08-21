@@ -9,13 +9,14 @@
     }"
     type="button"
     :aria-pressed="selected"
-    :aria-label="`${character.name || '캐릭터'} 선택${equipped ? ', 현재 장착 중' : ''}`"
+    :aria-label="`${displayName || '캐릭터'} 선택${equipped ? ', 현재 장착 중' : ''}`"
     @click="emit('select', character.characterId)"
+    @dblclick.prevent="emit('equip', character.characterId)"
   >
     <span class="character-card__image">
       <CharacterPreview :character="character" />
     </span>
-    <strong>{{ character.name || '이름 없는 캐릭터' }}</strong>
+    <strong>{{ displayName || '이름 없는 캐릭터' }}</strong>
     <span class="character-card__check" aria-hidden="true">
       <Check :size="15" :stroke-width="3" />
     </span>
@@ -25,7 +26,7 @@
 <script setup>
 import { computed } from 'vue'
 import { Check } from 'lucide-vue-next'
-import { isCoverCharacterImage } from '@/constants/characterImages'
+import { isCoverCharacterImage, resolveCharacterDisplayName } from '@/constants/characterImages'
 import CharacterPreview from './CharacterPreview.vue'
 
 const props = defineProps({
@@ -47,8 +48,9 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['select'])
+const emit = defineEmits(['select', 'equip'])
 const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
+const displayName = computed(() => resolveCharacterDisplayName(props.character))
 </script>
 
 <style scoped>
@@ -175,10 +177,18 @@ const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
   }
 }
 
-.character-card:hover {
-  transform: translateY(-3px);
-  border-color: #9d89c4;
-  box-shadow: 0 12px 24px rgba(83, 57, 128, 0.13);
+@media (hover: hover) and (pointer: fine) {
+  .character-card:hover {
+    transform: scale(1.02);
+    border-color: #9d89c4;
+    box-shadow: 0 12px 24px rgba(83, 57, 128, 0.13);
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .character-card:active {
+    transform: scale(1.02);
+  }
 }
 
 .character-card:focus-visible {
@@ -315,10 +325,12 @@ const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
   box-shadow: 5px 5px 0 #d5c8e9;
 }
 
-.character-card:hover {
-  border-color: #7658b5;
-  box-shadow: 3px 3px 0 #c8b7e5;
-  transform: translate(2px, 2px);
+@media (hover: hover) and (pointer: fine) {
+  .character-card:hover {
+    border-color: #7658b5;
+    box-shadow: 3px 3px 0 #c8b7e5;
+    transform: scale(1.02);
+  }
 }
 
 .character-card--equipped {

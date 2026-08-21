@@ -3,7 +3,8 @@
     <img
       v-if="imageUrl && !imageFailed"
       :src="imageUrl"
-      :alt="`${character?.name || '캐릭터'} 프로필`"
+      :alt="`${displayName || '캐릭터'} 프로필`"
+      :class="{ 'character-avatar__image--cover': usesCoverImage }"
       @error="imageFailed = true"
     />
     <span v-else class="character-avatar__fallback">{{ fallbackInitial }}</span>
@@ -12,7 +13,11 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { resolveCharacterImage } from '@/constants/characterImages'
+import {
+  resolveCharacterDisplayName,
+  resolveCharacterImage,
+  resolveCoverCharacterImageConfig,
+} from '@/constants/characterImages'
 
 const props = defineProps({
   character: {
@@ -27,6 +32,9 @@ const props = defineProps({
 
 const imageFailed = ref(false)
 const imageUrl = computed(() => resolveCharacterImage(props.character))
+const displayName = computed(() => resolveCharacterDisplayName(props.character))
+const coverImageConfig = computed(() => resolveCoverCharacterImageConfig(props.character))
+const usesCoverImage = computed(() => Boolean(coverImageConfig.value))
 const fallbackInitial = computed(() => String(props.fallbackText || '회').trim().charAt(0) || '회')
 
 watch(imageUrl, () => {
@@ -51,6 +59,14 @@ watch(imageUrl, () => {
   padding: 4px;
   object-fit: contain;
   box-sizing: border-box;
+}
+
+.character-avatar .character-avatar__image--cover {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  object-fit: contain !important;
+  background: #f6f1fb;
 }
 
 .character-avatar__fallback {

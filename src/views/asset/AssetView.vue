@@ -447,7 +447,7 @@ import {
 } from '@/api/account'
 import { getMyInfo } from '@/api/user'
 import { getGroups } from '@/api/group'
-import pensionTabIcon from '@/assets/characters/bear.png'
+import pensionTabIcon from '@/assets/asset_icon/pension-tab-character.png'
 import moimTabIcon from '@/assets/icons/loginIcon/starfriend.png'
 import pensionChainIcon from '@/assets/asset_icon/pension_chain.png'
 import pensionPlusIcon from '@/assets/asset_icon/pension_plus.png'

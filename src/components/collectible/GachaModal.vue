@@ -109,7 +109,7 @@
           >
             <CharacterPreview :character="character" size="hero" />
           </div>
-          <strong class="gacha-modal__name">{{ character?.name }}</strong>
+          <strong class="gacha-modal__name">{{ displayName }}</strong>
           <p class="gacha-modal__success" role="status" aria-live="polite">
             뽑기가 완료되었어요. 남은 포인트는 <strong>{{ formattedBalance }}P</strong>예요.
           </p>
@@ -142,7 +142,7 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import CharacterPreview from '@/components/collectible/CharacterPreview.vue'
-import { isCoverCharacterImage } from '@/constants/characterImages'
+import { isCoverCharacterImage, resolveCharacterDisplayName } from '@/constants/characterImages'
 
 defineOptions({ name: 'GachaModal' })
 
@@ -186,6 +186,7 @@ const titleId = 'gacha-modal-title'
 const modalRef = ref(null)
 const formattedBalance = computed(() => new Intl.NumberFormat('ko-KR').format(props.balance))
 const usesCoverImage = computed(() => isCoverCharacterImage(props.character))
+const displayName = computed(() => resolveCharacterDisplayName(props.character))
 
 const requestClose = () => {
   if (!props.loading && !props.equipping) emit('close')
@@ -812,6 +813,29 @@ watch([() => props.open, () => props.mode], async ([open]) => {
   border-radius: 50%;
   background: #f6f1fb;
   box-sizing: border-box;
+  transform-origin: center;
+  animation: gacha-result-pop 0.52s ease-out both;
+}
+
+@keyframes gacha-result-pop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+
+  58% {
+    transform: scale(1.025);
+    opacity: 1;
+  }
+
+  78% {
+    transform: scale(0.99);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .gacha-modal__result--cover {
@@ -1146,7 +1170,8 @@ watch([() => props.open, () => props.mode], async ([open]) => {
   .summon-scene__magic-circle,
   .summon-scene__spark,
   .summon-scene__egg,
-  .summon-state-fade {
+  .summon-state-fade,
+  .gacha-modal__result {
     animation: none;
   }
 

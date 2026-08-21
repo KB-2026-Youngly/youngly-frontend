@@ -1,15 +1,5 @@
 <template>
   <div class="point-page">
-    <div class="point-back-shadow mypage-back-shadow yl-stepped-card-shadow"><button class="back-button mypage-back-button pixel-step-button pixel-step-solid" type="button" aria-label="마이페이지로 돌아가기" @click="goBack">
-      <span class="point-back-surface mypage-back-surface pixel-step-surface"><ArrowLeft :size="18" aria-hidden="true" /></span>
-    </button></div>
-
-    <header class="page-heading">
-      <span>REWARD LOG</span>
-      <h1>내 포인트</h1>
-      <p>활동으로 모은 포인트와 사용 기록을 확인해 보세요.</p>
-    </header>
-
     <section v-if="isLoading" class="state-panel">
       <BaseSpinner size="large" label="포인트를 불러오는 중..." centered />
     </section>
@@ -53,8 +43,7 @@
 <script setup>
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { AlertTriangle, ArrowLeft } from 'lucide-vue-next'
-import { useRouter } from 'vue-router'
+import { AlertTriangle } from 'lucide-vue-next'
 import BaseEmptyState from '@/components/base/BaseEmptyState.vue'
 import BaseSpinner from '@/components/base/BaseSpinner.vue'
 import PointHistoryList from '@/components/point/PointHistoryList.vue'
@@ -62,10 +51,8 @@ import PointSummary from '@/components/point/PointSummary.vue'
 import { usePointStore } from '@/stores/point'
 
 const pointStore = usePointStore()
-const router = useRouter()
 const { balance, histories, isLoading, error } = storeToRefs(pointStore)
 const { fetchPointOverview } = pointStore
-const goBack = () => router.push('/mypage')
 
 onMounted(fetchPointOverview)
 </script>
@@ -116,25 +103,11 @@ onMounted(fetchPointOverview)
   outline-offset: 2px;
 }
 
-.page-heading span,
 .history-panel__heading span {
   color: #7156ad;
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 2px;
-}
-
-.page-heading h1 {
-  margin: 7px 0 8px;
-  font-size: clamp(27px, 5vw, 34px);
-  letter-spacing: -0.04em;
-  line-height: 1.15;
-}
-
-.page-heading p {
-  margin: 0;
-  color: #6e6677;
-  font-size: 14px;
 }
 
 .state-panel,
@@ -190,7 +163,7 @@ onMounted(fetchPointOverview)
     gap: 18px;
     min-height: calc(100dvh - 68px - 76px);
     margin: 0;
-    padding: 20px 16px 48px;
+    padding: 12px 16px 48px;
   }
 }
 
@@ -220,10 +193,6 @@ onMounted(fetchPointOverview)
 .back-button:hover {
   box-shadow: 2px 2px 0 var(--mypage-shadow);
   transform: translate(2px, 2px);
-}
-
-.page-heading h1 {
-  color: var(--mypage-ink);
 }
 
 .point-page :is(.state-panel, .history-panel) {

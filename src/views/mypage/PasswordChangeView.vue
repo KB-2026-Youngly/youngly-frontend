@@ -1,11 +1,5 @@
 <template>
   <div class="password-page">
-    <header class="password-header">
-      <div class="password-back-shadow mypage-back-shadow yl-stepped-card-shadow"><button class="mypage-back-button pixel-step-button pixel-step-solid" type="button" aria-label="마이페이지로 돌아가기" @click="goBack">
-        <span class="mypage-back-surface pixel-step-surface"><ArrowLeft :size="18" aria-hidden="true" /></span>
-      </button></div>
-    </header>
-
     <div class="password-form-shadow yl-stepped-card-shadow"><form class="password-form yl-mypage-card" novalidate @submit.prevent="handleSubmit">
       <div class="password-form__intro">
         <span aria-hidden="true"><LockKeyhole :size="21" /></span>
@@ -106,7 +100,7 @@
 <script setup>
 import { onBeforeUnmount, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, Eye, EyeOff, LockKeyhole } from 'lucide-vue-next'
+import { Eye, EyeOff, LockKeyhole } from 'lucide-vue-next'
 import { changePassword } from '@/api/user'
 import BaseButton from '@/components/base/BaseButton.vue'
 
@@ -166,8 +160,6 @@ const handleSubmit = async () => {
     isSubmitting.value = false
   }
 }
-
-const goBack = () => router.push('/mypage')
 
 onBeforeUnmount(() => window.clearTimeout(redirectTimer))
 </script>
