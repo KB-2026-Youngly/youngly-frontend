@@ -16,7 +16,7 @@
     <span class="character-card__image">
       <CharacterPreview :character="character" />
     </span>
-    <strong class="character-card__name" aria-hidden="true">
+    <strong class="character-card__name">
       {{ displayName || '이름 없는 캐릭터' }}
     </strong>
     <span class="character-card__check" aria-hidden="true">
@@ -282,10 +282,6 @@ const displayName = computed(() => resolveCharacterDisplayName(props.character))
   font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.character-card__name {
-  visibility: hidden;
 }
 
 .character-card__check {

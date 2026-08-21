@@ -30,8 +30,6 @@ import colli05Image from '@/assets/characters/colli-05.png'
 import colli06Image from '@/assets/characters/colli-06.png'
 import colli07Image from '@/assets/characters/colli-07.png'
 import colli08Image from '@/assets/characters/colli-08.png'
-import ramu01Image from '@/assets/characters/ramu-01.png'
-import ramu02Image from '@/assets/characters/ramu-02.png'
 import ramu03Image from '@/assets/characters/ramu-03.png'
 import ramu04Image from '@/assets/characters/ramu-04.png'
 import ramu05Image from '@/assets/characters/ramu-05.png'
@@ -72,8 +70,6 @@ const CHARACTER_IMAGE_BY_FILE_NAME = Object.freeze({
   'colli-06.png': colli06Image,
   'colli-07.png': colli07Image,
   'colli-08.png': colli08Image,
-  'ramu-01.png': ramu01Image,
-  'ramu-02.png': ramu02Image,
   'ramu-03.png': ramu03Image,
   'ramu-04.png': ramu04Image,
   'ramu-05.png': ramu05Image,
@@ -83,36 +79,44 @@ const CHARACTER_IMAGE_BY_FILE_NAME = Object.freeze({
 })
 
 const CHARACTER_DISPLAY_NAME_BY_FILE_NAME = Object.freeze({
-  ...Object.fromEntries(
-    Array.from({ length: 8 }, (_, index) => [
-      `kiki-${String(index + 1).padStart(2, '0')}.png`,
-      '키키',
-    ]),
-  ),
-  ...Object.fromEntries(
-    Array.from({ length: 8 }, (_, index) => [
-      `ager-${String(index + 1).padStart(2, '0')}.png`,
-      '아거',
-    ]),
-  ),
-  ...Object.fromEntries(
-    Array.from({ length: 8 }, (_, index) => [
-      `bibi-${String(index + 1).padStart(2, '0')}.png`,
-      '비비',
-    ]),
-  ),
-  ...Object.fromEntries(
-    Array.from({ length: 8 }, (_, index) => [
-      `colli-${String(index + 1).padStart(2, '0')}.png`,
-      '콜리',
-    ]),
-  ),
-  ...Object.fromEntries(
-    Array.from({ length: 8 }, (_, index) => [
-      `ramu-${String(index + 1).padStart(2, '0')}.png`,
-      '라무',
-    ]),
-  ),
+  'kiki-01.png': '헬스 키키',
+  'kiki-02.png': '스키 키키',
+  'kiki-03.png': '코딩 키키',
+  'kiki-04.png': '공부 키키',
+  'kiki-05.png': '영양 키키',
+  'kiki-06.png': '독서 키키',
+  'kiki-07.png': '겨울나라 키키',
+  'kiki-08.png': '누가 꽃이게 키키',
+  'ager-01.png': '헬스 아거',
+  'ager-02.png': '당구 아거',
+  'ager-03.png': '공부 아거',
+  'ager-04.png': '방정리 아거',
+  'ager-05.png': '코딩 아거',
+  'ager-06.png': '독서 아거',
+  'ager-07.png': '탁구왕 아거',
+  'ager-08.png': '오디세이 아거',
+  'bibi-01.png': '헬스 비비',
+  'bibi-02.png': '줄넘기 비비',
+  'bibi-03.png': '공부 비비',
+  'bibi-04.png': '코딩 비비',
+  'bibi-05.png': '독서 비비',
+  'bibi-06.png': '방정리 비비',
+  'bibi-07.png': '개꿀 비비',
+  'bibi-08.png': '이게 무슨 마일오 비비',
+  'colli-01.png': '축구 콜리',
+  'colli-02.png': '헬스 콜리',
+  'colli-03.png': '공부 콜리',
+  'colli-04.png': '코딩 콜리',
+  'colli-05.png': '영양 콜리',
+  'colli-06.png': '독서 콜리',
+  'colli-07.png': '물 만난 콜리',
+  'colli-08.png': '사과 공주 콜리',
+  'ramu-03.png': '몰라딘 라무',
+  'ramu-04.png': '트럼프 카드 라무',
+  'ramu-05.png': '수분 충전 라무',
+  'ramu-06.png': '반장 코리아 라무',
+  'ramu-07.png': '습하이더 라무',
+  'ramu-08.png': '또르 라무',
 })
 
 export const KNOWN_CHARACTER_COUNT = Object.keys(CHARACTER_IMAGE_BY_FILE_NAME).length
